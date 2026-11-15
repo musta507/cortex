@@ -4932,6 +4932,27 @@ async function voiceAudio16k(a0, a1) {
 }
 
 var voiceDown = 0;   // la IA de voz no se pudo descargar hace poco: no insistir
+// la IA de voz suele hacer empezar la primera palabra tras un silencio demasiado pronto (se «come» el hueco):
+// se mira el volumen del audio y cada palabra empieza donde de verdad empieza a sonar la voz
+function voiceSnap(ws, audio, a0) {
+  if (!ws.length || !audio || !audio.length) return ws;
+  const F = 160, n = Math.floor(audio.length / F), e = new Float32Array(n);   // energía cada 10 ms
+  for (let i = 0; i < n; i++) { let q = 0; for (let j = i * F; j < (i + 1) * F; j++) q += audio[j] * audio[j]; e[i] = Math.sqrt(q / F); }
+  const sorted = Array.from(e).sort((x, y) => x - y), floor = sorted[Math.floor(n * 0.15)] || 0, loud = sorted[Math.floor(n * 0.9)] || 0;
+  const thr = Math.max(floor * 2.5, floor + (loud - floor) * 0.12, 0.004);
+  const fr = t => Math.max(0, Math.min(n - 1, Math.round((t - a0) * 100)));
+  const out = ws.map(w => ({ ...w }));
+  for (let k = 0; k < out.length; k++) {
+    const w = out[k], prevEnd = k ? out[k - 1].end : -1;
+    if (w.end - w.start < 0.25) continue;
+    let i = fr(w.start); const z = fr(w.end);
+    let run = 0; for (; i <= z; i++) { if (e[i] > thr) { if (++run >= 3) { i -= 2; break; } } else run = 0; }   // 30 ms seguidos con voz
+    if (i > z) continue;
+    const onset = a0 + i / 100 - 0.04;
+    if (onset - w.start > 0.12 && onset < w.end - 0.12 && onset > prevEnd) w.start = +onset.toFixed(2);
+  }
+  return out;
+}
 async function doTranscribe(onMsg) {
   if (!file) return false;
   const say = (m, k) => { setStatus($('tStatus'), m, k); if (onMsg) onMsg(m, k); };
@@ -4965,7 +4986,7 @@ async function doTranscribe(onMsg) {
       if (res.chunks.length) ws = await fillGaps(ws, audio, a0, models, onStatus);
       // Gemini escucha el mismo audio y corrige lo mal oído, lo inventado y lo que faltaba
       if (getGemKey()) try { ws = await geminiFixWords(ws, audio, a0, m => say(m)); } catch (e) { console.warn('Revisión de subtítulos', e); }
-      words.push(...ws);
+      words.push(...voiceSnap(ws, audio, a0));
     }
     allWords = words;
     if (!allWords.length) throw new Error('No se ha detectado voz en el clip');
