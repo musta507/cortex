@@ -69,7 +69,7 @@ function runJob(job) {
   const out = path.join(TMP, job.id + '.%(ext)s');
   const args = [...YTDLP.slice(1), '--no-playlist', '--newline', '--no-part', '--no-mtime', '--restrict-filenames',
     '-f', 'bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[height<=1080][ext=mp4]/bv*[height<=1080]+ba/b[height<=1080]/b',
-    '--merge-output-format', 'mp4', '--match-filter', `!duration | duration<=${DL_MAX_MIN * 60}`, '--max-filesize', '700M',
+    '--merge-output-format', 'mp4', '--max-filesize', '700M',
     '--print', 'before_dl:TITLE:%(title)s', '--print', 'after_move:FILE:%(filepath)s', '--no-simulate', '-o', out];
   if (job.from != null && job.to != null) args.push('--download-sections', `*${job.from}-${job.to}`, '--force-keyframes-at-cuts');
   if (job.imp) args.unshift('--impersonate', 'chrome');
@@ -88,7 +88,7 @@ function runJob(job) {
     if (code === 0 && job.file && fs.existsSync(job.file)) { job.status = 'done'; job.p = 1; job.size = fs.statSync(job.file).size; }
     else {
       job.status = 'error'; const e = (err.match(/ERROR:.*$/m) || [''])[0];
-      job.error = job.why ? 'La descarga ' + job.why + '.' : /does not pass filter|duration/i.test(err) ? `El vídeo es demasiado largo (máximo ${DL_MAX_MIN} min). Pega el enlace de un clip.` : /File is larger|max-filesize/i.test(err) ? 'El vídeo es demasiado grande.' : /Unsupported URL|is not a valid URL/i.test(err) ? 'Ese enlace no es de un vídeo que pueda abrir.' : /private|login|sign in|cookies/i.test(err) ? 'Ese vídeo es privado o pide iniciar sesión.' : /404|not found|does not exist/i.test(err) ? 'No encuentro ese vídeo: ¿el enlace está bien?' : 'No se pudo descargar' + (e ? ': ' + e.replace(/^ERROR:\s*/, '').slice(0, 160) : '.');
+      job.error = job.why ? 'La descarga ' + job.why + ' (¿es un directo entero? Pega el enlace de un clip).' : /File is larger|max-filesize/i.test(err) ? 'El vídeo es demasiado grande.' : /Unsupported URL|is not a valid URL/i.test(err) ? 'Ese enlace no es de un vídeo que pueda abrir.' : /private|login|sign in|cookies/i.test(err) ? 'Ese vídeo es privado o pide iniciar sesión.' : /404|not found|does not exist/i.test(err) ? 'No encuentro ese vídeo: ¿el enlace está bien?' : 'No se pudo descargar' + (e ? ': ' + e.replace(/^ERROR:\s*/, '').slice(0, 160) : '.');
       console.warn('descarga fallida', job.url, err.slice(-500));
     }
     next();
