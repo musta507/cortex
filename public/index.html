@@ -985,6 +985,36 @@ body.st-open .app.easy .ez-flags{visibility:hidden}
 .sd-var .fl-tools{display:flex;gap:6px}
 .sd-var .fl-tools>*{flex:1 1 0;min-width:0}
 .ez-link{display:grid;gap:6px;width:min(460px,100%);justify-items:center}.ez-link .r{display:flex;gap:8px;width:100%}.ez-link input{flex:1;min-width:0}.ez-link #ezLinkInfo:empty{display:none}
+.ez-link #ezLinkInfo{width:100%}
+.dlb{width:100%;display:grid;gap:6px;font-size:13px;color:#D4D4D8;text-align:left}
+.dlb .t{display:flex;justify-content:space-between;gap:8px;font-weight:600}.dlb .t em{font-style:normal;color:#A1A1AA;font-variant-numeric:tabular-nums}
+.dlb .tr{position:relative;height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.dlb .tr b{display:none}
+.dlb .f{position:absolute;inset:0 auto 0 0;width:0;border-radius:inherit;background:#22C55E;transition:width .25s linear}
+.dlb.end .f{transition:width .35s cubic-bezier(.2,.9,.2,1)}
+/* 1 · verde con brillo que pasa */
+.dlb.v1 .f{background:linear-gradient(90deg,#16A34A,#4ADE80);overflow:hidden}
+.dlb.v1 .f::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-100%);animation:dlbSh 1.3s linear infinite}
+@keyframes dlbSh{to{transform:translateX(100%)}}
+/* 2 · rayas en movimiento */
+.dlb.v2 .tr{height:14px}
+.dlb.v2 .f{background:repeating-linear-gradient(-45deg,#22C55E 0 10px,#16A34A 10px 20px);background-size:28px 28px;animation:dlbSt .6s linear infinite}
+@keyframes dlbSt{to{background-position:28px 0}}
+/* 3 · fina, con punto que brilla en la punta */
+.dlb.v3 .tr{height:4px;overflow:visible;background:rgba(255,255,255,.1)}
+.dlb.v3 .f{background:#4ADE80;box-shadow:0 0 12px #22C55E}
+.dlb.v3 .f::after{content:'';position:absolute;right:-5px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(74,222,128,.35),0 0 18px #4ADE80;animation:dlbPu 1s ease-in-out infinite}
+@keyframes dlbPu{50%{box-shadow:0 0 0 8px rgba(74,222,128,.12),0 0 24px #4ADE80}}
+/* 4 · gruesa, con el porcentaje dentro */
+.dlb.v4 .tr{height:30px;border-radius:10px}
+.dlb.v4 .f{background:linear-gradient(180deg,#4ADE80,#16A34A)}
+.dlb.v4 .t em{display:none}
+.dlb.v4 .tr b{display:grid!important;position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);font-variant-numeric:tabular-nums}
+/* 5 · bloques que se van encendiendo */
+.dlb.v5 .tr{height:16px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.08) 0 calc(5% - 3px),transparent calc(5% - 3px) 5%);border-radius:4px}
+.dlb.v5 .f,.dlb.v5.end .f{transition:none}
+.dlb.v5 .f{border-radius:4px;background:repeating-linear-gradient(90deg,#22C55E 0 calc(5% - 3px),transparent calc(5% - 3px) 5%);background-size:var(--w,100%) 100%}
+.dlb.ok .t{color:#4ADE80}.dlb.ko .f{background:#F87171!important}
 .ez-alt{background:none;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-weight:600;cursor:pointer}
 .ez-alt span{font-weight:400;opacity:.75}
 .rep-row{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
@@ -9143,15 +9173,35 @@ $('ezPick').onclick = ev => { ev.stopPropagation(); $('ezFile').value = ''; $('e
 $('ezInsert').onclick = () => { $('ezFile').value = ''; $('ezFile').click(); };
 $('ezFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) ezInsertFile(f); });
 // insertar desde un enlace: lo descarga el Grabador Clipzi del PC
+/* barra de descarga: va rápida al principio y cada vez más lenta (nunca llega sola al final);
+   cuando la descarga termina de verdad, sale disparada hasta el 100 %. Hay 5 diseños (ezPref('dlBar') = 1…5). */
+function dlBar(host, label) {
+  const v = Math.min(5, Math.max(1, +ezPref('dlBar') || 1)), el = document.createElement('div');
+  el.className = 'dlb v' + v; el.innerHTML = `<div class="t"><span></span><em>0 %</em></div><div class="tr"><div class="f"></div><b></b></div>`;
+  host.innerHTML = ''; host.append(el);
+  const f = el.querySelector('.f'), pc = el.querySelector('em'), inn = el.querySelector('b'), lab = el.querySelector('.t span');
+  let real = 0, shown = 0, stop = false; const t0 = performance.now();
+  lab.textContent = label || 'Descargando el clip…';
+  const paint = x => { shown = x; const w = (x * 100).toFixed(1) + '%'; f.style.width = w; if (v === 5) f.style.setProperty('--w', (100 / Math.max(x, .01)).toFixed(1) + '%'); const n = Math.floor(x * 100) + ' %'; pc.textContent = n; inn.textContent = n; };
+  (function tick() { if (stop) return; const t = (performance.now() - t0) / 1000, fake = 0.93 * (1 - Math.exp(-t / 3.5)); paint(Math.max(shown, Math.min(0.97, Math.max(fake, real * 0.97)))); requestAnimationFrame(tick); })();
+  return {
+    set(p, text) { if (p > 0) real = Math.min(1, p); if (text) lab.textContent = text; },
+    async done(text) { stop = true; el.classList.add('end', 'ok'); lab.textContent = text || '¡Listo!'; paint(1); await sleep(450); },
+    fail() { stop = true; el.classList.add('ko'); },
+    el,
+  };
+}
 async function ezLinkInsert() {
   const inp = $('ezLinkUrl'), info = $('ezLinkInfo'), btn = $('ezLinkGo'), url = inp.value.trim();
   if (!/^https?:\/\/\S+\.\S+/.test(url)) { toast('Pega primero el enlace del clip'); inp.focus(); return; }
   btn.disabled = true;
+  const bar = dlBar(info, 'Descargando el clip…');
   try {
-    const r = await grabFetch(url, null, null, m => info.textContent = m);
-    info.textContent = ''; inp.value = '';
+    // el texto se queda en «Descargando el clip…»: solo cambia si hay que abrir el grabador o esperar cola
+    const r = await grabFetch(url, null, null, (m, p) => bar.set(p || 0, /grabador|cola/i.test(m) ? m : null));
+    await bar.done(); info.innerHTML = ''; inp.value = '';
     await ezInsertFile(r.file);
-  } catch (e) { info.textContent = ''; toast(e.auth ? e.message : 'No se pudo descargar: ' + e.message); }
+  } catch (e) { bar.fail(); await sleep(500); info.innerHTML = ''; toast(e.auth ? e.message : 'No se pudo descargar: ' + e.message); }
   finally { btn.disabled = false; }
 }
 $('ezLinkRow').onclick = ev => ev.stopPropagation();
@@ -11863,7 +11913,7 @@ async function agReuseDownload(url, dlKey, whole) {
 // web: el servidor descarga el vídeo del enlace y la página lo recibe
 async function webFetch(url, from, to, say) {
   window.__cxLink = url;
-  say('Buscando el vídeo…', 0);
+  say('Descargando el clip…', 0);
   const r = await fetch('/api/clip', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, from: from ?? null, to: to ?? null }) });
   const j = await r.json().catch(() => ({})); if (!r.ok || !j.id) throw new Error(j.error || 'no se pudo descargar');
   let st = null; const t0 = Date.now();
@@ -11874,9 +11924,9 @@ async function webFetch(url, from, to, say) {
     if (st.status === 'error') throw new Error(st.error || 'no se pudo descargar');
     if (st.status === 'done') break;
     if (Date.now() - t0 > 8 * 60000) throw new Error('la descarga tardó demasiado');
-    say(st.status === 'queued' ? `En cola (${st.queue})…` : `Descargando el vídeo… ${Math.round((st.p || 0) * 100)} %`, st.p || 0);
+    say(st.status === 'queued' ? `Descargando el clip… (en cola: ${st.queue})` : 'Descargando el clip…', st.p || 0);
   }
-  say('Recibiendo el vídeo…', 0.99);
+  say('Descargando el clip…', 0.99);
   const b = await (await fetch('/api/clip/' + j.id + '/file')).blob();
   if (!b.size) throw new Error('el vídeo llegó vacío');
   const name = ((st.title || 'clip').replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) || 'clip') + '.mp4';
