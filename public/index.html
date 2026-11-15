@@ -7350,6 +7350,7 @@ async function upsertProject() {
 }
 async function delProjectData(id) { for (const k of ['proj:', 'clip:', 'image:']) try { await kv.del(k + id); } catch {} }
 async function saveNow() {
+  try { webState(); } catch {}
   if (histTimer) { clearTimeout(histTimer); commitHistory(); }
   clearTimeout(saveTimer);
   if (!curProj || curProj === 'tplsample') return;
@@ -9115,6 +9116,19 @@ async function webExported(out) {
   const id = await webLog({ tipo: 'exportado', proyecto: curProj, meta, thumb: webThumb() }); if (!id) return;
   try { const r = await fetch('/api/subir/' + id, { method: 'PUT', headers: { 'Content-Type': 'video/mp4' }, body: out.blob }); if (!r.ok) console.warn('subir', r.status); } catch (e) { console.warn('subir', e); }
 }
+// al abrir un clip: se sube el vídeo original (así se ve en el panel aunque no se exporte)
+async function webOpened(f) {
+  if (!CORTEX_PROXY) return; const proj = curProj, link = window.__cxLink || null; window.__cxLink = null;
+  await new Promise(r => setTimeout(r, 700));
+  const id = await webLog({ tipo: 'abierto', proyecto: proj, meta: { archivo: f.name, enlace: link, duracion_s: +ezDur().toFixed(1) }, thumb: webThumb() }); if (!id) return;
+  try { await fetch('/api/subir/' + id, { method: 'PUT', headers: { 'Content-Type': f.type || 'video/mp4' }, body: f }); } catch (e) { console.warn('subir original', e); }
+}
+// mientras edita: cómo va (título, formato, duración) para verlo en el panel, como mucho cada 15 s
+let webStT = 0, webStLast = '';
+function webState() {
+  if (!CORTEX_PROXY || !curProj || !loaded) return; clearTimeout(webStT);
+  webStT = setTimeout(() => { let m = {}; try { m = clipLogSnap(); } catch { return; } const k = JSON.stringify([m.titulo, m.formato, m.duracion_s]); if (k === webStLast) return; webStLast = k; webLog({ tipo: 'estado', proyecto: curProj, meta: m, thumb: webThumb() }); }, 15000);
+}
 if (CORTEX_PROXY) fetch('/api/yo').then(r => r.status === 401 ? location.reload() : r.json()).then(j => { if (j && j.name) { window.__cxMe = j.name; try { renderHome(); } catch {} } }).catch(() => {});
 async function ezInsertFile(f) {
   if (!f || !(/^video\//.test(f.type) || /\.(mp4|mov|m4v|webm|mkv)$/i.test(f.name))) { toast('Eso no parece un vídeo'); return; }
@@ -9122,7 +9136,7 @@ async function ezInsertFile(f) {
   try { await loadFile(f); } catch (e) { toast('No se pudo abrir el vídeo'); return; } finally { ezHold = false; }
   if (tplEditing) { await tplAfterLoad(); return; }
   ezRetrim = false; ezA = 0; ezB = ezDur(); renderFlags();
-  webLog({ tipo: 'abierto', proyecto: curProj, meta: { archivo: f.name, enlace: window.__cxLink || null, duracion_s: +ezDur().toFixed(1) } }); setTimeout(() => { window.__cxLink = null; }, 0);
+  webOpened(f);
   ezShow('trim');
 }
 $('ezPick').onclick = ev => { ev.stopPropagation(); $('ezFile').value = ''; $('ezFile').click(); };

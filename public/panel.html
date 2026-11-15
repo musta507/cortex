@@ -136,22 +136,25 @@ async function loadProjects() {
   const g = $('grid'); g.innerHTML = '';
   if (!proyectos.length) { g.innerHTML = `<div class="empty">${sel ? esc(sel) + ' todavía no ha abierto ningún clip.' : 'Todavía no hay clips. Cuando los clippers entren y exporten, aparecerán aquí.'}</div>`; return; }
   for (const p of proyectos) {
-    const last = p.exports[p.exports.length - 1], c = document.createElement('div'); c.className = 'p';
-    const th = document.createElement('div'); th.className = 'th' + (last && last.thumb ? '' : ' none');
-    if (last && last.thumb) th.style.backgroundImage = `url(/api/admin/archivo/${last.id}.jpg)`;
-    th.innerHTML = last ? (last.video ? '<span class="play">▶</span>' : last.borrado ? '<span class="m">vídeo borrado (espacio)</span>' : '<span class="m">subiendo vídeo…</span>') : '<span class="m">abierto, sin exportar</span>';
+    const last = p.exports[p.exports.length - 1], src = p.fuente, st = p.estado, c = document.createElement('div'); c.className = 'p';
+    const show = last || src;   // lo exportado o, si no hay, el vídeo original que está editando
+    const th = document.createElement('div'); th.className = 'th' + (show && show.thumb ? '' : ' none');
+    if (show && show.thumb) th.style.backgroundImage = `url(/api/admin/archivo/${show.id}.jpg?t=${(st && st.at) || 0})`;
+    th.innerHTML = show ? (show.video ? '<span class="play">▶</span>' : show.borrado ? '<span class="m">vídeo borrado (espacio)</span>' : '<span class="m">subiendo vídeo…</span>') : '<span class="m">sin vídeo</span>';
+    if (!last && src) th.insertAdjacentHTML('beforeend', '<span class="tag" style="left:auto;right:8px">original</span>');
     if (!sel) th.insertAdjacentHTML('beforeend', `<span class="tag">${esc(p.user)}</span>`);
-    if (last && last.video) th.onclick = () => play(last.id);
-    const title = last ? last.titulo : (p.origen || 'Clip sin exportar');
+    if (show && show.video) th.onclick = () => play(show.id);
+    const title = last ? last.titulo : (st && st.titulo && st.titulo !== 'Texto predeterminado' ? st.titulo : (p.origen || 'Clip sin exportar'));
     const chips = [];
     if (last) { chips.push(`<span class="chip ok">Exportado${p.exports.length > 1 ? ' ×' + p.exports.length : ''}</span>`); if (last.formato) chips.push(`<span class="chip">${esc(FMT[last.formato] || last.formato)}</span>`); if (last.duracion_s) chips.push(`<span class="chip">${Math.round(last.duracion_s)} s</span>`); if (last.titulo_ia && last.titulo_ia !== last.titulo) chips.push('<span class="chip w">Título cambiado a mano</span>'); }
-    else chips.push('<span class="chip w">Sin exportar</span>');
+    else { chips.push('<span class="chip w">En edición · sin exportar</span>'); if (st && st.formato) chips.push(`<span class="chip">${esc(FMT[st.formato] || st.formato)}</span>`); if (st && st.duracion_s) chips.push(`<span class="chip">${Math.round(st.duracion_s)} s</span>`); }
     const b = document.createElement('div'); b.className = 'pb';
     b.innerHTML = `<strong>${esc(title || 'Sin título')}</strong><div class="chips">${chips.join('')}</div>
       <span class="m">${sel ? '' : esc(p.user) + ' · '}abierto ${when(p.abierto)}${last ? ' · exportado ' + when(last.at) : ''}</span>
       ${p.origen && last ? `<span class="m" title="${esc(p.origen)}">de: ${esc(String(p.origen).slice(0, 60))}</span>` : ''}
       ${last && last.titulo_ia && last.titulo_ia !== last.titulo ? `<span class="m">La IA puso: «${esc(last.titulo_ia)}»</span>` : ''}
-      ${last && last.video ? `<div class="acts"><button data-v="${last.id}">▶ Ver</button><a href="/api/admin/archivo/${last.id}.mp4?descargar">⬇ Descargar</a></div>` : ''}
+      ${!last && st && st.at ? `<span class="m">último cambio ${ago(st.at)}</span>` : ''}
+      ${show && show.video ? `<div class="acts"><button data-v="${show.id}">▶ Ver${last ? '' : ' original'}</button><a href="/api/admin/archivo/${show.id}.mp4?descargar">⬇ Descargar</a></div>` : ''}
       ${p.exports.length > 1 ? `<details class="more"><summary>${p.exports.length} exportaciones</summary><ul>${p.exports.map(x => `<li>${when(x.at)} · ${esc(x.titulo || 'sin título')}${x.video ? ` · <a href="#" data-v="${x.id}" style="color:#fff">ver</a>` : ''}</li>`).join('')}</ul></details>` : ''}`;
     b.querySelectorAll('[data-v]').forEach(x => x.onclick = ev => { ev.preventDefault(); play(x.dataset.v); });
     c.append(th, b); g.append(c);

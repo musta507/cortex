@@ -79,6 +79,17 @@ function cookieHeader(req, cname, value, days) {
 
 // ---------- clips ----------
 function addClip(user, data) {
+  // «estado»: cómo va el proyecto mientras se edita (título, formato…); se guarda en la ficha del clip abierto, no como uno nuevo
+  if (data.tipo === 'estado') {
+    const o = [...db.clips].reverse().find(c => c.user === user.name && c.proyecto === String(data.proyecto || '') && c.tipo === 'abierto');
+    if (o) {
+      let m = data.meta && typeof data.meta === 'object' ? data.meta : {}; if (JSON.stringify(m).length > 20000) m = { titulo: String(m.titulo || '').slice(0, 300), formato: m.formato, duracion_s: m.duracion_s };
+      o.estado = m; o.estadoAt = Date.now();
+      if (typeof data.thumb === 'string' && data.thumb.startsWith('data:image/jpeg;base64,') && data.thumb.length < 400000) { fs.writeFileSync(path.join(FILES, o.id + '.jpg'), Buffer.from(data.thumb.split(',')[1], 'base64')); o.thumb = 1; }
+      save(); return o;
+    }
+    data = { ...data, tipo: 'abierto' };
+  }
   const id = crypto.randomBytes(9).toString('base64url');
   const c = { id, user: user.name, at: Date.now(), tipo: String(data.tipo || '').slice(0, 20), proyecto: String(data.proyecto || '').slice(0, 40), meta: data.meta && typeof data.meta === 'object' ? data.meta : {}, video: 0, thumb: 0 };
   if (JSON.stringify(c.meta).length > 20000) c.meta = { titulo: String(c.meta.titulo || '').slice(0, 300), formato: c.meta.formato, duracion_s: c.meta.duracion_s };
@@ -108,9 +119,9 @@ function projects(user) {
   for (const c of db.clips) {
     if (user && c.user !== user) continue;
     const k = c.user + '|' + (c.proyecto || c.id);
-    let p = map.get(k); if (!p) map.set(k, p = { user: c.user, proyecto: c.proyecto, abierto: c.at, ultimo: c.at, origen: null, exports: [] });
+    let p = map.get(k); if (!p) map.set(k, p = { user: c.user, proyecto: c.proyecto, abierto: c.at, ultimo: c.at, origen: null, fuente: null, estado: null, exports: [] });
     p.ultimo = Math.max(p.ultimo, c.at);
-    if (c.tipo === 'abierto') { p.abierto = Math.min(p.abierto, c.at); p.origen = c.meta.enlace || c.meta.archivo || p.origen; }
+    if (c.tipo === 'abierto') { p.abierto = Math.min(p.abierto, c.at); p.origen = c.meta.enlace || c.meta.archivo || p.origen; p.fuente = { id: c.id, video: !!c.video, borrado: !!c.borrado, thumb: !!c.thumb }; if (c.estado) { p.estado = { titulo: c.estado.titulo || '', formato: c.estado.formato || '', duracion_s: c.estado.duracion_s || 0, titulo_ia: c.estado.titulo_ia || '', at: c.estadoAt }; p.ultimo = Math.max(p.ultimo, c.estadoAt || 0); } }
     if (c.tipo === 'exportado') p.exports.push({ id: c.id, at: c.at, titulo: c.meta.titulo || '', formato: c.meta.formato || '', duracion_s: c.meta.duracion_s || 0, video: !!c.video, borrado: !!c.borrado, thumb: !!c.thumb, plantilla: c.meta.plantilla_titulo || '', titulo_ia: c.meta.titulo_ia || '', subtitulos: !!c.meta.subtitulos });
   }
   return [...map.values()].sort((a, b) => b.ultimo - a.ultimo);
