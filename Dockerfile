@@ -5,7 +5,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* \
  && pip3 install --no-cache-dir --break-system-packages "yt-dlp[default,curl-cffi]"
 WORKDIR /app
-COPY package.json server.js ./
+COPY package.json server.js cuentas.js ./
 COPY public ./public
 ENV NODE_ENV=production
 CMD ["node", "server.js"]

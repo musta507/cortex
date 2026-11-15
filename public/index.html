@@ -5558,6 +5558,7 @@ async function doExport() {
     a.textContent = `Descargar ${name} (${(out.blob.size / 1048576).toFixed(1)} MB)`;
     $('result').append(a);
     window.__lastExport = out;
+    webExported(out);
     try { clipLogAdd({ tipo: 'exportado', ...clipLogSnap(), exportacion: { modo: out.mode || 'en tiempo real', fps: out.fps, tardo_s: +((performance.now() - t0) / 1000).toFixed(1) } }); } catch (e) { console.warn('registro', e); }
     setStatus(st, `Vídeo listo · ${out.fps} fps · ${out.codec === 'avc' ? 'H.264' : out.codec === 'vp9' ? 'VP9' : out.codec} · exportación ${out.mode || 'en tiempo real'} · ${((performance.now() - t0) / 1000).toFixed(1)} s${out.dur ? ` (${(out.dur / Math.max(0.1, (performance.now() - t0) / 1000)).toFixed(1).replace('.', ',')}× más rápido que el clip)` : ''}.`, 'ok');
   } catch (err) {
@@ -7405,7 +7406,7 @@ function renderHnav(c) {
     for (const o of clients) item(o.name, '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', false, () => { curClient = o.id; renderHome(); });
   }
   const sp = document.createElement('div'); sp.className = 'hsp'; n.append(sp);
-  const f = document.createElement('div'); f.className = 'hfoot'; f.textContent = 'Versión de prueba gratis · tus clips no salen de tu ordenador'; n.append(f);
+  const f = document.createElement('div'); f.className = 'hfoot'; f.innerHTML = 'Versión de prueba' + (window.__cxMe ? ` · ${String(window.__cxMe).replace(/[<>&]/g, '')} · <a href="/salir" style="color:inherit">Salir</a>` : ''); n.append(f);
 }
 // lo que más rinde de cada creador (datos reales del análisis de clips virales)
 const QUE_PETA_GEN = [['Acción / sustos', 2.8, '#FB923C'], ['Revelación', 1.5, '#A78BFA'], ['Polémica', 1.46, '#F87171'], ['Invitados', 1.36, '#60A5FA'], ['Humor de relleno', 0.89, '#FACC15'], ['Juego / fútbol', 0.85, '#9CA3AF']];
@@ -7418,7 +7419,7 @@ function renderBento(c) {
   hero.innerHTML = `<div><span class="k">EDITOR CON IA</span><h2>Sube tu clip.<br><span>Sale listo para petar.</span></h2><p class="hint" style="margin-top:10px;font-size:15px">Lo pone en vertical, le escribe el título que engancha y le añade subtítulos. Tú solo lo revisas.</p></div>
     <div style="display:grid;gap:10px"><div class="hin hdrop" id="hDrop"><span class="hint" style="flex:1;padding:12px">Arrastra aquí tu clip ya cortado</span><button class="primary" id="hFile">Subir clip</button></div>
     <div class="hin"><input type="url" id="hUrl" placeholder="…o pega el enlace de un clip de Kick, Twitch, YouTube o TikTok" aria-label="Enlace del clip"><button class="primary" id="hGo">Usar enlace</button></div>
-    <span class="hint">MP4 o MOV · hasta 3 minutos · tu archivo no se sube a ningún servidor</span><input type="file" id="hFileIn" accept="video/*" hidden></div>`;
+    <span class="hint">MP4 o MOV · hasta 3 minutos · tus clips exportados se guardan en tu cuenta</span><input type="file" id="hFileIn" accept="video/*" hidden></div>`;
   const st1 = document.createElement('section');
   st1.innerHTML = `<span class="lb">Clips hechos</span><span class="big">${mine.length}</span><span class="${week ? 'up' : 'hint'}">${week ? '+' + week + ' esta semana' : 'Ninguno esta semana'}</span>`;
   const st2 = document.createElement('section');
@@ -9104,12 +9105,24 @@ function ezShow(step) {
 }
 
 /* ---------- 1) insertar el clip ---------- */
+// web: lo que abre y exporta cada clipper queda en su cuenta (lo ve el administrador en /panel)
+async function webLog(data) { if (!CORTEX_PROXY) return null; try { const r = await fetch('/api/registro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); if (r.status === 401) { location.reload(); return null; } return (await r.json()).id || null; } catch (e) { console.warn('registro web', e); return null; } }
+function webThumb() { try { const c = $('cv'), w = 270, h = Math.round(w * c.height / c.width), t = document.createElement('canvas'); t.width = w; t.height = h; t.getContext('2d').drawImage(c, 0, 0, w, h); return t.toDataURL('image/jpeg', 0.72); } catch { return null; } }
+async function webExported(out) {
+  if (!CORTEX_PROXY || !out || !out.blob) return;
+  let meta = {}; try { meta = clipLogSnap(); } catch {}
+  meta.enlace = window.__cxLink || null;
+  const id = await webLog({ tipo: 'exportado', proyecto: curProj, meta, thumb: webThumb() }); if (!id) return;
+  try { const r = await fetch('/api/subir/' + id, { method: 'PUT', headers: { 'Content-Type': 'video/mp4' }, body: out.blob }); if (!r.ok) console.warn('subir', r.status); } catch (e) { console.warn('subir', e); }
+}
+if (CORTEX_PROXY) fetch('/api/yo').then(r => r.status === 401 ? location.reload() : r.json()).then(j => { if (j && j.name) { window.__cxMe = j.name; try { renderHome(); } catch {} } }).catch(() => {});
 async function ezInsertFile(f) {
   if (!f || !(/^video\//.test(f.type) || /\.(mp4|mov|m4v|webm|mkv)$/i.test(f.name))) { toast('Eso no parece un vídeo'); return; }
   ezHold = true;
   try { await loadFile(f); } catch (e) { toast('No se pudo abrir el vídeo'); return; } finally { ezHold = false; }
   if (tplEditing) { await tplAfterLoad(); return; }
   ezRetrim = false; ezA = 0; ezB = ezDur(); renderFlags();
+  webLog({ tipo: 'abierto', proyecto: curProj, meta: { archivo: f.name, enlace: window.__cxLink || null, duracion_s: +ezDur().toFixed(1) } }); setTimeout(() => { window.__cxLink = null; }, 0);
   ezShow('trim');
 }
 $('ezPick').onclick = ev => { ev.stopPropagation(); $('ezFile').value = ''; $('ezFile').click(); };
@@ -11835,6 +11848,7 @@ async function agReuseDownload(url, dlKey, whole) {
 }
 // web: el servidor descarga el vídeo del enlace y la página lo recibe
 async function webFetch(url, from, to, say) {
+  window.__cxLink = url;
   say('Buscando el vídeo…', 0);
   const r = await fetch('/api/clip', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, from: from ?? null, to: to ?? null }) });
   const j = await r.json().catch(() => ({})); if (!r.ok || !j.id) throw new Error(j.error || 'no se pudo descargar');

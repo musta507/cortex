@@ -1,8 +1,11 @@
 // Cortex · versión de prueba en la web.
-// Sirve la página y hace de puente con Gemini: la clave vive solo aquí (variable GEMINI_KEY), nunca llega al navegador.
+// Sirve la página (solo a quien tiene contraseña), hace de puente con Gemini (la clave vive solo aquí, variable GEMINI_KEY),
+// descarga vídeos por enlace y guarda los clips que exporta cada clipper para verlos en /panel.
 const http = require('http'), fs = require('fs'), path = require('path'), zlib = require('zlib'), os = require('os'), { spawn } = require('child_process');
 
+const K = require('./cuentas');
 const KEY = (process.env.GEMINI_KEY || '').trim();
+const ADMIN = (process.env.ADMIN_PASSWORD || '').trim();
 const PORT = process.env.PORT || 3000;
 const PER_IP = +process.env.LIMITE_POR_PERSONA || 150;   // peticiones a la IA por persona y día
 const TOTAL = +process.env.LIMITE_TOTAL || 5000;          // peticiones a la IA de todos, por día
@@ -15,6 +18,28 @@ const TMP = path.join(os.tmpdir(), 'cortex-dl'); fs.mkdirSync(TMP, { recursive: 
 
 const page = fs.readFileSync(path.join(__dirname, 'public', 'index.html'));
 const pageGz = zlib.gzipSync(page, { level: 9 });
+const panelPage = fs.readFileSync(path.join(__dirname, 'public', 'panel.html'));
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function loginPage(o) {
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(o.title)}</title>
+<style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0A0A0C radial-gradient(1200px 600px at 50% -10%,#1d1d2b,transparent);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:#F4F4F5;padding:16px}
+.c{width:min(400px,100%);background:#111114;border:1px solid #27272A;border-radius:18px;padding:30px 26px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.b{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;margin-bottom:18px}.b i{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:#fff;color:#111;font-style:normal;font-size:15px}
+h1{font-size:22px;margin:0 0 6px}p{color:#A1A1AA;margin:0 0 18px;font-size:14px}label{display:block;font-size:13px;font-weight:600;color:#D4D4D8;margin-bottom:6px}
+input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #3F3F46;background:#0A0A0C;color:#fff;font-size:16px;outline:none}input:focus{border-color:#fff}
+button{width:100%;margin-top:14px;padding:12px;border:0;border-radius:10px;background:#fff;color:#111;font-weight:800;font-size:15px;cursor:pointer}
+.e{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.4);color:#FCA5A5;padding:9px 12px;border-radius:10px;font-size:13px;margin-bottom:14px}.n{margin-top:16px;font-size:12px;color:#71717A}</style></head>
+<body><form class="c" method="post" action="${o.action}"><div class="b"><i>▶</i>Cortex</div><h1>${esc(o.h)}</h1><p>${esc(o.sub)}</p>${o.msg ? `<div class="e">${esc(o.msg)}</div>` : ''}
+<label for="p">Contraseña</label><input id="p" name="pass" type="password" autocomplete="current-password" autofocus required><button>Entrar</button>${o.note ? `<div class="n">${esc(o.note)}</div>` : ''}</form></body></html>`;
+}
+const USER_LOGIN = msg => loginPage({ title: 'Entrar · Cortex', action: '/entrar', h: 'Versión de prueba', sub: 'Escribe la contraseña que te hemos dado para entrar.', msg, note: 'Los clips que exportes se guardan en tu cuenta para que podamos revisarlos y mejorar Cortex.' });
+const ADMIN_LOGIN = msg => loginPage({ title: 'Panel · Cortex', action: '/panel/entrar', h: 'Panel', sub: ADMIN ? 'Contraseña de administrador.' : 'El panel está apagado: falta la variable ADMIN_PASSWORD en Railway.', msg });
+const tries = new Map();
+function tooMany(ip) { const now = Date.now(), t = (tries.get(ip) || []).filter(x => now - x < 15 * 60000); tries.set(ip, t); return t.length >= 20; }
+const html = (res, code, body, extra) => { res.writeHead(code, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', ...(extra || {}) }); res.end(body); };
+const go = (res, to, extra) => { res.writeHead(303, { Location: to, ...(extra || {}) }); res.end(); };
+async function readBody(req, max) { const ch = []; let n = 0; for await (const c of req) { n += c.length; if (n > max) throw new Error('grande'); ch.push(c); } return Buffer.concat(ch).toString('utf8'); }
+const formPass = b => new URLSearchParams(b).get('pass') || '';
 
 let day = '', total = 0, perIp = new Map(), dlIp = new Map();
 function rollDay() { const d = new Date().toISOString().slice(0, 10); if (d !== day) { day = d; total = 0; perIp = new Map(); dlIp = new Map(); } }
@@ -84,18 +109,65 @@ function sameSite(req) {
 http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://x');
+    // ---------- entrar / salir ----------
+    if (req.method === 'POST' && url.pathname === '/entrar') {
+      const ip = ipOf(req); if (tooMany(ip)) return html(res, 429, USER_LOGIN('Demasiados intentos. Espera unos minutos.'));
+      const u = K.findByPass(formPass(await readBody(req, 2000)));
+      if (!u) { tries.get(ip).push(Date.now()); return html(res, 401, USER_LOGIN('Esa contraseña no es correcta.')); }
+      return go(res, '/', { 'Set-Cookie': K.cookieHeader(req, 'cx', K.makeCookie('u', u.name, 60, u.ver), 60) });
+    }
+    if (url.pathname === '/salir') return go(res, '/', { 'Set-Cookie': K.cookieHeader(req, 'cx', '', 0) });
+    if (req.method === 'GET' && url.pathname === '/api/yo') { const u = K.sessionUser(req); return json(res, u ? 200 : 401, { name: u ? u.name : '' }); }
+    // ---------- panel ----------
+    if (req.method === 'POST' && url.pathname === '/panel/entrar') {
+      const ip = ipOf(req); if (tooMany(ip)) return html(res, 429, ADMIN_LOGIN('Demasiados intentos. Espera unos minutos.'));
+      const p = formPass(await readBody(req, 2000));
+      if (!ADMIN || p.length !== ADMIN.length || !require('crypto').timingSafeEqual(Buffer.from(p), Buffer.from(ADMIN))) { tries.get(ip).push(Date.now()); return html(res, 401, ADMIN_LOGIN('Contraseña incorrecta.')); }
+      return go(res, '/panel', { 'Set-Cookie': K.cookieHeader(req, 'cxa', K.makeCookie('a', 'admin', 14), 14) });
+    }
+    if (url.pathname === '/panel/salir') return go(res, '/panel', { 'Set-Cookie': K.cookieHeader(req, 'cxa', '', 0) });
+    if (req.method === 'GET' && url.pathname === '/panel') return K.isAdmin(req) ? html(res, 200, panelPage) : html(res, 200, ADMIN_LOGIN());
+    if (url.pathname.startsWith('/api/admin/')) {
+      if (!K.isAdmin(req)) return json(res, 401, { error: 'Entra en el panel.' });
+      if (req.method !== 'GET' && !sameSite(req)) return json(res, 403, { error: 'origen no permitido' });
+      const p = url.pathname.slice(11);
+      if (req.method === 'GET' && p === 'resumen') return json(res, 200, { users: K.stats(), hoy: total });
+      if (req.method === 'GET' && p === 'proyectos') return json(res, 200, { proyectos: K.projects(url.searchParams.get('user') || '') });
+      if (req.method === 'POST' && p === 'clippers') { let b; try { b = JSON.parse(await readBody(req, 4000)); } catch { return json(res, 400, { error: 'petición no válida' }); } const e = K.addUser(b.name, b.pass); return json(res, e ? 400 : 200, e ? { error: e } : { ok: true }); }
+      if (req.method === 'POST' && p === 'contrasena') { let b; try { b = JSON.parse(await readBody(req, 4000)); } catch { return json(res, 400, { error: 'petición no válida' }); } const e = K.setPass(b.name, b.pass); return json(res, e ? 400 : 200, e ? { error: e } : { ok: true }); }
+      if (req.method === 'POST' && p === 'quitar') { let b; try { b = JSON.parse(await readBody(req, 4000)); } catch { return json(res, 400, { error: 'petición no válida' }); } K.removeUser(b.name); return json(res, 200, { ok: true }); }
+      let fm = p.match(/^archivo\/([\w-]{6,30})\.(mp4|jpg)$/);
+      if (req.method === 'GET' && fm) {
+        const c = K.clipOf(fm[1]); const f = fm[2] === 'mp4' ? K.videoPath(fm[1]) : path.join(K.FILES, fm[1] + '.jpg');
+        if (!c || !fs.existsSync(f)) return json(res, 404, { error: 'no está' });
+        const size = fs.statSync(f).size, type = fm[2] === 'mp4' ? 'video/mp4' : 'image/jpeg', range = req.headers.range;
+        const dl = url.searchParams.has('descargar') ? { 'Content-Disposition': `attachment; filename="${(c.user + '_' + (c.meta.titulo || 'clip')).replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]+/g, '').slice(0, 80) || 'clip'}.mp4"` } : {};
+        if (range && fm[2] === 'mp4') {   // para poder saltar dentro del vídeo
+          const m2 = range.match(/bytes=(\d*)-(\d*)/); let a = m2[1] ? +m2[1] : 0, z = m2[2] ? +m2[2] : size - 1; z = Math.min(z, size - 1);
+          if (a > z) { res.writeHead(416, { 'Content-Range': `bytes */${size}` }); return res.end(); }
+          res.writeHead(206, { 'Content-Type': type, 'Content-Range': `bytes ${a}-${z}/${size}`, 'Accept-Ranges': 'bytes', 'Content-Length': z - a + 1, ...dl });
+          return fs.createReadStream(f, { start: a, end: z }).pipe(res);
+        }
+        res.writeHead(200, { 'Content-Type': type, 'Content-Length': size, 'Accept-Ranges': 'bytes', 'Cache-Control': 'private, max-age=3600', ...dl });
+        return fs.createReadStream(f).pipe(res);
+      }
+      return json(res, 404, { error: 'no existe' });
+    }
+    if (req.method === 'GET' && url.pathname === '/healthz') return json(res, 200, { ok: true, ia: !!KEY, panel: !!ADMIN, datos: K.DATA, hoy: total });
+    // ---------- a partir de aquí, solo con sesión de clipper ----------
+    const me = K.sessionUser(req);
+    if (!me) { if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) return html(res, 200, USER_LOGIN()); if (url.pathname.startsWith('/api/')) return json(res, 401, { error: { message: 'Tu sesión ha caducado: vuelve a entrar.' } }); }
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
       const gz = /\bgzip\b/.test(req.headers['accept-encoding'] || '');
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff', ...(gz ? { 'Content-Encoding': 'gzip' } : {}) });
       return res.end(gz ? pageGz : page);
     }
-    if (req.method === 'GET' && url.pathname === '/healthz') return json(res, 200, { ok: true, ia: !!KEY, hoy: total });
     const m = url.pathname.match(/^\/api\/gemini\/([\w.-]{3,60})$/);
     if (req.method === 'POST' && m) {
       if (!KEY) return json(res, 503, { error: { message: 'La IA no está configurada en el servidor (falta GEMINI_KEY).' } });
       if (!/^gemini-/.test(m[1])) return json(res, 400, { error: { message: 'modelo no permitido' } });
       if (!sameSite(req)) return json(res, 403, { error: { message: 'origen no permitido' } });
-      const why = quota(ipOf(req)); if (why) return json(res, 429, { error: { message: why } });
+      const why = quota(me.name); if (why) return json(res, 429, { error: { message: why } });
       const chunks = []; let size = 0;
       for await (const c of req) { size += c.length; if (size > MAX_BODY) return json(res, 413, { error: { message: 'El clip es demasiado grande para la IA.' } }); chunks.push(c); }
       const body = Buffer.concat(chunks);
@@ -114,16 +186,32 @@ http.createServer(async (req, res) => {
       let b = ''; for await (const c of req) { b += c; if (b.length > 4000) return json(res, 413, { error: 'petición demasiado grande' }); }
       let q; try { q = JSON.parse(b); } catch { return json(res, 400, { error: 'petición no válida' }); }
       const link = String(q.url || '').trim(); if (badHost(link)) return json(res, 400, { error: 'Ese enlace no vale. Pega el enlace de un clip de Kick, Twitch, YouTube o TikTok.' });
-      const why = dlQuota(ipOf(req)); if (why) return json(res, 429, { error: why });
+      const why = dlQuota(me.name); if (why) return json(res, 429, { error: why });
       const id = Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
       const num = v => (v == null || v === '' || !isFinite(+v)) ? null : Math.max(0, +v);
-      const job = { id, url: link, from: num(q.from), to: num(q.to), status: 'queued', p: 0, at: Date.now(), ip: ipOf(req) };
+      const job = { id, url: link, from: num(q.from), to: num(q.to), status: 'queued', p: 0, at: Date.now(), ip: me.name };
       jobs.set(id, job); queue.push(job); next();
       return json(res, 200, { id });
     }
+    // ---------- registro de lo que hace cada clipper ----------
+    if (req.method === 'POST' && url.pathname === '/api/registro') {
+      if (!sameSite(req)) return json(res, 403, { error: 'origen no permitido' });
+      let b; try { b = JSON.parse(await readBody(req, 600000)); } catch { return json(res, 400, { error: 'petición no válida' }); }
+      const c = K.addClip(me, b); return json(res, 200, { id: c.id });
+    }
+    let um = url.pathname.match(/^\/api\/subir\/([\w-]{6,30})$/);
+    if (req.method === 'PUT' && um) {
+      if (!sameSite(req)) return json(res, 403, { error: 'origen no permitido' });
+      const c = K.clipOf(um[1]); if (!c || c.user !== me.name || c.video) return json(res, 404, { error: 'no existe' });
+      const f = K.videoPath(c.id), tmp = f + '.part', out = fs.createWriteStream(tmp); let n = 0, bad = false;
+      for await (const ch of req) { n += ch.length; if (n > 500 * 1024 * 1024) { bad = true; break; } if (!out.write(ch)) await new Promise(r => out.once('drain', r)); }
+      await new Promise(r => out.end(r));
+      if (bad || n < 1000) { fs.rm(tmp, () => {}); return json(res, 413, { error: 'vídeo no válido' }); }
+      fs.renameSync(tmp, f); K.videoDone(c, n); return json(res, 200, { ok: true });
+    }
     let jm = url.pathname.match(/^\/api\/clip\/(\w{8,40})(\/file)?$/);
     if (req.method === 'GET' && jm) {
-      const job = jobs.get(jm[1]); if (!job || job.ip !== ipOf(req)) return json(res, 404, { error: 'No encuentro esa descarga.' });
+      const job = jobs.get(jm[1]); if (!job || job.ip !== me.name) return json(res, 404, { error: 'No encuentro esa descarga.' });
       if (!jm[2]) return json(res, 200, { status: job.status, p: job.p, title: job.title || '', error: job.error || '', size: job.size || 0, queue: job.status === 'queued' ? queue.indexOf(job) + 1 : 0 });
       if (job.status !== 'done') return json(res, 409, { error: 'Aún no está lista.' });
       res.writeHead(200, { 'Content-Type': 'video/mp4', 'Content-Length': job.size, 'Cache-Control': 'no-store' });
