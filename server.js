@@ -43,6 +43,7 @@ const go = (res, to, extra) => { res.writeHead(303, { Location: to, ...(extra ||
 async function readBody(req, max) { const ch = []; let n = 0; for await (const c of req) { n += c.length; if (n > max) throw new Error('grande'); ch.push(c); } return Buffer.concat(ch).toString('utf8'); }
 const formPass = b => new URLSearchParams(b).get('pass') || '';
 
+const iaErrs = []; const iaErr = (m, txt) => { iaErrs.push({ at: Date.now(), modelo: m, error: String(txt).replace(/AIza[\w-]{20,}/g, '…').slice(0, 300) }); if (iaErrs.length > 20) iaErrs.shift(); };
 let day = '', total = 0, perIp = new Map(), dlIp = new Map();
 function rollDay() { const d = new Date().toISOString().slice(0, 10); if (d !== day) { day = d; total = 0; perIp = new Map(); dlIp = new Map(); } }
 function quota(ip) {
@@ -141,6 +142,21 @@ http.createServer(async (req, res) => {
       if (req.method !== 'GET' && !sameSite(req)) return json(res, 403, { error: 'origen no permitido' });
       const p = url.pathname.slice(11);
       if (req.method === 'GET' && p === 'resumen') return json(res, 200, { users: K.stats(), hoy: total });
+      // probar la IA desde el panel: dice si la clave funciona y, si no, por qué
+      if (req.method === 'GET' && p === 'ia') {
+        if (!KEY) return json(res, 200, { ok: false, msg: 'Falta la variable GEMINI_KEY en Railway.' });
+        const out = [];
+        for (const mod of ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash']) {
+          try {
+            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': KEY }, body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Responde solo: ok' }] }] }), signal: AbortSignal.timeout(20000) });
+            const t = await r.text(); let msg = ''; try { msg = (JSON.parse(t).error || {}).message || ''; } catch {}
+            out.push({ modelo: mod, estado: r.status, ok: r.ok, error: msg.replace(/AIza[\w-]{20,}/g, '…').slice(0, 300) });
+            if (r.ok) break;
+          } catch (e) { out.push({ modelo: mod, ok: false, error: String(e.message || e) }); }
+        }
+        const good = out.some(x => x.ok);
+        return json(res, 200, { ok: good, pruebas: out, errores_recientes: iaErrs.slice(-8).reverse(), clave: KEY.slice(0, 4) + '…' + KEY.slice(-4) + ` (${KEY.length} caracteres)` });
+      }
       if (req.method === 'GET' && p === 'proyectos') return json(res, 200, { proyectos: K.projects(url.searchParams.get('user') || '') });
       if (req.method === 'POST' && p === 'clippers') { let b; try { b = JSON.parse(await readBody(req, 4000)); } catch { return json(res, 400, { error: 'petición no válida' }); } const e = K.addUser(b.name, b.pass); return json(res, e ? 400 : 200, e ? { error: e } : { ok: true }); }
       if (req.method === 'POST' && p === 'contrasena') { let b; try { b = JSON.parse(await readBody(req, 4000)); } catch { return json(res, 400, { error: 'petición no válida' }); } const e = K.setPass(b.name, b.pass); return json(res, e ? 400 : 200, e ? { error: e } : { ok: true }); }
@@ -185,6 +201,7 @@ http.createServer(async (req, res) => {
       try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m[1]}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': KEY }, body, signal: AbortSignal.timeout(180000) }); }
       catch (e) { return json(res, 502, { error: { message: 'No se pudo hablar con la IA. Inténtalo otra vez.' } }); }
       let txt = await r.text();
+      if (!r.ok) iaErr(m[1], r.status + ' ' + txt);
       // un fallo de la clave del servidor no es cosa de quien usa la web: no se le enseña como «clave incorrecta»
       if (r.status === 401 || r.status === 403 || (r.status === 400 && /api key/i.test(txt))) { console.error('GEMINI_KEY rechazada:', txt.slice(0, 200)); return json(res, 503, { error: { message: 'La IA no está disponible ahora mismo.' } }); }
       res.writeHead(r.status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });

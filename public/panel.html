@@ -85,6 +85,7 @@ dialog .x{position:absolute;top:-44px;right:0}
     <div class="box">
       <h2>Clippers</h2>
       <div class="users" id="users"></div>
+      <div class="add" style="margin-top:0;border-top:0;padding-top:0;margin-bottom:14px"><button type="button" id="iaT">🧪 Probar la IA</button><div class="msg" id="iaM" style="white-space:pre-wrap"></div></div>
       <form class="add" id="add" autocomplete="off">
         <strong>Añadir clipper</strong>
         <input id="aName" placeholder="Nombre (para reconocerlo)" maxlength="40" required>
@@ -163,6 +164,15 @@ async function loadProjects() {
 function play(id) { const v = $('dlgV'); v.src = `/api/admin/archivo/${id}.mp4`; $('dlg').showModal(); v.play().catch(() => {}); }
 $('dlgX').onclick = () => { $('dlgV').pause(); $('dlg').close(); };
 $('dlg').addEventListener('close', () => { const v = $('dlgV'); v.pause(); v.removeAttribute('src'); v.load(); });
+$('iaT').onclick = async () => {
+  const m = $('iaM'); m.className = 'msg'; m.textContent = 'Probando…';
+  try {
+    const j = await (await fetch('/api/admin/ia')).json();
+    if (j.ok) { m.className = 'msg ok'; m.textContent = '✅ La IA funciona (' + j.pruebas.find(x => x.ok).modelo + ').'; }
+    else { m.className = 'msg e'; m.textContent = '❌ ' + (j.msg || 'La IA no responde.') + (j.pruebas ? '\n' + j.pruebas.map(x => `${x.modelo}: ${x.estado || ''} ${x.error}`).join('\n') : '') + (j.clave ? '\nClave puesta: ' + j.clave : ''); }
+    if (j.errores_recientes && j.errores_recientes.length) m.textContent += '\n\nÚltimos fallos de la web:\n' + j.errores_recientes.map(x => `${new Date(x.at).toLocaleTimeString('es-ES')} ${x.modelo}: ${x.error}`).join('\n');
+  } catch (e) { m.className = 'msg e'; m.textContent = 'No se pudo probar: ' + e.message; }
+};
 $('aGen').onclick = () => { const w = ['clip', 'viral', 'stream', 'corte', 'reel', 'kick', 'live', 'top']; $('aPass').value = w[Math.floor(Math.random() * w.length)] + '-' + Math.floor(1000 + Math.random() * 9000); };
 $('add').onsubmit = async ev => {
   ev.preventDefault(); const m = $('aMsg'); m.className = 'msg'; m.textContent = '';
