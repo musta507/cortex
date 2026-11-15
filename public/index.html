@@ -11908,6 +11908,28 @@ async function openLive() {
   if (!liveTimer) liveTimer = setInterval(livePoll, 1500);
   livePoll();
 }
+/* botón «atrás» del ratón o del navegador: retrocede dentro de Cortex en vez de salirse de la página */
+function appBack() {
+  const vis = id => { const e = $(id); return e && !e.hidden; };
+  if (vis('pvModal')) { const x = document.querySelector('#pvModal [data-close], #pvModal .pv-x, #pvClose'); if (x) x.click(); else $('pvModal').hidden = true; return true; }
+  if (vis('stEd')) { $('seX').click(); return true; }
+  if ($('home').hidden && $('livePage').hidden) {   // en el editor
+    if (vis('liveBack')) { $('liveBack').click(); return true; }
+    $('homeBtn').click(); return true;
+  }
+  if (!$('livePage').hidden) { $('lvBackHome').click(); return true; }
+  if (typeof homeSec !== 'undefined' && homeSec !== 'inicio') { setHomeSec('inicio'); return true; }
+  if (typeof curClient !== 'undefined' && curClient && typeof clients !== 'undefined' && clients.length > 1 && !document.querySelector('.pub')) { curClient = null; renderHome(); return true; }
+  return false;
+}
+try {
+  history.pushState({ cortex: 1 }, '');
+  addEventListener('popstate', () => {
+    let done = false; try { done = appBack(); } catch (e) { console.warn('atrás', e); }
+    if (done) history.pushState({ cortex: 1 }, '');
+    else history.back();   // ya en el inicio: ahora sí se sale
+  });
+} catch {}
 $('lvBackHome').onclick = () => { $('livePage').hidden = true; renderHome(); $('home').hidden = false; };
 $('liveBack').onclick = async () => { await saveNow(); vid.pause(); $('liveBack').hidden = true; $('livePage').hidden = false; livePoll(); };
 
