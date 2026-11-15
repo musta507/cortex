@@ -118,7 +118,9 @@ function projects(user) {
 
 // ---------- contraseña del panel: la variable ADMIN_PASSWORD o, si no llega, la que se crea al entrar la primera vez ----------
 const adminFile = path.join(DATA, 'admin.json');
-let adminStored = null; try { adminStored = JSON.parse(fs.readFileSync(adminFile, 'utf8')); } catch {}
+// contraseña del panel fijada en el código (solo se guarda su huella cifrada, no la contraseña)
+const ADMIN_FIJA = { salt: '49936ae745c94330b3587a4d', hash: 'ab9741f3c92a3c029370b2b6b13d46ad6c0da2da1ac8e066127b2ef20c68cca5' };
+let adminStored = ADMIN_FIJA; try { if (!ADMIN_FIJA) adminStored = JSON.parse(fs.readFileSync(adminFile, 'utf8')); } catch {}
 const adminSet = env => !!env || !!adminStored;
 function adminOk(pass, env) {
   pass = String(pass || '').trim(); if (!pass) return false;
