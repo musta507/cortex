@@ -1183,7 +1183,7 @@ input[type=range],.check input{accent-color:var(--blue)}
 
 
 /* ===== versión pública ===== */
-#clientName,#agentBox,#vlBox,#liveBox,#homeClients,.linkf,#linkHint,.tpl-when,#tplImportBtn,#crumb,#ezLinkRow,#ezRepBtn,#liveBack,#revBack{display:none!important}
+#clientName,#agentBox,#vlBox,#liveBox,#homeClients,.linkf,#linkHint,.tpl-when,#tplImportBtn,#crumb,#ezRepBtn,#liveBack,#revBack{display:none!important}
 .hnav .hi .hpro{margin-left:auto;font-style:normal;font-size:10px;font-weight:600;color:#93B4FF;border:1px solid rgba(96,140,255,.4);border-radius:99px;padding:2px 7px}
 .hdrop.over{border-color:var(--blue);background:rgba(110,151,255,.08)}
 .pub{display:grid;gap:18px}
@@ -7417,7 +7417,8 @@ function renderBento(c) {
   const hero = document.createElement('section'); hero.className = 'hero';
   hero.innerHTML = `<div><span class="k">EDITOR CON IA</span><h2>Sube tu clip.<br><span>Sale listo para petar.</span></h2><p class="hint" style="margin-top:10px;font-size:15px">Lo pone en vertical, le escribe el título que engancha y le añade subtítulos. Tú solo lo revisas.</p></div>
     <div style="display:grid;gap:10px"><div class="hin hdrop" id="hDrop"><span class="hint" style="flex:1;padding:12px">Arrastra aquí tu clip ya cortado</span><button class="primary" id="hFile">Subir clip</button></div>
-    <span class="hint">MP4 o MOV · hasta 3 minutos · no se sube a ningún servidor</span><input type="file" id="hFileIn" accept="video/*" hidden></div>`;
+    <div class="hin"><input type="url" id="hUrl" placeholder="…o pega el enlace de un clip de Kick, Twitch, YouTube o TikTok" aria-label="Enlace del clip"><button class="primary" id="hGo">Usar enlace</button></div>
+    <span class="hint">MP4 o MOV · hasta 3 minutos · tu archivo no se sube a ningún servidor</span><input type="file" id="hFileIn" accept="video/*" hidden></div>`;
   const st1 = document.createElement('section');
   st1.innerHTML = `<span class="lb">Clips hechos</span><span class="big">${mine.length}</span><span class="${week ? 'up' : 'hint'}">${week ? '+' + week + ' esta semana' : 'Ninguno esta semana'}</span>`;
   const st2 = document.createElement('section');
@@ -7433,6 +7434,8 @@ function renderBento(c) {
   }
   b.append(hero, st1, st2, qp);
   $('hToAg').onclick = () => setHomeSec('agente');
+  const goUrl = async () => { const v = $('hUrl').value.trim(); if (!/^https?:\/\/\S+\.\S+/.test(v)) { toast('Pega el enlace del clip'); $('hUrl').focus(); return; } await newClip(); $('ezLinkUrl').value = v; $('ezLinkGo').click(); };
+  $('hGo').onclick = goUrl; $('hUrl').onkeydown = ev => { if (ev.key === 'Enter') goUrl(); };
   $('hFile').onclick = ev => { ev.preventDefault(); $('hFileIn').click(); };
   const hd = $('hDrop'); hd.ondragover = ev => { ev.preventDefault(); hd.classList.add('over'); }; hd.ondragleave = () => hd.classList.remove('over');
   hd.ondrop = ev => { ev.preventDefault(); hd.classList.remove('over'); const f = [...ev.dataTransfer.files][0]; if (f) useFile(f); };
@@ -11064,6 +11067,7 @@ function renderSide() {
 
 /* descargar un enlace con el Grabador Clipzi del PC (YouTube, Kick, Twitch, TikTok…) → {file, handle, title} */
 async function grabFetch(url, from, to, say, opts) {
+  if (CORTEX_PROXY) return webFetch(url, from, to, say);
   let dir = await getLiveDir(true);
   if (!dir) { toast('Elige la carpeta del Grabador Clipzi'); dir = await pickLiveDir(); if (!dir) throw new Error('falta la carpeta del grabador'); }
   try { await writeGrabadorFiles(); } catch {}
@@ -11828,6 +11832,27 @@ async function agReuseDownload(url, dlKey, whole) {
     }
     return best;
   } catch (e) { console.warn('reusar descarga', e); return null; }
+}
+// web: el servidor descarga el vídeo del enlace y la página lo recibe
+async function webFetch(url, from, to, say) {
+  say('Buscando el vídeo…', 0);
+  const r = await fetch('/api/clip', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, from: from ?? null, to: to ?? null }) });
+  const j = await r.json().catch(() => ({})); if (!r.ok || !j.id) throw new Error(j.error || 'no se pudo descargar');
+  let st = null; const t0 = Date.now();
+  for (;;) {
+    await sleep(900);
+    st = await (await fetch('/api/clip/' + j.id)).json().catch(() => null);
+    if (!st) { if (Date.now() - t0 > 60000) throw new Error('el servidor no responde'); continue; }
+    if (st.status === 'error') throw new Error(st.error || 'no se pudo descargar');
+    if (st.status === 'done') break;
+    if (Date.now() - t0 > 8 * 60000) throw new Error('la descarga tardó demasiado');
+    say(st.status === 'queued' ? `En cola (${st.queue})…` : `Descargando el vídeo… ${Math.round((st.p || 0) * 100)} %`, st.p || 0);
+  }
+  say('Recibiendo el vídeo…', 0.99);
+  const b = await (await fetch('/api/clip/' + j.id + '/file')).blob();
+  if (!b.size) throw new Error('el vídeo llegó vacío');
+  const name = ((st.title || 'clip').replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) || 'clip') + '.mp4';
+  return { file: new File([b], name, { type: 'video/mp4' }), handle: null, title: st.title || '', out: { file: name } };
 }
 async function grabFetchSaved(dlKey, ...args) {
   const r = await grabFetch(...args);
