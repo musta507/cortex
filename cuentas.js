@@ -116,4 +116,16 @@ function projects(user) {
   return [...map.values()].sort((a, b) => b.ultimo - a.ultimo);
 }
 
-module.exports = { DATA, FILES, findByPass, addUser, setPass, removeUser, userOf, makeCookie, readCookie, sessionUser, isAdmin, cookieHeader, addClip, clipOf, videoPath, videoDone, stats, projects };
+// ---------- contraseña del panel: la variable ADMIN_PASSWORD o, si no llega, la que se crea al entrar la primera vez ----------
+const adminFile = path.join(DATA, 'admin.json');
+let adminStored = null; try { adminStored = JSON.parse(fs.readFileSync(adminFile, 'utf8')); } catch {}
+const adminSet = env => !!env || !!adminStored;
+function adminOk(pass, env) {
+  pass = String(pass || '').trim(); if (!pass) return false;
+  if (env && pass.length === env.length && crypto.timingSafeEqual(Buffer.from(pass), Buffer.from(env))) return true;
+  if (adminStored) return crypto.timingSafeEqual(Buffer.from(hash(pass, adminStored.salt), 'hex'), Buffer.from(adminStored.hash, 'hex'));
+  return false;
+}
+function adminCreate(pass) { const salt = crypto.randomBytes(12).toString('hex'); adminStored = { salt, hash: hash(pass, salt), at: Date.now() }; fs.writeFileSync(adminFile, JSON.stringify(adminStored)); }
+
+module.exports = { adminSet, adminOk, adminCreate, DATA, FILES, findByPass, addUser, setPass, removeUser, userOf, makeCookie, readCookie, sessionUser, isAdmin, cookieHeader, addClip, clipOf, videoPath, videoDone, stats, projects };

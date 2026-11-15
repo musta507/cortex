@@ -33,7 +33,9 @@ button{width:100%;margin-top:14px;padding:12px;border:0;border-radius:10px;backg
 <label for="p">Contraseña</label><input id="p" name="pass" type="password" autocomplete="current-password" autofocus required><button>Entrar</button>${o.note ? `<div class="n">${esc(o.note)}</div>` : ''}</form></body></html>`;
 }
 const USER_LOGIN = msg => loginPage({ title: 'Entrar · Cortex', action: '/entrar', h: 'Versión de prueba', sub: 'Escribe la contraseña que te hemos dado para entrar.', msg, note: 'Los clips que exportes se guardan en tu cuenta para que podamos revisarlos y mejorar Cortex.' });
-const ADMIN_LOGIN = msg => loginPage({ title: 'Panel · Cortex', action: '/panel/entrar', h: 'Panel', sub: ADMIN ? 'Contraseña de administrador.' : 'El panel está apagado: falta la variable ADMIN_PASSWORD en Railway.', msg });
+const ADMIN_LOGIN = msg => K.adminSet(ADMIN) ? loginPage({ title: 'Panel · Cortex', action: '/panel/entrar', h: 'Panel', sub: 'Contraseña de administrador.', msg })
+  : loginPage({ title: 'Panel · Cortex', action: '/panel/crear', h: 'Crea la contraseña del panel', sub: 'Es la primera vez que entras: elige tu contraseña de administrador (mínimo 6 caracteres). Solo tú podrás entrar al panel con ella.', msg,
+      note: K.DATA.startsWith('/app') ? '⚠ Aún no hay volumen en Railway: si la web se actualiza, esta contraseña y los clippers se borrarán. Añade un volumen en /data.' : '' });
 const tries = new Map();
 function tooMany(ip) { const now = Date.now(), t = (tries.get(ip) || []).filter(x => now - x < 15 * 60000); tries.set(ip, t); return t.length >= 20; }
 const html = (res, code, body, extra) => { res.writeHead(code, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', ...(extra || {}) }); res.end(body); };
@@ -122,7 +124,14 @@ http.createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/panel/entrar') {
       const ip = ipOf(req); if (tooMany(ip)) return html(res, 429, ADMIN_LOGIN('Demasiados intentos. Espera unos minutos.'));
       const p = formPass(await readBody(req, 2000));
-      if (!ADMIN || p.length !== ADMIN.length || !require('crypto').timingSafeEqual(Buffer.from(p), Buffer.from(ADMIN))) { tries.get(ip).push(Date.now()); return html(res, 401, ADMIN_LOGIN('Contraseña incorrecta.')); }
+      if (!K.adminOk(p, ADMIN)) { tries.get(ip).push(Date.now()); return html(res, 401, ADMIN_LOGIN('Contraseña incorrecta.')); }
+      return go(res, '/panel', { 'Set-Cookie': K.cookieHeader(req, 'cxa', K.makeCookie('a', 'admin', 14), 14) });
+    }
+    if (req.method === 'POST' && url.pathname === '/panel/crear') {
+      if (K.adminSet(ADMIN)) return go(res, '/panel');
+      const p = formPass(await readBody(req, 2000)).trim();
+      if (p.length < 6) return html(res, 400, ADMIN_LOGIN('Pon al menos 6 caracteres.'));
+      K.adminCreate(p);
       return go(res, '/panel', { 'Set-Cookie': K.cookieHeader(req, 'cxa', K.makeCookie('a', 'admin', 14), 14) });
     }
     if (url.pathname === '/panel/salir') return go(res, '/panel', { 'Set-Cookie': K.cookieHeader(req, 'cxa', '', 0) });
@@ -153,7 +162,7 @@ http.createServer(async (req, res) => {
       }
       return json(res, 404, { error: 'no existe' });
     }
-    if (req.method === 'GET' && url.pathname === '/healthz') return json(res, 200, { ok: true, ia: !!KEY, panel: !!ADMIN, datos: K.DATA, hoy: total });
+    if (req.method === 'GET' && url.pathname === '/healthz') return json(res, 200, { ok: true, ia: !!KEY, panel: K.adminSet(ADMIN), panel_variable: !!ADMIN, datos: K.DATA, hoy: total });
     // ---------- a partir de aquí, solo con sesión de clipper ----------
     const me = K.sessionUser(req);
     if (!me) { if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) return html(res, 200, USER_LOGIN()); if (url.pathname.startsWith('/api/')) return json(res, 401, { error: { message: 'Tu sesión ha caducado: vuelve a entrar.' } }); }
