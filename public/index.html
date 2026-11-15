@@ -9308,16 +9308,18 @@ $('ezBar').addEventListener('pointermove', e => {
   if (ezDrag === 'a') { ezA = Math.max(0, Math.min(t, ezB - MIN)); at = ezA; }
   else if (ezDrag === 'b') { ezB = Math.min(ezDur(), Math.max(t, ezA + MIN)); at = Math.max(ezA, ezB - 0.05); }
   else at = Math.max(ezA, Math.min(ezB - 0.05, t));
-  ezVid.pause(); ezScrubT = at; ezScrubShow(at); ezSeekTo(at);
+  ezVid.pause(); ezScrubT = at; ezScrubShow(at); ezSeekTo(ezDrag === 'b' ? Math.max(ezA, ezB - 1) : at);
   ezTrimUI();
 });
 let ezScrubT = 0;
 let ezLastH = null;
-// al soltar: el asa de inicio reproduce desde el principio; la del final, solo los 2 últimos segundos
+// al soltar: el asa de inicio reproduce desde el principio; la del final, solo el último segundo
 function ezPreview(h) {
-  ezSeekWant = null; ezSeekBusy = false; $('ezScrub').hidden = true;
-  try { ezVid.currentTime = h === 'b' ? Math.max(ezA, ezB - 2) : ezA; } catch {}
-  ezVid.play().catch(() => {});
+  const to = h === 'b' ? Math.max(ezA, ezB - 1) : ezA;
+  ezSeekWant = null; ezSeekBusy = false;
+  // si el vídeo ya está ahí (se fue colocando mientras arrastrabas), arranca al instante, sin volver a buscar
+  if (Math.abs((ezVid.currentTime || 0) - to) > 0.04) { try { ezVid.currentTime = to; } catch {} }
+  $('ezScrub').hidden = true; ezVid.play().catch(() => {});
 }
 const ezEndDrag = () => { const was = ezDrag; ezDrag = null; document.querySelectorAll('.ez-sel i.on').forEach(x => x.classList.remove('on')); if (was === 'a' || was === 'b') ezPreview(was); else ezSeekTo(ezScrubT); ezTrimUI(); };
 // afinar con el teclado: ← → mueven el último extremo tocado 0,1 s (con Mayús, 1 s)
@@ -9326,8 +9328,7 @@ document.addEventListener('keydown', e => {
   e.preventDefault(); e.stopImmediatePropagation();
   const d = (e.key === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 1 : 0.1);
   if (ezLastH === 'a') ezA = Math.max(0, Math.min(ezA + d, ezB - 1)); else ezB = Math.min(ezDur(), Math.max(ezB + d, ezA + 1));
-  ezTrimUI(); clearTimeout(ezPreview.t); ezVid.pause(); const at = ezLastH === 'a' ? ezA : Math.max(ezA, ezB - 0.05); ezScrubShow(at); ezSeekTo(at);
-  ezPreview.t = setTimeout(() => ezPreview(ezLastH), 500);
+  ezTrimUI(); clearTimeout(ezPreview.t); ezVid.pause();   ezScrubShow(ezLastH === 'a' ? ezA : ezB); ezSeekTo(ezLastH === 'b' ? Math.max(ezA, ezB - 1) : ezA); ezPreview.t = setTimeout(() => ezPreview(ezLastH), 350);
 }, true);
 $('ezBar').addEventListener('pointerup', ezEndDrag);
 $('ezBar').addEventListener('pointercancel', ezEndDrag);
