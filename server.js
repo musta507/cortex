@@ -194,12 +194,12 @@ http.createServer(async (req, res) => {
       if (!sameSite(req)) return json(res, 403, { error: { message: 'origen no permitido' } });
       const why = quota(me.name); if (why) return json(res, 429, { error: { message: why } });
       const chunks = []; let size = 0;
-      for await (const c of req) { size += c.length; if (size > MAX_BODY) return json(res, 413, { error: { message: 'El clip es demasiado grande para la IA.' } }); chunks.push(c); }
+      for await (const c of req) { size += c.length; if (size > MAX_BODY) { iaErr(m[1], 'petición demasiado grande (' + Math.round(size / 1048576) + ' MB)'); return json(res, 413, { error: { message: 'El clip es demasiado grande para la IA.' } }); } chunks.push(c); }
       const body = Buffer.concat(chunks);
       try { const j = JSON.parse(body.toString('utf8')); if (!j || !Array.isArray(j.contents)) throw 0; } catch { return json(res, 400, { error: { message: 'petición no válida' } }); }
       let r;
       try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m[1]}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': KEY }, body, signal: AbortSignal.timeout(180000) }); }
-      catch (e) { return json(res, 502, { error: { message: 'No se pudo hablar con la IA. Inténtalo otra vez.' } }); }
+      catch (e) { iaErr(m[1], 'sin respuesta: ' + (e.message || e)); return json(res, 502, { error: { message: 'No se pudo hablar con la IA. Inténtalo otra vez.' } }); }
       let txt = await r.text();
       if (!r.ok) iaErr(m[1], r.status + ' ' + txt);
       // un fallo de la clave del servidor no es cosa de quien usa la web: no se le enseña como «clave incorrecta»
