@@ -906,7 +906,7 @@ body.easy #resetPos,body.easy header .tag,body.easy #quality,body.easy #fps,body
 .ez-opt .check{font-size:13px;color:var(--muted)}
 .ez-opt input[type=text]:disabled{opacity:.5}
 .ez-fmts{display:flex;flex-wrap:wrap;gap:6px}
-.ez-tin{display:flex;gap:6px}.ez-tin input{flex:1;min-width:0}.ez-tin .emobtn{padding:6px 10px;font-size:16px;justify-self:auto}
+.ez-tin{display:flex;gap:6px;align-items:flex-start}.ez-tin input,.ez-tin textarea{flex:1;min-width:0}.ez-tin textarea{min-height:84px;resize:vertical;font:600 15px/1.4 inherit;padding:10px 12px}.ez-tin .emobtn{padding:6px 10px;font-size:16px;justify-self:auto}
 .ez-tv>*{grid-area:1/1}
 .ez-tv canvas.ez-scrub{width:100%;max-height:44vh;object-fit:contain;display:block;pointer-events:none}
 .ez-fmts.off{opacity:.45}
@@ -992,6 +992,18 @@ body.st-open .app.easy .ez-flags{visibility:hidden}
 .sd-var .fl-tools{display:flex;gap:6px}
 .sd-var .fl-tools>*{flex:1 1 0;min-width:0}
 .ez-link{display:grid;gap:6px;width:min(460px,100%);justify-items:center}.ez-link .r{display:flex;gap:8px;width:100%}.ez-link input{flex:1;min-width:0}.ez-link #ezLinkInfo:empty{display:none}
+.ez-fmts{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
+.ez-fmt{display:flex!important;flex-direction:column;align-items:stretch;gap:4px;padding:6px!important;text-align:center}
+.ez-fmt .pm{margin:0;border-radius:5px}.ez-fmt b{font-size:11px;line-height:1.2}
+.ez-pk{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px}
+.ez-pk button{flex:0 0 96px;display:flex;flex-direction:column;gap:5px;padding:6px;border-radius:10px;text-align:center;font-size:11px;font-weight:700;line-height:1.2}
+.ez-pk button.on{border-color:#fff;box-shadow:0 0 0 1px #fff}
+.ez-pk .pm{margin:0}
+.ez-pk .pv{display:grid;place-items:center;height:74px;border-radius:6px;background:linear-gradient(135deg,#39424f,#6b5a4a);overflow:hidden;padding:4px}
+.ez-pk .pv span{max-width:100%;line-height:1.15;overflow:hidden;text-overflow:ellipsis}
+.ez-pk .pv.none{background:#18181B;color:var(--mut);font-size:22px}
+.ez-tpl-g{grid-template-columns:1fr!important}
+.ez-tpl-g>div>span{display:block;font-size:12px;font-weight:700;color:var(--mut);margin-bottom:6px}
 .ez-tpls{border:1px solid var(--line);border-radius:12px;padding:10px 14px}.ez-tpls[hidden]{display:none}
 .ez-tpls summary{cursor:pointer;font-weight:700;font-size:14px}.ez-tpls summary .hint{font-weight:400;margin-left:6px}
 .ez-tpl-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
@@ -1396,7 +1408,7 @@ input[type=range],.check input{accent-color:var(--blue)}
           <div class="ez-opts" id="ezOpts">
             <div class="ez-opt">
               <div class="ez-opt-h"><span class="lbl">Título</span><label class="check"><input type="checkbox" id="ezTitleAuto" checked>Automático (lo escribe la IA)</label></div>
-              <div class="ez-tin"><input type="text" id="ezTitleIn" placeholder="Escribe el título del clip" aria-label="Título del clip"><button type="button" class="emobtn" id="emojiEzTitle" title="Añadir emojis">😀</button></div>
+              <div class="ez-tin"><textarea id="ezTitleIn" rows="3" placeholder="Escribe el título del clip" aria-label="Título del clip"></textarea><button type="button" class="emobtn" id="emojiEzTitle" title="Añadir emojis">😀</button></div>
             </div>
             <div class="ez-opt">
               <div class="ez-opt-h"><span class="lbl">Formato</span><label class="check"><input type="checkbox" id="ezFmtAuto" checked>Automático (lo elige la IA)</label></div>
@@ -1405,9 +1417,9 @@ input[type=range],.check input{accent-color:var(--blue)}
           </div>
           <details class="ez-tpls" id="ezTpls"><summary>🎨 Plantillas para este clip <span class="hint">solo cambian este clip</span></summary>
             <div class="ez-tpl-g">
-              <label>Plantilla de formato<select id="ezTplF"></select></label>
-              <label>Plantilla de título<select id="ezTplT"></select></label>
-              <label>Subtítulos<select id="ezTplS"></select></label>
+              <div><span>Plantilla de formato</span><div class="ez-pk" id="ezTplF"></div></div>
+              <div><span>Plantilla de título</span><div class="ez-pk" id="ezTplT"></div></div>
+              <div><span>Subtítulos</span><div class="ez-pk" id="ezTplS"></div></div>
             </div>
           </details>
           <div class="ez-row ez-end"><button id="ezBack">Cambiar de clip</button><span class="ez-gap"></span><button id="ezManual">Editar yo, sin IA</button><button class="primary ez-cta" id="ezGo">✨ Editar con IA</button></div>
@@ -4927,10 +4939,10 @@ async function doTranscribe(onMsg) {
   btn.disabled = true; barW.hidden = false; bar.style.width = '0%';
   try {
     const ranges = subRanges();
-    const q = $('model').value;
-    const models = q === 'small'
-      ? [{ id: 'onnx-community/whisper-small_timestamped', word: true }, { id: 'Xenova/whisper-small', word: false }]
-      : [{ id: 'onnx-community/whisper-base_timestamped', word: true }, { id: 'Xenova/whisper-base', word: false }];
+    // el mejor modelo que aguante el ordenador: el grande (Whisper large-v3 turbo) con tarjeta gráfica; si no, el mediano
+    const gpu = await hasWebGPU();
+    const models = [...(gpu ? [{ id: 'onnx-community/whisper-large-v3-turbo_timestamped', word: true, gpu: true, enc: 'fp16' }] : []),
+      { id: 'onnx-community/whisper-small_timestamped', word: true }, { id: 'Xenova/whisper-small', word: false }, { id: 'onnx-community/whisper-base_timestamped', word: true }];
     const files = {};
     const onProgress = (p) => {
       if (p.status !== 'progress') return;
@@ -4946,7 +4958,7 @@ async function doTranscribe(onMsg) {
       const audio = await voiceAudio16k(a0, a1);
       const onStatus = (msg) => { say(msg + tag); if (msg.startsWith('Transcribiendo')) bar.style.width = '100%'; };
       let res;
-      try { res = await runAI(audio, models, $('lang').value, onProgress, onStatus); }
+      try { res = await runAI(trLoud(audio), models, $('lang').value, onProgress, onStatus, { no_repeat_ngram_size: 4, repetition_penalty: 1.1 }); }
       catch (e) { if (!getGemKey()) throw e; console.warn('IA de voz del navegador no disponible: solo Gemini', e); res = { chunks: [], mode: 'word' }; }   // sin la IA del navegador, Gemini lo hace solo
       clipMeta.wordMode = res.mode;
       let ws = cleanRepeats(chunksToWords(res.chunks, res.mode).map(w => ({ ...w, start: w.start + a0, end: w.end + a0 })).filter(w => w.end > w.start && w.start < a1 + 0.5));
@@ -5569,8 +5581,8 @@ async function exportRealtime(onProg, onStatus) {
 }
 
 const exportName = out => 'clipzi_' + ($('title').value.trim().slice(0, 30).replace(/[^\p{L}\p{N}]+/gu, '_') || 'clip') + '.' + out.ext;
-$('export').onclick = () => doExport();
-async function doExport() {
+$('export').onclick = () => doExport({ auto: true });
+async function doExport(opts = {}) {
   if (!loaded || exporting) return null;
   if (layoutMode === 'split' && !img) { setStatus($('eStatus'), 'Falta la imagen de abajo: pégala (Ctrl+V), arrástrala o haz clic en el recuadro.', 'err'); toast('Falta la imagen'); return null; }
   const st = $('eStatus'), barW = $('eBarW'), bar = $('eBar');
@@ -5604,6 +5616,7 @@ async function doExport() {
     a.className = 'dl'; a.href = URL.createObjectURL(out.blob); a.download = name;
     a.textContent = `Descargar ${name} (${(out.blob.size / 1048576).toFixed(1)} MB)`;
     $('result').append(a);
+    if (opts.auto) { a.click(); a.textContent = `✅ Descargado: ${name} (${(out.blob.size / 1048576).toFixed(1)} MB) · volver a descargar`; }
     window.__lastExport = out;
     webExported(out);
     try { clipLogAdd({ tipo: 'exportado', ...clipLogSnap(), exportacion: { modo: out.mode || 'en tiempo real', fps: out.fps, tardo_s: +((performance.now() - t0) / 1000).toFixed(1) } }); } catch (e) { console.warn('registro', e); }
@@ -9398,7 +9411,7 @@ function ezOptsUI() {
     ta.checked = ezPref('titleAuto') !== '0'; fa.checked = ezPref('fmtAuto') !== '0'; ezFmtSel = ezPref('fmt') || null;
     ta.onchange = () => { ezPref('titleAuto', ta.checked ? '1' : '0'); ezOptsUI(); if (!ta.checked) $('ezTitleIn').focus(); };
     fa.onchange = () => { ezPref('fmtAuto', fa.checked ? '1' : '0'); ezOptsUI(); };
-    $('ezTitleIn').addEventListener('keydown', e => e.stopPropagation());
+    $('ezTitleIn').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && !e.shiftKey) e.preventDefault(); });
     $('emojiEzTitle').onclick = e => openEmoji(e.currentTarget, $('ezTitleIn'));
   }
   $('ezTitleIn').disabled = ta.checked; $('emojiEzTitle').disabled = ta.checked;
@@ -9408,11 +9421,14 @@ function ezOptsUI() {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'ez-fmt' + (!fa.checked && ezFmtSel === id ? ' on' : '');
     b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(!fa.checked && ezFmtSel === id)); b.disabled = fa.checked;
     b.innerHTML = '<span></span><b></b>'; b.firstChild.textContent = ic; b.lastChild.textContent = name;
-    b.onclick = () => { ezFmtSel = id; ezPref('fmt', id); ezOptsUI(); };
+    try { b.prepend(mockFrom(fmtStyle(id), false)); } catch {}
+    b.onclick = () => { ezFmtSel = id; ezPref('fmt', id); ezClip.f = ''; ezOptsUI(); ezTplUI(); };
     box.append(b);
   }
 }
 /* ---------- 3) la IA lo edita sola ---------- */
+// cómo queda cada formato con la plantilla de este streamer (para las vistas previas)
+function fmtStyle(id) { const f = AG_FORMATS[id], p = f && PRESETS.find(x => x.name === f.preset); const st = p ? effectivePreset(p) : JSON.parse(JSON.stringify(BASE_STYLE)); if (id === 'duo') st.layoutMode = 'react'; return st; }
 const EZ_FMTS = [['podcast', '🎙️', 'Podcast'], ['reaccion', '📺', 'Reacción'], ['dividida', '🖼️', 'Pantalla dividida'], ['horizontal', '▭', 'Horizontal'], ['horizontal_cam', '🎥', 'Horizontal · solo cámara'], ['duo', '👥', 'Dos personas']];
 let ezSteps = [];
 function busy(title, steps) {
@@ -10150,18 +10166,43 @@ const SUB_BUILTIN = {
 };
 // plantillas elegidas solo para el clip que se va a editar (no cambian las de por defecto)
 let ezClip = { f: '', t: '', s: '' };
+function ttPv(tp, txt) {   // muestra de un diseño de título
+  const pv = document.createElement('span'); pv.className = 'pv'; const t = document.createElement('span');
+  const k = tp.c || {}, [fam, wt] = (k.titleFont || 'Inter|800').split('|');
+  t.textContent = k.titleUpper ? (txt || 'TÍTULO').toUpperCase() : (txt || 'Título');
+  t.style.fontFamily = `"${fam}", system-ui, sans-serif`; t.style.fontWeight = wt || 800; t.style.fontSize = Math.max(11, Math.min(17, (+k.titleSize || 54) / 3.6)) + 'px';
+  if (tp.titleStyle === 'box') { t.style.background = k.boxColor || '#fff'; t.style.color = k.boxText || '#111'; t.style.padding = '3px 8px'; t.style.borderRadius = Math.min(8, (+k.boxR || 20) / 3) + 'px'; }
+  else { t.style.color = k.titleColor || '#fff'; t.style.textShadow = '0 1px 4px rgba(0,0,0,.7)'; }
+  pv.append(t); return pv;
+}
+function subPv(k) {   // muestra de un estilo de subtítulos (con la palabra que suena resaltada)
+  const pv = document.createElement('span'); pv.className = 'pv'; const t = document.createElement('span'), [fam, wt] = (k.subFont || 'Montserrat|900').split('|');
+  t.style.fontFamily = `"${fam}", system-ui, sans-serif`; t.style.fontWeight = wt || 900; t.style.fontSize = Math.max(11, Math.min(16, (+k.subSize || 72) / 5)) + 'px'; t.style.color = k.subColor || '#fff';
+  t.style.textShadow = +k.shOp ? '0 1px 5px rgba(0,0,0,.9)' : 'none'; if (k.strokeOn) t.style.webkitTextStroke = '1px ' + (k.strokeC || '#000');
+  const w = ['no', 'me', 'lo', 'creo'].map(x => k.upper ? x.toUpperCase() : x);
+  t.innerHTML = w.map((x, i) => i === 2 && k.hl ? `<b style="color:${k.hlColor || '#ffe600'}">${x}</b>` : x).join(' ');
+  pv.append(t); return pv;
+}
+function ezPick(box, opts, cur, onPick) {
+  box.innerHTML = '';
+  for (const o of opts) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = o.v === cur ? 'on' : '';
+    b.append(o.el); const n = document.createElement('span'); n.textContent = o.label; b.append(n);
+    b.onclick = () => { onPick(o.v); for (const x of box.children) x.classList.toggle('on', x === b); };
+    box.append(b);
+  }
+}
 function ezTplUI() {
   const F = $('ezTplF'), T = $('ezTplT'), S = $('ezTplS'); if (!F) return;
-  F.innerHTML = ''; F.append(new Option('La que diga «Formato» (arriba)', ''));
-  for (const [id, ic, n] of EZ_FMTS) F.append(new Option(`${ic} ${n}`, 'f:' + id));
-  for (const n of Object.keys(templates || {})) F.append(new Option('⭐ ' + n, 't:' + n));
-  T.innerHTML = ''; T.append(new Option('La fija del streamer', ''));
-  for (const n of [...Object.keys(titleTpls), ...Object.keys(TT_BUILTIN).filter(n => !titleTpls[n])]) T.append(new Option(n, n));
-  S.innerHTML = ''; S.append(new Option('Con subtítulos · los del formato', '')); for (const n of Object.keys(SUB_BUILTIN)) S.append(new Option('Con subtítulos · ' + n, n)); S.append(new Option('Sin subtítulos', 'no'));
-  const fa = $('ezFmtAuto');
-  F.value = ezClip.f || (!fa.checked && ezFmtSel ? 'f:' + ezFmtSel : ''); T.value = ezClip.t; S.value = ezClip.s;
-  F.onchange = () => { ezClip.f = F.value; if (F.value.startsWith('f:')) { fa.checked = false; ezFmtSel = F.value.slice(2); } ezOptsUI(); };
-  T.onchange = () => { ezClip.t = T.value; }; S.onchange = () => { ezClip.s = S.value; };
+  const none = txt => { const e = document.createElement('span'); e.className = 'pv none'; e.textContent = txt; return e; };
+  const fa = $('ezFmtAuto'), curF = ezClip.f || (!fa.checked && ezFmtSel ? 'f:' + ezFmtSel : '');
+  ezPick(F, [{ v: '', label: fa.checked ? 'La que elija la IA' : 'La de arriba', el: none('✨') },
+    ...EZ_FMTS.map(([id, ic, n]) => ({ v: 'f:' + id, label: n, el: mockFrom(fmtStyle(id), false) })),
+    ...Object.keys(templates || {}).map(n => ({ v: 't:' + n, label: '⭐ ' + n, el: mockFrom(templates[n], false) }))],
+    curF, v => { ezClip.f = v; if (v.startsWith('f:')) { fa.checked = false; ezFmtSel = v.slice(2); } else if (!v) fa.checked = ezPref('fmtAuto') !== '0'; ezOptsUI(); });
+  const tnames = [...Object.keys(titleTpls), ...Object.keys(TT_BUILTIN).filter(n => !titleTpls[n])];
+  ezPick(T, [{ v: '', label: 'La fija del streamer', el: titleDef && ttGet(titleDef) ? ttPv(ttGet(titleDef)) : none('★') }, ...tnames.map(n => ({ v: n, label: n, el: ttPv(ttGet(n)) }))], ezClip.t, v => { ezClip.t = v; });
+  ezPick(S, [{ v: '', label: 'Los del formato', el: none('Aa') }, ...Object.keys(SUB_BUILTIN).map(n => ({ v: n, label: n, el: subPv(SUB_BUILTIN[n]) })), { v: 'no', label: 'Sin subtítulos', el: none('🚫') }], ezClip.s, v => { ezClip.s = v; });
 }
 // se aplican al terminar de editar el clip (después de lo que haga la IA)
 async function ezClipApply() {
