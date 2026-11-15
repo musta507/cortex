@@ -881,15 +881,22 @@ body.easy #resetPos,body.easy header .tag,body.easy #quality,body.easy #fps,body
 .ez-h strong{font-size:18px}
 .ez-tv{background:#000;border-radius:12px;overflow:hidden;display:grid;place-items:center;max-height:44vh}
 .ez-tv video{width:100%;max-height:44vh;display:block;object-fit:contain}
-.ez-bar{position:relative;height:58px;border-radius:10px;background:var(--bg);border:1px solid var(--line);overflow:hidden;touch-action:none;cursor:pointer;user-select:none}
+.ez-bar{position:relative;height:62px;margin-top:22px;padding:0 14px;touch-action:none;cursor:pointer;user-select:none}
+.ez-in{position:absolute;top:0;bottom:0;left:14px;right:14px;border-radius:4px;overflow:hidden;background:var(--bg)}
+.ez-lay{position:absolute;top:0;bottom:0;left:14px;right:14px;pointer-events:none}
 .ez-thumbs{position:absolute;inset:0;display:flex}
 .ez-thumbs canvas{flex:1;min-width:0;height:100%;object-fit:cover;opacity:.9}
 .ez-dim{position:absolute;top:0;bottom:0;background:rgba(0,0,0,.66);pointer-events:none}
 .ez-dim.l{left:0}.ez-dim.r{right:0}
-.ez-sel{position:absolute;top:0;bottom:0;border:3px solid var(--accent);border-radius:8px;box-sizing:border-box;pointer-events:none}
-.ez-sel i{position:absolute;top:-3px;bottom:-3px;width:16px;background:var(--accent);pointer-events:auto;cursor:ew-resize;display:grid;place-items:center}
-.ez-sel i::after{content:"";width:2px;height:18px;border-radius:2px;background:var(--accent-ink)}
-.ez-h-l{left:-3px;border-radius:7px 0 0 7px}.ez-h-r{right:-3px;border-radius:0 7px 7px 0}
+.ez-sel{position:absolute;top:-2px;bottom:-2px;border-top:2px solid #fff;border-bottom:2px solid #fff;box-sizing:border-box;pointer-events:none}
+.ez-sel i{position:absolute;top:-2px;bottom:-2px;width:14px;background:#fff;pointer-events:auto;cursor:ew-resize;display:grid;place-items:center;font-style:normal}
+.ez-sel i::before{content:'';position:absolute;top:-6px;bottom:-6px;left:-8px;right:-8px}
+.ez-sel em{position:absolute;bottom:calc(100% + 6px);padding:2px 7px;border-radius:6px;background:#fff;color:#111;font:700 11px/1.4 ui-monospace,monospace;font-style:normal;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s}
+.ez-sel i.on em,.ez-bar:hover .ez-sel em{opacity:1}
+.ez-h-l em{right:0}.ez-h-r em{left:0}
+.ez-sel i.on{background:#FDE047}
+.ez-sel i::after{content:"";width:2px;height:20px;border-radius:2px;background:#111}
+.ez-h-l{left:-14px;border-radius:7px 0 0 7px}.ez-h-r{right:-14px;border-radius:0 7px 7px 0}
 .ez-ph{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 6px #000;pointer-events:none}
 .ez-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ez-opts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:14px;text-align:left}
@@ -985,6 +992,11 @@ body.st-open .app.easy .ez-flags{visibility:hidden}
 .sd-var .fl-tools{display:flex;gap:6px}
 .sd-var .fl-tools>*{flex:1 1 0;min-width:0}
 .ez-link{display:grid;gap:6px;width:min(460px,100%);justify-items:center}.ez-link .r{display:flex;gap:8px;width:100%}.ez-link input{flex:1;min-width:0}.ez-link #ezLinkInfo:empty{display:none}
+.ez-tpls{border:1px solid var(--line);border-radius:12px;padding:10px 14px}.ez-tpls[hidden]{display:none}
+.ez-tpls summary{cursor:pointer;font-weight:700;font-size:14px}.ez-tpls summary .hint{font-weight:400;margin-left:6px}
+.ez-tpl-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
+.ez-tpl-g label{display:grid;gap:5px;font-size:12px;font-weight:700;color:var(--mut)}.ez-tpl-g select{width:100%}
+@media (max-width:700px){.ez-tpl-g{grid-template-columns:1fr}}
 .ez-link #ezLinkInfo{width:100%}
 .dlb{width:100%;display:grid;gap:6px;font-size:13px;color:#D4D4D8;text-align:left}
 .dlb .t{display:flex;justify-content:space-between;gap:8px;font-weight:600}.dlb .t em{font-style:normal;color:#A1A1AA;font-variant-numeric:tabular-nums}
@@ -1376,10 +1388,8 @@ input[type=range],.check input{accent-color:var(--blue)}
           <div class="ez-h"><strong id="ezTrimT">Recorta la duración</strong><span class="hint">Arrastra los extremos de la barra para elegir dónde empieza y dónde acaba. Espacio reproduce.</span></div>
           <div class="ez-tv"><video id="ezVid" playsinline preload="auto"></video><canvas class="ez-scrub" id="ezScrub" hidden></canvas></div>
           <div class="ez-bar" id="ezBar">
-            <div class="ez-thumbs" id="ezThumbs"></div>
-            <div class="ez-dim l" id="ezDimL"></div><div class="ez-dim r" id="ezDimR"></div>
-            <div class="ez-sel" id="ezSel"><i class="ez-h-l" data-h="a"></i><i class="ez-h-r" data-h="b"></i></div>
-            <div class="ez-ph" id="ezPh"></div>
+            <div class="ez-in" id="ezBarIn"><div class="ez-thumbs" id="ezThumbs"></div><div class="ez-dim l" id="ezDimL"></div><div class="ez-dim r" id="ezDimR"></div></div>
+            <div class="ez-lay"><div class="ez-sel" id="ezSel"><i class="ez-h-l" data-h="a"><em id="ezTipA"></em></i><i class="ez-h-r" data-h="b"><em id="ezTipB"></em></i></div><div class="ez-ph" id="ezPh"></div></div>
           </div>
           <div class="ez-row"><button id="ezPlay" class="ez-round" aria-label="Reproducir">▶</button><span class="ez-times" id="ezTimes"></span><button id="ezAll">Usar el clip entero</button></div>
           <label class="f ez-key" id="ezKeyWrap" hidden>Clave de Gemini (para que la IA elija el formato y escriba el título)<input type="password" id="ezKey" placeholder="Pégala aquí: se guarda solo en este ordenador" autocomplete="off"></label>
@@ -1393,6 +1403,13 @@ input[type=range],.check input{accent-color:var(--blue)}
               <div class="ez-fmts" id="ezFmtPick" role="radiogroup" aria-label="Formato"></div><label class="check"><input type="checkbox" class="scn-chk">Cambiar de formato en cada escena (cuando el clip cambia de plano)</label>
             </div>
           </div>
+          <details class="ez-tpls" id="ezTpls"><summary>🎨 Plantillas para este clip <span class="hint">solo cambian este clip</span></summary>
+            <div class="ez-tpl-g">
+              <label>Plantilla de formato<select id="ezTplF"></select></label>
+              <label>Plantilla de título<select id="ezTplT"></select></label>
+              <label>Subtítulos<select id="ezTplS"></select></label>
+            </div>
+          </details>
           <div class="ez-row ez-end"><button id="ezBack">Cambiar de clip</button><span class="ez-gap"></span><button id="ezManual">Editar yo, sin IA</button><button class="primary ez-cta" id="ezGo">✨ Editar con IA</button></div>
         </div>
       </div>
@@ -9165,7 +9182,7 @@ async function ezInsertFile(f) {
   ezHold = true;
   try { await loadFile(f); } catch (e) { toast('No se pudo abrir el vídeo'); return; } finally { ezHold = false; }
   if (tplEditing) { await tplAfterLoad(); return; }
-  ezRetrim = false; ezA = 0; ezB = ezDur(); renderFlags();
+  ezRetrim = false; ezA = 0; ezB = ezDur(); renderFlags(); ezClip = { f: '', t: '', s: '' };
   webOpened(f);
   ezShow('trim');
 }
@@ -9219,7 +9236,7 @@ function ezTrimOpen() {
   if (!(ezB > ezA)) { ezA = 0; ezB = D; }
   $('ezTrimT').textContent = ezRetrim ? 'Cambia la duración del clip' : 'Recorta la duración';
   $('ezGo').textContent = ezRetrim ? '✓ Aplicar recorte' : '✨ Editar con IA';
-  $('ezManual').hidden = ezRetrim; $('ezBack').hidden = ezRetrim; $('ezOpts').hidden = ezRetrim; ezOptsUI();
+  $('ezManual').hidden = ezRetrim; $('ezBack').hidden = ezRetrim; $('ezOpts').hidden = ezRetrim; $('ezTpls').hidden = ezRetrim; ezOptsUI(); ezTplUI();
   $('ezBack').textContent = 'Cambiar de clip';
   $('ezKeyWrap').hidden = ezRetrim || !!getGemKey();
   $('ezKey').value = '';
@@ -9239,7 +9256,7 @@ async function ezMakeThumbs() {
     try { const x = cs[i].getContext('2d'), r = Math.max(160 / tv.videoWidth, 90 / tv.videoHeight), w = tv.videoWidth * r, h = tv.videoHeight * r; x.drawImage(tv, (160 - w) / 2, (90 - h) / 2, w, h); } catch {}
   }
   // fotogramas pequeños para que al arrastrar la barra la imagen vaya fluida (primero uno de cada pocos, luego se rellena)
-  const D = ezDur(), fn = Math.max(30, Math.min(200, Math.ceil(D * 4))), fw = 320, fh = Math.round(fw * (tv.videoHeight || 9) / (tv.videoWidth || 16));
+  const D = ezDur(), fn = Math.max(40, Math.min(260, Math.ceil(D * 6))), fw = 256, fh = Math.round(fw * (tv.videoHeight || 9) / (tv.videoWidth || 16));
   ezFrames = { file, n: fn, D, list: new Array(fn).fill(null) };
   const sc = $('ezScrub'); sc.width = fw; sc.height = fh;
   const order = [], seen = new Set();
@@ -9273,12 +9290,14 @@ function ezTrimUI() {
   $('ezSel').style.left = a + '%'; $('ezSel').style.width = (b - a) + '%';
   $('ezDimL').style.width = a + '%'; $('ezDimR').style.width = (100 - b) + '%';
   $('ezPh').style.left = ((ezDrag ? ezScrubT : (ezVid.currentTime || 0)) / D * 100) + '%';
+  $('ezTipA').textContent = fmtS(ezA); $('ezTipB').textContent = fmtS(ezB);
   $('ezTimes').innerHTML = `Empieza <b>${fmtS(ezA)}</b> · acaba <b>${fmtS(ezB)}</b> · dura <b>${(ezB - ezA).toFixed(1)} s</b>`;
 }
-function ezBarT(e) { const r = $('ezBar').getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * ezDur(); }
+function ezBarT(e) { const r = $('ezBarIn').getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * ezDur(); }
 $('ezBar').addEventListener('pointerdown', e => {
   const h = e.target.dataset && e.target.dataset.h;
-  ezDrag = h || 'seek';
+  ezDrag = h || 'seek'; ezLastH = h || ezLastH;
+  document.querySelectorAll('.ez-sel i').forEach(x => x.classList.toggle('on', x.dataset.h === h));
   $('ezBar').setPointerCapture(e.pointerId); e.preventDefault();
   if (ezDrag === 'seek') { ezVid.pause(); const t = Math.max(ezA, Math.min(ezB - 0.05, ezBarT(e))); ezScrubShow(t); ezSeekTo(t); ezScrubT = t; ezTrimUI(); }
 });
@@ -9293,7 +9312,23 @@ $('ezBar').addEventListener('pointermove', e => {
   ezTrimUI();
 });
 let ezScrubT = 0;
-const ezEndDrag = () => { const was = ezDrag; ezDrag = null; ezSeekTo(was === 'b' ? ezA : ezScrubT); ezTrimUI(); };
+let ezLastH = null;
+// al soltar: el asa de inicio reproduce desde el principio; la del final, solo los 2 últimos segundos
+function ezPreview(h) {
+  ezSeekWant = null; ezSeekBusy = false; $('ezScrub').hidden = true;
+  try { ezVid.currentTime = h === 'b' ? Math.max(ezA, ezB - 2) : ezA; } catch {}
+  ezVid.play().catch(() => {});
+}
+const ezEndDrag = () => { const was = ezDrag; ezDrag = null; document.querySelectorAll('.ez-sel i.on').forEach(x => x.classList.remove('on')); if (was === 'a' || was === 'b') ezPreview(was); else ezSeekTo(ezScrubT); ezTrimUI(); };
+// afinar con el teclado: ← → mueven el último extremo tocado 0,1 s (con Mayús, 1 s)
+document.addEventListener('keydown', e => {
+  if (!ezMode || ezStep !== 'trim' || !ezLastH || !/^Arrow(Left|Right)$/.test(e.key) || (e.target.closest && e.target.closest('input,textarea,select'))) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const d = (e.key === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 1 : 0.1);
+  if (ezLastH === 'a') ezA = Math.max(0, Math.min(ezA + d, ezB - 1)); else ezB = Math.min(ezDur(), Math.max(ezB + d, ezA + 1));
+  ezTrimUI(); clearTimeout(ezPreview.t); ezVid.pause(); const at = ezLastH === 'a' ? ezA : Math.max(ezA, ezB - 0.05); ezScrubShow(at); ezSeekTo(at);
+  ezPreview.t = setTimeout(() => ezPreview(ezLastH), 500);
+}, true);
 $('ezBar').addEventListener('pointerup', ezEndDrag);
 $('ezBar').addEventListener('pointercancel', ezEndDrag);
 function ezTogglePlay() {
@@ -9322,7 +9357,7 @@ function ezApplyTrim() {
   tsel.clear(); tlSig = '';
   seekOut(0); pushHistory(); renderFlags();
 }
-$('ezManual').onclick = async () => { ezApplyTrim(); ezShow('edit'); clipMeta.noSubs = !(await ezAgentCfg()).subs; toast('Haz clic derecho sobre el vídeo para ver las opciones'); };
+$('ezManual').onclick = async () => { ezApplyTrim(); ezShow('edit'); clipMeta.noSubs = !(await ezAgentCfg()).subs; await ezClipApply(); toast('Haz clic derecho sobre el vídeo para ver las opciones'); };
 $('ezGo').onclick = async () => {
   if (!ezRetrim && !$('ezTitleAuto').checked && !$('ezTitleIn').value.trim()) { toast('Escribe el título o marca «Automático»'); $('ezTitleIn').focus(); return; }
   if (!ezRetrim && !$('ezFmtAuto').checked && !ezFmtSel) { toast('Elige un formato o marca «Automático»'); return; }
@@ -9335,7 +9370,9 @@ $('ezGo').onclick = async () => {
     toast('Duración cambiada'); return;
   }
   ezApplyTrim(); ezShow('edit');
-  await ezRunAI();
+  ezSkip.subs = ezClip.s === 'no';
+  try { await ezRunAI(); } finally { ezSkip.subs = false; }
+  await ezClipApply();
 };
 
 // formato elegido para los clips del directo ('auto' = lo elige la IA)
@@ -10102,6 +10139,38 @@ function ezUnhook() {
 
 /* ---------- plantillas de título: solo el diseño del título (letra, tamaño, caja, colores), aparte de las plantillas de formato ----------
    Cada creador tiene las suyas y una «fija», que se pone sola en cada clip nuevo. */
+// estilos de subtítulos listos para usar
+const SUB_BUILTIN = {
+  'Blanco con sombra': { subFont: 'Montserrat|900', subSize: '72', subColor: '#ffffff', upper: false, hl: false, pop: true, strokeOn: false, shOp: '85', shBlur: '18' },
+  'Palabra en amarillo': { subFont: 'Montserrat|900', subSize: '74', subColor: '#ffffff', upper: false, hl: true, hlColor: '#ffe600', pop: true, strokeOn: false, shOp: '85', shBlur: '18' },
+  'Palabra en verde': { subFont: 'Montserrat|900', subSize: '74', subColor: '#ffffff', upper: false, hl: true, hlColor: '#4ade80', pop: true, strokeOn: false, shOp: '85', shBlur: '18' },
+  'MAYÚSCULAS con borde': { subFont: 'Montserrat|900', subSize: '70', subColor: '#ffffff', upper: true, hl: false, pop: true, strokeOn: true, strokeC: '#000000', strokeW: '12', shOp: '0', shBlur: '0' },
+  'Pequeño y limpio': { subFont: 'Inter|800', subSize: '56', subColor: '#ffffff', upper: false, hl: false, pop: false, strokeOn: false, shOp: '70', shBlur: '14' },
+};
+// plantillas elegidas solo para el clip que se va a editar (no cambian las de por defecto)
+let ezClip = { f: '', t: '', s: '' };
+function ezTplUI() {
+  const F = $('ezTplF'), T = $('ezTplT'), S = $('ezTplS'); if (!F) return;
+  F.innerHTML = ''; F.append(new Option('La que diga «Formato» (arriba)', ''));
+  for (const [id, ic, n] of EZ_FMTS) F.append(new Option(`${ic} ${n}`, 'f:' + id));
+  for (const n of Object.keys(templates || {})) F.append(new Option('⭐ ' + n, 't:' + n));
+  T.innerHTML = ''; T.append(new Option('La fija del streamer', ''));
+  for (const n of [...Object.keys(titleTpls), ...Object.keys(TT_BUILTIN).filter(n => !titleTpls[n])]) T.append(new Option(n, n));
+  S.innerHTML = ''; S.append(new Option('Con subtítulos · los del formato', '')); for (const n of Object.keys(SUB_BUILTIN)) S.append(new Option('Con subtítulos · ' + n, n)); S.append(new Option('Sin subtítulos', 'no'));
+  const fa = $('ezFmtAuto');
+  F.value = ezClip.f || (!fa.checked && ezFmtSel ? 'f:' + ezFmtSel : ''); T.value = ezClip.t; S.value = ezClip.s;
+  F.onchange = () => { ezClip.f = F.value; if (F.value.startsWith('f:')) { fa.checked = false; ezFmtSel = F.value.slice(2); } ezOptsUI(); };
+  T.onchange = () => { ezClip.t = T.value; }; S.onchange = () => { ezClip.s = S.value; };
+}
+// se aplican al terminar de editar el clip (después de lo que haga la IA)
+async function ezClipApply() {
+  const c = ezClip; let ch = false;
+  if (c.f.startsWith('t:') && templates[c.f.slice(2)]) { await applyStyle(JSON.parse(JSON.stringify(templates[c.f.slice(2)]))); ch = true; }
+  if (c.t && ttGet(c.t)) { await ttApply(c.t, true); ch = true; }
+  if (c.s && SUB_BUILTIN[c.s]) { const st = getStyle(); st.c = { ...st.c, ...SUB_BUILTIN[c.s] }; await applyStyle(st); ch = true; }
+  if (c.s === 'no') { clipMeta.noSubs = true; try { trk.caps.hide = true; syncTrackUI(); } catch {} ch = true; }
+  if (ch) pushHistory();
+}
 const TT_BUILTIN = {
   'Caja blanca': { titleStyle: 'box', boxMode: 'single', c: { titleFont: 'TikTok Sans|800', titleSize: '54', titleUpper: false, boxColor: '#ffffff', boxText: '#111111', boxR: '22', boxPX: '34', boxPY: '20' } },
   'Caja negra': { titleStyle: 'box', boxMode: 'single', c: { titleFont: 'TikTok Sans|800', titleSize: '54', titleUpper: false, boxColor: '#0b0b0b', boxText: '#ffffff', boxR: '22', boxPX: '34', boxPY: '20' } },
