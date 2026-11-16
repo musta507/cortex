@@ -56,11 +56,35 @@
 .st-ed.full{left:0;width:100%;z-index:60;padding:14px 22px;animation:seFade .2s ease-out}
 @keyframes seFade{from{opacity:0}to{opacity:1}}
 .st-ed.full .se-body{grid-template-columns:auto minmax(320px,440px);justify-content:center;gap:28px}
-.st-ed.full .se-pv{height:calc(100vh - 90px);max-width:none}
+.st-ed.full .se-pv{height:calc(100vh - 250px);max-width:none}
 @media (max-width:820px){.st-ed.full .se-body{grid-template-columns:1fr}.st-ed.full .se-pv{height:60vh;justify-self:center}}
 .se-h{display:flex;align-items:center;justify-content:space-between}
 .se-h button{width:auto;padding:4px 10px}
 .se-body{display:grid;grid-template-columns:auto minmax(220px,1fr);gap:16px;align-items:start;min-height:0}
+.se-ai{position:relative;display:flex;gap:6px}
+.se-ai #seAi{flex:1;padding:12px;font-size:15px;font-weight:800}
+.se-ai #seAiMore{width:auto;padding:8px 12px}
+.se-aid{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:5;display:grid;gap:8px;padding:14px;border-radius:12px;background:#18181B;border:1px solid #3F3F46;box-shadow:0 18px 40px rgba(0,0,0,.55);animation:seIn .15s ease-out}
+.se-aid[hidden]{display:none}.se-aid strong{font-size:12px;color:#A1A1AA}.se-aid hr{border:0;border-top:1px solid #3F3F46;margin:2px 0;width:100%}
+.se-aid .check{font-size:13px;color:#E4E4E7}
+.se-tl{grid-column:1/-1;position:relative;display:grid;gap:6px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#0C0C0F;user-select:none}
+.tl-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tl-tools button{width:auto;padding:5px 10px;font-size:12px}
+.tl-time{margin-left:auto;font:600 12px ui-monospace,monospace;color:#A1A1AA}
+.tl-row{display:grid;grid-template-columns:56px 1fr;gap:8px;align-items:center}
+.tl-lab{font-size:11px;font-weight:700;color:#71717A;text-align:right}
+.tl-tr{position:relative;height:30px;border-radius:6px;background:#18181B;cursor:pointer;touch-action:none}
+.tl-clip{height:42px}
+.tl-b{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;gap:4px;padding:0 6px;border-radius:5px;font-size:11px;font-weight:700;color:#111;white-space:nowrap;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
+.tl-sc{background:#A78BFA}.tl-sc[data-f=podcast]{background:#FBBF24}.tl-sc[data-f=reaccion]{background:#60A5FA}.tl-sc[data-f=duo]{background:#F472B6}.tl-sc[data-f=horizontal]{background:#34D399}
+.tl-sc:hover{filter:brightness(1.12)}
+.tl-sg{background:linear-gradient(180deg,#3F3F46,#27272A);color:#E4E4E7;border:1px solid #52525B}
+.tl-sg.on{border-color:#fff}
+.tl-sg i{position:absolute;top:-1px;bottom:-1px;width:10px;background:#fff;cursor:ew-resize;font-style:normal}
+.tl-sg i.l{left:-1px;border-radius:5px 0 0 5px}.tl-sg i.r{right:-1px;border-radius:0 5px 5px 0}
+.tl-sg i.on{background:#FDE047}
+.tl-ph{position:absolute;top:44px;bottom:6px;width:2px;margin-left:-1px;background:#F87171;pointer-events:none;box-shadow:0 0 6px rgba(248,113,113,.8)}
+.tl-ph::before{content:'';position:absolute;top:-5px;left:-4px;border:5px solid transparent;border-top-color:#F87171}
 .se-ctl{display:flex;flex-direction:column;gap:12px;min-width:0}
 .se-def{width:auto;align-self:flex-start;padding:5px 10px;font-size:12px}
 .se-l .check{font-weight:500;color:#E4E4E7;font-size:13px}
@@ -1561,24 +1585,31 @@ input[type=range],.check input{accent-color:var(--blue)}
           <div class="se-body">
             <div class="se-pv"><canvas id="seCv" width="540" height="960"></canvas><span class="se-tip">Arrastra para mover · rueda del ratón para el zoom</span><div class="se-pvb"><button id="sePlay" title="Reproducir / parar">▶</button><button id="seSnd" title="Oír o no el sonido del clip (apagado: sigues oyendo el directo)">🔇</button></div></div>
             <div class="se-ctl">
+              <div class="se-ai"><button class="primary" id="seAi">✨ Editar con IA</button><button id="seAiMore" title="Elegir qué hace la IA">⚙️ ▾</button>
+                <div class="se-aid" id="seAiD" hidden>
+                  <strong>Al pulsar «Editar con IA», la IA hace:</strong>
+                  <label class="check"><input type="checkbox" id="seAutoT">El título</label>
+                  <label class="check"><input type="checkbox" id="seAutoF">Elegir el formato <span class="hint" id="seAutoFh"></span></label>
+                  <label class="check"><input type="checkbox" id="seAutoE">Cambiar de formato en cada escena <span class="hint">(si el clip cambia de plano)</span></label>
+                  <label class="check"><input type="checkbox" id="seAutoS">Los subtítulos</label>
+                  <label class="check"><input type="checkbox" id="seAutoX">Recortar el clip <span class="hint">(según el título)</span></label>
+                  <hr><label class="check"><input type="checkbox" id="seAutoO">Hacerlo sola nada más meter un clip</label>
+                </div>
+              </div>
               <p class="hint" id="seS"></p>
               <label class="se-l">Título<textarea id="seTitle" rows="3" placeholder="Título del clip"></textarea></label>
               <div class="se-l">Formato<div class="se-fmts" id="seFmts"></div><button id="seFmtDef" class="se-def" title="Los próximos clips se abrirán ya con este formato">⭐ Usar siempre este formato</button></div>
               <label class="se-l">Plantilla de título <span class="hint">(la que elijas queda por defecto)</span><select id="seTT"></select></label>
-              <div class="se-l">Recortar <span class="hint" id="seTrimT"></span>
-                <button id="seAiTrim" class="primary se-def" title="La IA escucha el clip y lo deja en el trozo que cuenta lo que dice el título">✨ Que lo recorte la IA</button>
-                <div class="se-trim"><span>Empieza</span><input type="range" id="seA" step="0.1"><span>Acaba</span><input type="range" id="seB" step="0.1"></div>
-              </div>
-              <div class="se-l">Que la IA haga sola <span class="hint">(se aplica desde el siguiente clip)</span>
-                <label class="check"><input type="checkbox" id="seAutoT">El título</label>
-                <label class="check"><input type="checkbox" id="seAutoF">Elegir el formato <span class="hint" id="seAutoFh"></span></label>
-                <label class="check"><input type="checkbox" id="seAutoE">Cambiar de formato en cada escena <span class="hint">(si el clip cambia de plano)</span></label>
-                <label class="check"><input type="checkbox" id="seAutoS">Los subtítulos</label>
-                <label class="check"><input type="checkbox" id="seAutoX">Recortar el clip <span class="hint">(si el título lo pones tú, lo recorta al pulsar Intro)</span></label>
-              </div>
+              <div hidden><span id="seTrimT"></span><button id="seAiTrim"></button><input type="range" id="seA" step="0.1"><input type="range" id="seB" step="0.1"></div>
               <div class="se-bar" id="seBarW" hidden><i id="seBar"></i></div>
               <div id="seRes"></div>
               <div class="se-btns"><button class="primary" id="seExp">⬇️ Exportar</button><button id="seFull" title="Abrir este clip en el editor completo">🛠️ Editor completo</button></div>
+            </div>
+            <div class="se-tl" id="seTl">
+              <div class="tl-tools"><button id="tlCut" title="Partir el clip donde está la línea roja (tecla S)">✂️ Cortar aquí</button><button id="tlDel" title="Quitar el trozo donde está la línea roja (Supr)">🗑️ Quitar trozo</button><button id="tlScene" title="Que a partir de aquí vaya con otro formato">🎬 Cambiar formato desde aquí</button><button id="tlUndo" title="Deshacer (Ctrl+Z)">↶</button><span class="tl-time" id="tlTime"></span></div>
+              <div class="tl-row"><span class="tl-lab">Formato</span><div class="tl-tr" id="tlSc"></div></div>
+              <div class="tl-row"><span class="tl-lab">Clip</span><div class="tl-tr tl-clip" id="tlClip"></div></div>
+              <i class="tl-ph" id="tlPh"></i>
             </div>
           </div>
         </aside>
@@ -12529,6 +12560,7 @@ function stEdLoop() {
   if ($('stEd').hidden) return;
   if (stPend) { stEdRaf = requestAnimationFrame(stEdLoop); return; }   // aún se está preparando: no se pisa lo que escribes
   try { const c = $('seCv'), src = $('cv'); c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); } catch {}
+  try { mtRender(); } catch (e) { if (!mtRender.w) { mtRender.w = 1; console.warn('línea de tiempo', e); } }
   $('sePlay').textContent = vid.paused ? '▶' : '❚❚';
   { const tv = titleIsDefault() ? '' : $('title').value; if (document.activeElement !== $('seTitle') && $('seTitle').value !== tv) $('seTitle').value = tv; }
   if (exporting) { $('seBarW').hidden = false; $('seBar').style.width = $('eBar').style.width; $('seS').textContent = $('eStatus').textContent; }
@@ -12601,6 +12633,125 @@ async function stAiTrim() {
 // al elegir tú el formato, vale para todo el clip (se quita el «un formato por escena»)
 function stNoScenes() { try { if (clipMeta.scenes) { delete clipMeta.scenes; scSig = ''; } sceneOv = null; } catch (e) { console.warn(e); } }
 function stCenter() { pos.tx = 0; try { draw(vid.currentTime || 0, false); } catch {} }
+/* ---------- mini línea de tiempo del panel: recortar, cortar, quitar trozos y cambiar el formato por partes ---------- */
+let mtSig = '', mtDrag = null;
+function mtBlocks() {   // escenas en tiempo del vídeo final
+  const out = [], sc = clipMeta.scenes; let acc = 0;
+  const list = segs.length ? segs : [{ s: 0, e: vid.duration || 0 }];
+  for (const g of list) {
+    if (!sc || !sc.length) { const pv = out[out.length - 1]; if (pv) pv.T1 = acc + g.e - g.s; else out.push({ i: -1, f: curFmtOf(), T0: acc, T1: acc + g.e - g.s }); }
+    else sc.forEach((x, i) => { const a = Math.max(x.s, g.s), b = Math.min(x.e, g.e); if (b - a < 0.02) return; const T0 = acc + a - g.s, pv = out[out.length - 1]; if (pv && pv.i === i && Math.abs(pv.T1 - T0) < 0.02) pv.T1 = acc + b - g.s; else out.push({ i, f: x.ov ? x.f : curFmtOf(), T0, T1: acc + b - g.s }); });
+    acc += g.e - g.s;
+  }
+  return out;
+}
+const mtName = f => (SC_FMT[f] || (EZ_FMTS.find(x => x[0] === f) || ['', '▭', 'Horizontal']).slice(1))[1] || f;
+function mtRender() {
+  const box = $('seTl'); if (!box || !loaded) return;
+  const D = totalDur() || 1, bl = mtBlocks(), sig = JSON.stringify([D.toFixed(2), segs.map(g => [g.s.toFixed(2), g.e.toFixed(2)]), bl.map(b => [b.i, b.f, b.T0.toFixed(2)]), mtDrag && mtDrag.k]);
+  if (sig !== mtSig) {
+    mtSig = sig; const sc = $('tlSc'), cl = $('tlClip'); sc.innerHTML = ''; cl.innerHTML = '';
+    for (const b of bl) {
+      const e = document.createElement('div'); e.className = 'tl-b tl-sc'; e.dataset.f = b.f; e.style.left = (b.T0 / D * 100) + '%'; e.style.width = ((b.T1 - b.T0) / D * 100) + '%';
+      e.textContent = (SC_FMT[b.f] ? SC_FMT[b.f][0] + ' ' : '') + mtName(b.f); e.title = 'Clic para cambiar el formato de esta parte';
+      e.onpointerdown = ev => ev.stopPropagation();
+      e.onclick = ev => { ev.stopPropagation(); const r = e.getBoundingClientRect(); mtScMenu(b.i, r.left, r.bottom + 6); };
+      sc.append(e);
+    }
+    let acc = 0;
+    segs.forEach((g, k) => {
+      const d = g.e - g.s, e = document.createElement('div'); e.className = 'tl-b tl-sg'; e.style.left = (acc / D * 100) + '%'; e.style.width = (d / D * 100) + '%';
+      e.innerHTML = `<i class="l" data-k="${k}" data-h="s"></i><span>${d.toFixed(1).replace('.', ',')} s</span><i class="r" data-k="${k}" data-h="e"></i>`;
+      if (mtDrag && mtDrag.k === k) e.querySelector(mtDrag.h === 's' ? 'i.l' : 'i.r').classList.add('on');
+      cl.append(e); acc += d;
+    });
+  }
+  const T = curT(), cl = $('tlClip'); $('tlPh').style.left = (cl.offsetLeft + Math.min(1, T / D) * cl.offsetWidth) + 'px';
+  $('tlTime').textContent = `${fmtS(T)} / ${fmtS(D)}`;
+}
+function mtScMenu(i, x, y) {
+  if (i < 0) {   // sin partes: el formato de todo el clip
+    ctxOpen(x, y, 'Formato de todo el clip', EZ_FMTS.map(([id, ic, n]) => ({ icon: ic, label: n, on: curFmtOf() === id, act: async () => { stNoScenes(); await ezSetFormat(id); stCenter(); stEdFmts(id); mtSig = ''; } })));
+    return;
+  }
+  const sc = clipMeta.scenes[i], items = Object.entries(SC_FMT).map(([k, [ic, n]]) => ({ icon: ic, label: n, on: !!sc.ov && sc.f === k, act: async () => { await scSetFmt(i, k); mtSig = ''; } }));
+  items.push({ icon: '↩️', label: 'Como el resto del clip', on: !sc.ov, act: async () => { await scSetFmt(i, 'base'); mtSig = ''; } });
+  if (i > 0) items.push({ icon: '🔗', label: 'Unir con la parte anterior', act: () => { const pv = clipMeta.scenes[i - 1]; pv.e = sc.e; clipMeta.scenes.splice(i, 1); if (clipMeta.scenes.length < 2 && !clipMeta.scenes[0].ov) delete clipMeta.scenes; pushHistory(); scSig = ''; mtSig = ''; } });
+  ctxOpen(x, y, `Parte ${i + 1}: formato`, items);
+}
+function mtCut() {   // partir el trozo en el punto rojo
+  if (!loaded || !segs.length) return; const L = locate(curT()), g = segs[L.i];
+  if (L.t - g.s < 0.2 || g.e - L.t < 0.2) { toast('Muy cerca del borde de un trozo'); return; }
+  segs.splice(L.i, 1, { id: newId(), s: g.s, e: L.t }, { id: newId(), s: L.t, e: g.e }); pseg = L.i + 1; pushHistory(); mtSig = ''; toast('✂️ Cortado: ahora puedes quitar uno de los trozos o moverle los bordes');
+}
+function mtDel() {
+  if (!loaded || segs.length < 2) { toast('Primero corta el clip (✂️) para separar el trozo que quieres quitar'); return; }
+  const L = locate(curT()); segs.splice(L.i, 1); pseg = Math.min(L.i, segs.length - 1); seekOut(segStart(pseg)); pushHistory(); mtSig = ''; renderFlags();
+}
+function mtScene() {   // a partir de aquí, otra parte (con su propio formato)
+  if (!loaded) return; const t = vid.currentTime || 0, base = curFmtOf();
+  if (!clipMeta.scenes || !clipMeta.scenes.length) clipMeta.scenes = [{ s: 0, e: (vid.duration || 0) + 1, f: base, ov: null }];
+  const i = clipMeta.scenes.findIndex(x => t >= x.s && t < x.e); if (i < 0) return; const x = clipMeta.scenes[i];
+  if (t - x.s < 0.3 || x.e - t < 0.3) { toast('Ya hay un cambio justo aquí'); return; }
+  clipMeta.scenes.splice(i, 1, { ...x, e: +t.toFixed(3) }, { ...x, s: +t.toFixed(3), ov: x.ov ? JSON.parse(JSON.stringify(x.ov)) : null });
+  pushHistory(); scSig = ''; mtSig = ''; mtRender();
+  const b = [...$('tlSc').children].find(e => { const r = e.getBoundingClientRect(), ph = $('tlPh').getBoundingClientRect(); return ph.left >= r.left - 1 && ph.left <= r.right + 1 && r.left > ph.left - 4; }) || $('tlSc').lastChild;
+  const r = b.getBoundingClientRect(); setTimeout(() => mtScMenu(i + 1, r.left, r.bottom + 6), 0);
+}
+// arrastrar: en la pista mueve la línea roja; en un borde blanco recorta ese trozo (el vídeo te sigue)
+function mtT(ev) { const r = $('tlClip').getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * totalDur(); }
+function mtDown(ev) {
+  if (!loaded || exporting || stPend) return; ev.preventDefault();
+  const h = ev.target.closest('i[data-h]'); vid.pause();
+  mtDrag = h ? { k: +h.dataset.k, h: h.dataset.h, D0: totalDur() } : { seek: true };
+  try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch {}
+  mtMove(ev);
+}
+function mtMove(ev) {
+  if (!mtDrag) return;
+  if (mtDrag.seek) { seekOut(mtT(ev)); return; }
+  const g = segs[mtDrag.k]; if (!g) return; const r = $('tlClip').getBoundingClientRect(), dx = (ev.clientX - r.left) / r.width * mtDrag.D0, Ts = segStart(mtDrag.k), D = vid.duration || g.e;
+  if (mtDrag.h === 's') { const s = Math.max(0, Math.min(g.e - 0.3, g.s + (dx - Ts))); g.s = s; pseg = mtDrag.k; vid.currentTime = s; }
+  else { const e = Math.min(D, Math.max(g.s + 0.3, g.s + (dx - Ts))); g.e = e; pseg = mtDrag.k; vid.currentTime = Math.max(g.s, e - 0.04); }
+  mtSig = '';
+}
+function mtUp() {
+  const d = mtDrag; mtDrag = null; mtSig = ''; if (!d) return;
+  if (d.seek) return;
+  pushHistory(); renderFlags();
+  const g = segs[d.k]; if (!g) return; pseg = d.k; vid.currentTime = d.h === 's' ? g.s : Math.max(g.s, g.e - 1); vid.play().catch(() => {});   // al soltar: el principio, o el último segundo
+}
+setTimeout(() => {
+  for (const id of ['tlSc', 'tlClip']) { const t = $(id); if (!t) continue; t.addEventListener('pointerdown', mtDown); t.addEventListener('pointermove', mtMove); t.addEventListener('pointerup', mtUp); t.addEventListener('pointercancel', mtUp); }
+  if (!$('tlCut')) return;
+  $('tlCut').onclick = mtCut; $('tlDel').onclick = mtDel; $('tlScene').onclick = mtScene; $('tlUndo').onclick = () => { goHistory(-1); mtSig = ''; };
+  $('stEd').addEventListener('keydown', e => {
+    if (e.target.closest('input,textarea,select')) return;
+    if (e.key === 's' || e.key === 'S') { e.preventDefault(); mtCut(); } else if (e.key === 'Delete') { e.preventDefault(); mtDel(); } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); goHistory(e.shiftKey ? 1 : -1); mtSig = ''; } else if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+  });
+}, 0);
+/* ---------- botón «Editar con IA» con sus casillas (se guardan) ---------- */
+let stAiBusy = false;
+async function stAiRun() {
+  if (!loaded || exporting || stPend || stAiBusy) return;
+  stAiBusy = true; const b = $('seAi'); b.disabled = true; b.textContent = '⏳ La IA está editando…'; $('seAiD').hidden = true;
+  const aT = ezPref('stAutoT') !== '0', aF = ezPref('stAutoF') !== '0', aS = ezPref('stAutoS') !== '0', aE = ezPref('stAutoE') === '1', aX = ezPref('stAutoX') !== '0';
+  try {
+    const fa = $('ezFmtAuto'); fa.checked = aF; if (!aF) ezFmtSel = clipMeta.fmt || ezFmtSel || ezPref('stFmtDef') || 'horizontal';
+    ezSkip.title = !aT; ezSkip.subs = !aS; ezSkip.scenes = !aE;
+    try { await ezRunAI(); } finally { ezSkip.title = ezSkip.subs = ezSkip.scenes = false; }
+    if (aX && !titleIsDefault()) await stAiTrim();
+    stCenter(); stEdFmts(clipMeta.fmt || ''); stEdTT(); mtSig = ''; $('seS').textContent = '✅ Listo. Cambia lo que quieras y exporta.';
+  } catch (e) { console.warn(e); $('seS').textContent = '⚠ ' + (e.message || e); }
+  finally { stAiBusy = false; b.disabled = false; b.textContent = '✨ Editar con IA'; }
+}
+setTimeout(() => {
+  if (!$('seAi')) return;
+  $('seAi').onclick = stAiRun;
+  $('seAiMore').onclick = e => { e.stopPropagation(); $('seAiD').hidden = !$('seAiD').hidden; };
+  document.addEventListener('pointerdown', e => { if (!$('seAiD').hidden && !e.target.closest('.se-ai')) $('seAiD').hidden = true; });
+  $('seAutoO').checked = ezPref('stAutoO') !== '0'; $('seAutoO').onchange = () => ezPref('stAutoO', $('seAutoO').checked ? '1' : '0');
+}, 0);
 function stEdAutoUI() {
   $('seAutoE').checked = ezPref('stAutoE') === '1';
   $('seAutoX').checked = ezPref('stAutoX') !== '0';
@@ -12616,7 +12767,7 @@ async function stQuickOpen(fresh = true) {
   stQuick = true; stDock = true; ed.classList.add('full'); ed.hidden = false;
   stEdSound = true; $('seSnd').textContent = '🔊';   // aquí no hay directo que escuchar: el clip suena
   $('seT').textContent = `✂️ Tu clip · ${Math.round(ezDur())} s`; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = ''; $('seExp').disabled = true;
-  const aT = ezPref('stAutoT') !== '0', aF = ezPref('stAutoF') !== '0', aS = ezPref('stAutoS') !== '0';
+  const auto = ezPref('stAutoO') !== '0', aT = auto && ezPref('stAutoT') !== '0', aF = auto && ezPref('stAutoF') !== '0', aS = auto && ezPref('stAutoS') !== '0';
   $('seS').textContent = aT || aF || aS ? '✨ La IA está preparando el clip… puedes ir escribiendo el título' : '⏳ Abriendo el clip…';
   stEdFmts(''); stEdTT(); stEdAutoUI(); cancelAnimationFrame(stEdRaf); stEdLoop(); setTimeout(() => $('seTitle').focus(), 60);
   if (!fresh) {   // clip ya hecho: solo se enseña como está
@@ -12624,7 +12775,7 @@ async function stQuickOpen(fresh = true) {
     stEdTrimUI(); stEdTT(); stEdFmts(clipMeta.fmt || ''); vid.muted = !stEdSound; $('seS').textContent = ''; $('seExp').disabled = false; return;
   }
   ezA = 0; ezB = ezDur(); ezApplyTrim(); ezShow('edit');
-  ezSkip.title = !aT; ezSkip.subs = !aS; ezSkip.scenes = ezPref('stAutoE') !== '1';
+  ezSkip.title = !aT; ezSkip.subs = !aS; ezSkip.scenes = !(auto && ezPref('stAutoE') === '1');
   const fmt0 = aF ? null : (ezPref('stFmtDef') || 'horizontal');
   if (fmt0) { $('ezFmtAuto').checked = false; ezFmtSel = fmt0; }
   stPend = 'quick';   // mientras la IA trabaja, lo que escribas no se pisa
@@ -12636,7 +12787,8 @@ async function stQuickOpen(fresh = true) {
   stCenter(); stEdR = [0, ezDur()];
   for (const id of ['seA', 'seB']) { $(id).min = 0; $(id).max = ezDur(); }
   stEdTrimUI(); stEdTT(); stEdFmts(clipMeta.fmt || ''); vid.muted = !stEdSound; $('seS').textContent = ''; stTrimDone = false;
-  if (ezPref('stAutoX') !== '0' && !titleIsDefault() && ezDur() > 40) await stAiTrim();
+  if (auto && ezPref('stAutoX') !== '0' && !titleIsDefault() && ezDur() > 40) await stAiTrim();
+  mtSig = '';
   $('seExp').disabled = false;
   if (titleIsDefault()) $('seS').textContent = '✍️ Escribe el título y pulsa Intro' + (ezDur() > 40 ? ': la IA recorta el clip y te lo deja listo.' : '.');
 }
