@@ -1487,8 +1487,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .ttc-h{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #26262C}.ttc-h b{font-size:16px}
 .ttc-x{width:32px!important;height:32px;padding:0!important;border-radius:9px!important}
 .ttc-b{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);min-height:0}
-.ttc-pv{display:grid;align-content:start;gap:10px;padding:18px;border-right:1px solid #26262C}
-.ttc-stage{position:relative;height:clamp(200px,calc(100vh - 400px),620px);margin:0 auto;width:100%;border-radius:14px;overflow:hidden;display:grid;place-items:center;transition:background .25s}
+.ttc-pv{display:grid;align-content:start;gap:10px;padding:18px;border-right:1px solid #26262C;overflow:auto;min-height:0}
+.ttc-stage{position:relative;flex:none;height:clamp(180px,calc(100vh - 470px),600px);margin:0 auto;width:100%;border-radius:14px;overflow:hidden;display:grid;place-items:center;transition:background .25s}
 .ttc-stage[data-bg=vid]{background:linear-gradient(160deg,#3b4658 0%,#6b5a4a 45%,#2c3b2f 100%)}
 .ttc-stage[data-bg=dark]{background:#0b0b0d}.ttc-stage[data-bg=light]{background:#f2f2f2}
 .ttc-cv{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -1516,6 +1516,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .ttc-a .ttc-ck{margin-right:auto}.ttc-a button{width:auto;padding:10px 16px}
 .ttc-msg{font-size:12.5px;color:#FCA5A5}
 @media (max-width:820px){.ttc-b{grid-template-columns:1fr;overflow:auto}.ttc-pv{border-right:0}.ttc-stage{aspect-ratio:9/8}.ttc-c{overflow:visible}}
+.se-hl{display:grid;gap:6px;margin-top:-4px}.se-hl[hidden]{display:none}
+.se-hl>span{font-size:12px;font-weight:700;color:#A1A1AA}.se-hl em,.ttc-f em{font-style:normal;font-weight:500;color:#71717A}
+.se-hl .chips,#ttcChips{gap:5px}
+.se-hl .chip,#ttcChips .chip{padding:4px 9px!important;font-size:12.5px!important;border-radius:8px!important;background:rgba(255,255,255,.05)!important;border:1px solid var(--gline)!important;color:#D4D4D8!important;transition:background-color .12s,color .12s,transform .1s!important}
+.se-hl .chip:hover,#ttcChips .chip:hover{background:rgba(255,255,255,.1)!important;color:#fff!important}
+.se-hl .chip.on,#ttcChips .chip.on{background:#ef4444!important;border-color:#ef4444!important;color:#fff!important}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important}}
 
 /* ===== versión pública ===== */
@@ -1851,6 +1857,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
               </div>
               <p class="hint" id="seS"></p>
               <label class="se-l">Título<textarea id="seTitle" rows="3" placeholder="Título del clip (Enter: línea nueva · Ctrl+Enter: listo)"></textarea></label>
+              <div class="se-hl" id="seHlW"><span>Destacar en color <em>toca una palabra</em></span><div class="chips" id="seChips"></div></div>
               <div class="se-l">Formato<div class="se-fmts" id="seFmts"></div><button id="seFmtDef" class="se-def" title="Los próximos clips se abrirán ya con este formato">⭐ Usar siempre este formato</button></div>
               <label class="se-l">Plantilla de título <span class="hint">(la que elijas queda por defecto)</span><select id="seTT"></select></label>
               <div hidden><span id="seTrimT"></span><button id="seAiTrim"></button><input type="range" id="seA" step="0.1"><input type="range" id="seB" step="0.1"></div>
@@ -10675,7 +10682,7 @@ async function ttRender() {
 }
 let ttRenderN = 0;
 /* ---------- crear / editar una plantilla de título: todo a mano y viéndolo al momento ---------- */
-const TTC_DEF = { titleStyle: 'box', boxMode: 'single', c: { titleFont: 'Anton|400', titleSize: '58', titleUpper: true, titleColor: '#ffffff', titleHl: '#ff1f1f', titleLH: '118', boxR: '14', boxPX: '28', boxPY: '16', boxColor: '#ffffff', boxText: '#111111', boxOp: '100', tLS: '0', tStrokeW: '0', tStrokeC: '#000000', tShadow: '60', titleW: '0' } };
+const TTC_DEF = { titleStyle: 'box', boxMode: 'single', c: { titleFont: 'Anton|400', titleSize: '58', titleUpper: false, titleColor: '#ffffff', titleHl: '#ff1f1f', titleLH: '118', boxR: '14', boxPX: '28', boxPY: '16', boxColor: '#ffffff', boxText: '#111111', boxOp: '100', tLS: '0', tStrokeW: '0', tStrokeC: '#000000', tShadow: '60', titleW: '0' } };
 let ttc = null;
 function ttcStyle(t, tp, k) {   // pinta el título de muestra con CSS, a escala k del vídeo (1080 px de ancho)
   const c = { ...TTC_DEF.c, ...(tp.c || {}) }, [fam, wt] = String(c.titleFont).split('|'), size = +c.titleSize, box = tp.titleStyle === 'box';
@@ -10691,7 +10698,7 @@ function ttcStyle(t, tp, k) {   // pinta el título de muestra con CSS, a escala
   t.style.maxWidth = (+c.titleW > 0 ? +c.titleW : 940) * k + 'px'; t.style.whiteSpace = 'normal'; t.style.textAlign = 'center';
 }
 // la vista previa del creador se pinta con el mismo dibujo que el vídeo (cajas por línea incluidas)
-function ttcPaint(canvas, tp, text, bg) {
+function ttcPaint(canvas, tp, text, bg, hl) {
   const cw = canvas.clientWidth || 360, ch = canvas.clientHeight || 480, W2 = 1080, H2 = Math.round(Math.max(360, Math.min(2400, W2 * ch / cw)));   // el lienzo toma la forma del hueco, así el título nunca se corta
   if (canvas.width !== W2 || canvas.height !== H2) { canvas.width = W2; canvas.height = H2; }
   const real = ctx, x2 = canvas.getContext('2d'); ctx = x2;
@@ -10703,9 +10710,8 @@ function ttcPaint(canvas, tp, text, bg) {
     const size = +c.titleSize, lh = size * (+c.titleLH / 100), padX = isBox ? +c.boxPX : 0, padY = isBox ? +c.boxPY : 0, tW = +c.titleW || 0;
     x2.font = `${wt || 800} ${size}px "${fam}", Inter, "Helvetica Neue", Arial, sans-serif`; x2.textAlign = 'left'; x2.textBaseline = 'alphabetic'; x2.letterSpacing = (+c.tLS || 0) + 'px';
     const rgbOf = h => [1, 3, 5].map(i => parseInt(String(h).slice(i, i + 2), 16) || 0), hd = (a, b) => { const A = rgbOf(a), B = rgbOf(b); return Math.abs(A[0] - B[0]) + Math.abs(A[1] - B[1]) + Math.abs(A[2] - B[2]); };
-    const hlOk = hd(c.titleHl, isBox ? c.boxColor : '#808080') > 120 && hd(c.titleHl, isBox ? c.boxText : c.titleColor) > 60;   // la palabra destacada de muestra, solo si se distingue
     const maxW = tW > 0 ? Math.max(120, tW) : Math.max(320, W2 - 140 - padX * 2), lines = []; let gi = 0;
-    for (const para of String(text || 'Título').split('\n')) { const ws = para.split(/\s+/).filter(Boolean).map(t => ({ t: c.titleUpper ? t.toLocaleUpperCase('es') : t, red: gi++ === 1 && hlOk })); if (ws.length) lines.push(...wrapBalanced(ws, maxW).lines); }
+    for (const para of String(text || 'Título').split('\n')) { const ws = para.split(/\s+/).filter(Boolean).map(t => ({ t: c.titleUpper ? t.toLocaleUpperCase('es') : t, red: !!(hl && hl.has(gi++)) })); if (ws.length) lines.push(...wrapBalanced(ws, maxW).lines); }
     if (!lines.length) return;
     const n = lines.length, blockH = (n - 1) * lh + size, top = H2 / 2 - blockH / 2, cx = W2 / 2, maxLW = Math.max(...lines.map(l => l.w)), space = x2.measureText(' ').width, mid = bodyMid(c.titleUpper || !hasLower(text));
     if (isBox) {
@@ -10720,7 +10726,7 @@ function ttcPaint(canvas, tp, text, bg) {
 }
 function ttcOpen(editName, base, suggest) {
   const tp = JSON.parse(JSON.stringify(base || TTC_DEF)); tp.c = { ...TTC_DEF.c, ...(tp.c || {}) }; if (!tp.titleStyle) tp.titleStyle = 'plain'; if (!tp.boxMode) tp.boxMode = 'single';
-  ttc = { edit: editName, tp };
+  ttc = { edit: editName, tp }; const ttcHL = new Set();
   let ov = $('ttcOv'); if (ov) ov.remove(); ov = document.createElement('div'); ov.id = 'ttcOv'; ov.className = 'ttc-ov';
   const fonts = [...$('titleFont').options].map(o => [o.value, o.textContent]);
   ov.innerHTML = `<div class="ttc" role="dialog" aria-label="Plantilla de título">
@@ -10728,7 +10734,8 @@ function ttcOpen(editName, base, suggest) {
     <div class="ttc-b">
       <div class="ttc-pv"><div class="ttc-stage" data-bg="vid"><canvas class="ttc-cv"></canvas></div>
         <div class="ttc-bgs"><span>Fondo de prueba</span><button data-bg="vid" class="on">Vídeo</button><button data-bg="dark">Oscuro</button><button data-bg="light">Claro</button></div>
-        <label class="ttc-f">Texto de prueba <em>(Enter: línea nueva)</em><textarea id="ttcTxt" rows="2" maxlength="160">Westcol no se lo puede creer 🔥</textarea></label></div>
+        <label class="ttc-f">Texto de prueba <em>(Enter: línea nueva)</em><textarea id="ttcTxt" rows="2" maxlength="160">Westcol no se lo puede creer 🔥</textarea></label>
+        <div class="ttc-f">Destacar palabras <em>(toca una para verla con el color destacado)</em><div class="chips" id="ttcChips"></div></div></div>
       <div class="ttc-c">
         <label class="ttc-f">Nombre<input type="text" id="ttcName" maxlength="40" placeholder="Por ejemplo: Caja roja WestCOL"></label>
         <div class="ttc-s"><span>Letra</span><div class="ttc-fonts" id="ttcFonts"></div></div>
@@ -10772,7 +10779,10 @@ function ttcOpen(editName, base, suggest) {
     for (const b of fb.children) b.classList.toggle('on', b.dataset.v === c.titleFont);
     const mode = box ? tp.boxMode : 'none'; for (const b of q('#ttcBox').children) b.classList.toggle('on', b.dataset.v === mode);
     q('#ttcBoxO').hidden = !box; q('#ttcShR').hidden = box;
-    ttcPaint(q('.ttc-cv'), tp, q('#ttcTxt').value || 'Título', q('.ttc-stage').dataset.bg);
+    const words = (q('#ttcTxt').value || '').split(/\s+/).filter(Boolean), chb = q('#ttcChips'), sig = words.join(' ') + '|' + [...ttcHL].join();
+    if (chb.dataset.sig !== sig) { chb.dataset.sig = sig; chb.innerHTML = ''; for (const i of [...ttcHL]) if (i >= words.length) ttcHL.delete(i);
+      words.forEach((w, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (ttcHL.has(i) ? ' on' : ''); b.textContent = w; b.onclick = () => { ttcHL.has(i) ? ttcHL.delete(i) : ttcHL.add(i); draw(); }; chb.append(b); }); }
+    ttcPaint(q('.ttc-cv'), tp, q('#ttcTxt').value || 'Título', q('.ttc-stage').dataset.bg, ttcHL);
   };
   ov.addEventListener('input', e => { const el = e.target, k = el.dataset && el.dataset.k; if (k) { const v = el.type === 'checkbox' ? el.checked : el.value; if (k === '__txt') { c.titleColor = v; c.boxText = v; } else c[k] = v; } draw(); });
   q('#ttcBox').onclick = e => { const v = e.target.dataset && e.target.dataset.v; if (!v) return; if (v === 'none') tp.titleStyle = 'plain'; else { if (tp.titleStyle !== 'box') { const tc = c.titleColor; c.boxText = c.boxText && c.boxText.toLowerCase() !== (c.boxColor || '').toLowerCase() ? c.boxText : (tc && tc.toLowerCase() !== '#ffffff' ? tc : '#111111'); } tp.titleStyle = 'box'; tp.boxMode = v; } draw(); };
@@ -13045,11 +13055,19 @@ function stEdTrimUI() {
   const [a, b] = srcRange(); $('seA').value = a; $('seB').value = b;
   $('seTrimT').textContent = `· dura ${(b - a).toFixed(1).replace('.', ',')} s`;
 }
+// palabras del título para ponerlas en el color destacado (las mismas que en el editor avanzado)
+function seChipsSync() {
+  const box = $('seChips'); if (!box) return; const words = $('title').value.split(/\s+/).filter(Boolean), sig = words.join(' ') + '|' + [...titleHL].join();
+  if (box.dataset.sig === sig) return; box.dataset.sig = sig; box.innerHTML = ''; $('seHlW').hidden = !words.length;
+  words.forEach((w, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (titleHL.has(i) ? ' on' : ''); b.textContent = w; b.setAttribute('aria-pressed', titleHL.has(i));
+    b.onclick = () => { titleHL.has(i) ? titleHL.delete(i) : titleHL.add(i); try { renderChips(); } catch {} pushHistory(); seChipsSync(); }; box.append(b); });
+}
 function stEdLoop() {
   if ($('stEd').hidden) return;
   if (stPend) { stEdRaf = requestAnimationFrame(stEdLoop); return; }   // aún se está preparando: no se pisa lo que escribes
   try { const c = $('seCv'), src = $('cv'); c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); } catch {}
   try { mtRender(); } catch (e) { if (!mtRender.w) { mtRender.w = 1; console.warn('línea de tiempo', e); } }
+  try { seChipsSync(); } catch {}
   $('sePlay').textContent = vid.paused ? '▶' : '❚❚';
   { const tv = titleIsDefault() ? '' : $('title').value; if (document.activeElement !== $('seTitle') && $('seTitle').value !== tv) $('seTitle').value = tv; }
   if (exporting) { $('seBarW').hidden = false; $('seBar').style.width = $('eBar').style.width; $('seS').textContent = $('eStatus').textContent; }
@@ -13081,7 +13099,7 @@ async function stEdOpen(S, g, c) {
     for (const id of ['seA', 'seB']) { $(id).min = stEdR[0]; $(id).max = stEdR[1]; }
     stEdTrimUI(); stEdTT(); stEdFmts(clipMeta.fmt || '');
     vid.muted = !stEdSound; say(''); stTrimDone = false;
-    if (ezPref('stAutoX') !== '0') { if (!titleIsDefault()) await stAiTrim(); else if (document.activeElement !== $('seTitle')) { say('✍️ Escribe el título y pulsa Intro: la IA recorta el clip y te lo deja listo.'); $('seTitle').focus(); } else say('✍️ Clip listo. Cuando acabes el título pulsa Intro y la IA lo recorta.'); }
+    if (ezPref('stAutoX') !== '0') { if (!titleIsDefault()) await stAiTrim(); else if (document.activeElement !== $('seTitle')) { say('✍️ Escribe el título y pulsa Ctrl+Enter: la IA recorta el clip y te lo deja listo.'); $('seTitle').focus(); } else say('✍️ Clip listo. Cuando acabes el título pulsa Intro y la IA lo recorta.'); }
     if (typeof fmtNeedsImage === 'function' && fmtNeedsImage()) say('🖼️ Este formato lleva una imagen abajo: cópiala y pulsa Ctrl+V');
   } catch (e) { console.warn(e); say('⚠ ' + (e.message || e)); }
   stPend = null; $('seExp').disabled = false;
@@ -13879,7 +13897,7 @@ async function stQuickOpen(fresh = true) {
   if (auto && ezPref('stAutoX') !== '0' && !titleIsDefault() && ezDur() > 40) await stAiTrim();
   mtSig = '';
   $('seExp').disabled = false;
-  if (titleIsDefault()) $('seS').textContent = '✍️ Escribe el título y pulsa Intro' + (ezDur() > 40 ? ': la IA recorta el clip y te lo deja listo.' : '.');
+  if (titleIsDefault()) $('seS').textContent = '✍️ Escribe el título y pulsa Ctrl+Enter' + (ezDur() > 40 ? ': la IA recorta el clip y te lo deja listo.' : '.');
 }
 async function stEdClose(full) {
   try { mtInspClose(); mtCapCommit(true); } catch {}
