@@ -1463,6 +1463,21 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .se-pvb button{transition:transform .15s var(--ease),background-color .15s}
 .se-pvb button:hover{transform:scale(1.08);background:rgba(0,0,0,.85)}
 .st-ed.full{background:radial-gradient(900px 520px at 85% -10%,rgba(59,110,246,.10),transparent 70%),#0A0A0D}
+/* biblioteca de logos */
+.lg-grid{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.lg-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;width:150px;padding:10px 10px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);cursor:pointer;color:inherit;font:inherit;transition:transform .25s var(--ease),border-color .2s,box-shadow .25s}
+.lg-card:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.3);box-shadow:0 14px 32px rgba(0,0,0,.4)}
+.lg-card.on{border-color:#fff;box-shadow:0 0 0 1px #fff}
+.lg-pv{display:grid;place-items:center;width:100%;height:96px;border-radius:8px;overflow:hidden;background:repeating-conic-gradient(#2a2a30 0 25%,#202025 0 50%) 0 0/16px 16px}
+.lg-pv img{max-width:86%;max-height:80px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+.lg-pv.none{background:rgba(255,255,255,.04);color:#8E8E96;font-size:13px;font-weight:600}
+.lg-up .lg-pv span{font-size:30px;color:#C7D6FF}
+.lg-up{border-style:dashed}
+.lg-up:hover .lg-pv{background:rgba(110,151,255,.08)}
+.lg-ren{position:absolute;top:4px;left:6px;font-size:12px;opacity:0;background:none;border:0;color:inherit;cursor:pointer;padding:2px;transition:opacity .15s}
+.lg-card .tt-del{opacity:0;transition:opacity .15s}
+.lg-card:hover .lg-ren,.lg-card:hover .tt-del{opacity:.75}
+.lg-grid>*{animation:cxPop .4s var(--ease) both}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important}}
 
 /* ===== versión pública ===== */
@@ -1888,6 +1903,11 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <div class="tpl-h"><strong>🔤 Plantillas de título de <span id="ttWho"></span></strong><span class="hint">Solo el diseño del título (letra, tamaño, caja y colores). Pulsa una para dejarla fija: se pondrá sola en todos los clips nuevos de este creador, sea cual sea el formato.</span></div>
             <div class="tt-grid" id="ttGrid"></div>
             <p class="hint">Para crear una tuya: abre un clip, deja el título como te guste y pulsa arriba «🔤 Plantilla de título» → «Guardar el título actual como plantilla».</p>
+          </section>
+          <section class="tplbox" id="lgBox">
+            <div class="tpl-h"><strong>🖼️ Logos</strong><span class="hint">Todos tus logos en un sitio. Pulsa uno para ponérselo a <b id="lgWho"></b>: saldrá en todos sus clips. Puedes subir varios a la vez.</span></div>
+            <div class="lg-grid" id="lgGrid"></div>
+            <input type="file" id="lgFile" accept="image/*" multiple hidden>
           </section>
           </div>
           <div class="hsec" data-sec="agente" hidden>
@@ -6394,7 +6414,7 @@ function setLogo(src, record = true) {
       logo = { img: im, src };
       $('logoTitle').textContent = 'Cambiar logo';
       $('logoOpts').hidden = false; $('sL').classList.add('done');
-      if (record) { pushHistory(); persistClient(); }   // el logo es de cada cliente
+      if (record) { pushHistory(); persistClient(); lgAdd(src).catch(() => {}); }   // el logo es de cada cliente (y queda en la biblioteca de logos)
       res();
     };
     im.onerror = () => { $('logoTitle').textContent = 'Ese archivo no es una imagen válida'; res(); };
@@ -10595,6 +10615,48 @@ async function ttRender() {
   box.after(w);
 }
 let ttRenderN = 0;
+/* ---------- biblioteca de logos (en Plantillas): todos tus logos, y cada creador elige el suyo ---------- */
+async function lgLib() { let l = null; try { l = await kv.get('logoLib'); } catch {} return Array.isArray(l) ? l : []; }
+async function lgAdd(src, name) {
+  if (!src) return; const l = await lgLib(); if (l.some(x => x.src === src)) return;
+  l.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: (name || 'Logo ' + (l.length + 1)).slice(0, 40), src, at: Date.now() }); try { await kv.set('logoLib', l); } catch {}
+}
+// los logos se guardan pequeños (máx. 600 px), que van de sobra para el vídeo
+function lgShrink(file) { return new Promise((res, rej) => { const fr = new FileReader(); fr.onerror = rej; fr.onload = () => { const im = new Image(); im.onerror = rej; im.onload = () => { const k = Math.min(1, 600 / Math.max(im.width, im.height)); if (k >= 1 && fr.result.length < 900000) { res(fr.result); return; } const c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL('image/png')); }; im.src = fr.result; }; fr.readAsDataURL(file); }); }
+let lgRenderN = 0;
+async function lgRender() {
+  const box = $('lgGrid'); if (!box) return; const my = ++lgRenderN, c = clientOf(curClient); $('lgWho').textContent = c ? c.name : 'este creador';
+  let lib = await lgLib(); const have = new Set(lib.map(x => x.src)); let added = false;
+  for (const o of clients) { let st = null; try { st = await kv.get('client:' + o.id); } catch {} const src = st && st.logo && st.logo.src; if (src && !have.has(src)) { have.add(src); lib.push({ id: 'c' + o.id + Date.now().toString(36), name: 'Logo de ' + o.name, src, at: Date.now() }); added = true; } }
+  if (added) { try { await kv.set('logoLib', lib); } catch {} }
+  if (my !== lgRenderN) return;
+  const cur = logo ? logo.src : null; box.innerHTML = '';
+  const card = (x) => {
+    const b = document.createElement('div'); b.className = 'lg-card' + ((x ? cur === x.src : !cur) ? ' on' : ''); b.tabIndex = 0;
+    const pv = document.createElement('div'); pv.className = 'lg-pv'; if (x) { const im = document.createElement('img'); im.src = x.src; im.alt = ''; pv.append(im); } else { pv.classList.add('none'); pv.textContent = 'Sin logo'; }
+    const nm = document.createElement('div'); nm.className = 'tt-n'; nm.textContent = x ? x.name : 'Ninguno'; b.append(pv, nm);
+    if (b.classList.contains('on')) { const f = document.createElement('div'); f.className = 'tt-fix'; f.textContent = '✓ El de ' + (c ? c.name : 'este creador'); b.append(f); }
+    if (x) {
+      const ed = document.createElement('button'); ed.className = 'lg-ren'; ed.title = 'Cambiar el nombre'; ed.textContent = '✏️';
+      ed.onclick = async e => { e.stopPropagation(); const n = (prompt('Nombre del logo:', x.name) || '').trim(); if (!n) return; const l = await lgLib(), it = l.find(y => y.id === x.id); if (it) { it.name = n.slice(0, 40); await kv.set('logoLib', l); } lgRender(); };
+      const d = document.createElement('button'); d.className = 'tt-del'; d.title = 'Quitar de la biblioteca'; d.textContent = '🗑';
+      d.onclick = async e => { e.stopPropagation(); if (!confirm(`¿Quitar «${x.name}» de tus logos?` + (cur === x.src ? ' (Este creador lo seguirá teniendo hasta que elijas otro.)' : ''))) return; await kv.set('logoLib', (await lgLib()).filter(y => y.id !== x.id)); lgRender(); };
+      b.append(ed, d);
+    }
+    b.onclick = async () => { if (!curClient) { toast('Elige primero un creador'); return; }
+      if (x) await setLogo(x.src, false); else clearLogo(false); await saveTypeStore(); lgRender(); toast(x ? `«${x.name}» puesto para ${c ? c.name : 'este creador'}` : 'Sin logo para ' + (c ? c.name : 'este creador')); };
+    b.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); b.click(); } };
+    box.append(b);
+  };
+  for (const x of lib) card(x);
+  card(null);
+  const up = document.createElement('button'); up.type = 'button'; up.className = 'lg-card lg-up'; up.innerHTML = '<div class="lg-pv none"><span>＋</span></div><div class="tt-n">Subir logos</div>'; up.onclick = () => $('lgFile').click(); box.append(up);
+}
+setTimeout(() => { const f = $('lgFile'); if (!f) return; f.addEventListener('change', async () => {
+  const files = [...f.files]; f.value = ''; let n = 0;
+  for (const x of files) { try { await lgAdd(await lgShrink(x), x.name.replace(/\.[^.]+$/, '')); n++; } catch (e) { console.warn('logo', e); } }
+  if (n) toast(n === 1 ? 'Logo añadido: púlsalo para ponérselo a este creador' : `${n} logos añadidos`); lgRender();
+}); }, 0);
 // copia de todas las plantillas (títulos y formatos de cada creador) en la carpeta del grabador: plantillas-cortex.json
 let cxTplDone = false;
 async function cxExportTpls() {
@@ -12115,8 +12177,8 @@ function tplCard(st, name, sub, isDef, btns) {
 }
 async function tplRender() {
   ttRender().catch(e => console.warn('títulos', e));
-  const c = clientOf(curClient), box = $('tplBox'); if (!c || !box) return;
-  await loadClientStore(c.id);
+  const c = clientOf(curClient), box = $('tplBox'); if (!c || !box) { lgRender().catch(() => {}); return; }
+  await loadClientStore(c.id); lgRender().catch(e => console.warn('logos', e));
   $('tplWho').textContent = c.name;
   const g = $('tplGrid'); g.innerHTML = '';
   const AW = await getAgent(c);
