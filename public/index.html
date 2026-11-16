@@ -1849,7 +1849,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
                 </div>
               </div>
               <p class="hint" id="seS"></p>
-              <label class="se-l">Título<textarea id="seTitle" rows="3" placeholder="Título del clip"></textarea></label>
+              <label class="se-l">Título<textarea id="seTitle" rows="3" placeholder="Título del clip (Enter: línea nueva · Ctrl+Enter: listo)"></textarea></label>
               <div class="se-l">Formato<div class="se-fmts" id="seFmts"></div><button id="seFmtDef" class="se-def" title="Los próximos clips se abrirán ya con este formato">⭐ Usar siempre este formato</button></div>
               <label class="se-l">Plantilla de título <span class="hint">(la que elijas queda por defecto)</span><select id="seTT"></select></label>
               <div hidden><span id="seTrimT"></span><button id="seAiTrim"></button><input type="range" id="seA" step="0.1"><input type="range" id="seB" step="0.1"></div>
@@ -9776,7 +9776,7 @@ function ezOptsUI() {
     ta.checked = ezPref('titleAuto') !== '0'; fa.checked = ezPref('fmtAuto') !== '0'; ezFmtSel = ezPref('fmt') || null;
     ta.onchange = () => { ezPref('titleAuto', ta.checked ? '1' : '0'); ezOptsUI(); if (!ta.checked) $('ezTitleIn').focus(); };
     fa.onchange = () => { ezPref('fmtAuto', fa.checked ? '1' : '0'); ezOptsUI(); };
-    $('ezTitleIn').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && !e.shiftKey) e.preventDefault(); });
+    $('ezTitleIn').addEventListener('keydown', e => { e.stopPropagation(); });   // Enter: baja a la línea de abajo
     $('emojiEzTitle').onclick = e => openEmoji(e.currentTarget, $('ezTitleIn'));
   }
   $('ezTitleIn').disabled = ta.checked; $('emojiEzTitle').disabled = ta.checked;
@@ -11061,14 +11061,14 @@ function ezEdit(k) {
     label = 'Texto'; get = () => tx.text; set = v => { tx.text = v; fillTextPanel(); };
   } else return;
   const orig = get(), pop = $('ezPop');
-  pop.innerHTML = `<strong></strong><textarea rows="2"></textarea><div class="row"><span class="hint">Enter para guardar · Esc para cancelar</span><button class="emobtn" type="button" title="Emojis">😀</button><button type="button" data-a="no">Cancelar</button><button type="button" class="primary" data-a="ok">Listo</button></div>`;
+  pop.innerHTML = `<strong></strong><textarea rows="2"></textarea><div class="row"><span class="hint">Enter: línea nueva · Ctrl+Enter guarda · Esc cancela</span><button class="emobtn" type="button" title="Emojis">😀</button><button type="button" data-a="no">Cancelar</button><button type="button" class="primary" data-a="ok">Listo</button></div>`;
   pop.querySelector('strong').textContent = label;
   const ta = pop.querySelector('textarea'); ta.value = orig;
   ezPopState = { restore: () => set(orig), changed: false };
   ta.addEventListener('input', () => { set(ta.value); ezPopState && (ezPopState.changed = true); });
   ta.addEventListener('keydown', e => {
     e.stopPropagation();
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ezPopDone(true); }
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); ezPopDone(true); }
     if (e.key === 'Escape') { e.preventDefault(); ezPopDone(false); }
   });
   pop.querySelector('[data-a=ok]').onclick = () => ezPopDone(true);
@@ -13890,7 +13890,7 @@ setTimeout(() => {
   $('seSnd').onclick = () => { stEdSound = !stEdSound; vid.muted = !stEdSound; $('seSnd').textContent = stEdSound ? '🔊' : '🔇'; lvMiniCheck(); };
   $('seTitle').addEventListener('input', () => { if (stPend) return; try { titleHL.clear(); } catch {} $('title').value = $('seTitle').value; $('title').dispatchEvent(new Event('input', { bubbles: true })); });
   $('seTitle').addEventListener('change', () => { try { renderChips(); pushHistory(); } catch {} });
-  $('seTitle').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('seTitle').blur(); if (stPend) { $('seS').textContent = stQuick ? '👍 Título puesto: se aplica en cuanto la IA termine.' : '👍 Título puesto. En cuanto el clip esté guardado, la IA lo recorta y te lo deja listo.'; return; } if ($('seTitle').value.trim() && ezPref('stAutoX') !== '0' && !stTrimDone) stAiTrim(); } });
+  $('seTitle').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $('seTitle').blur(); if (stPend) { $('seS').textContent = stQuick ? '👍 Título puesto: se aplica en cuanto la IA termine.' : '👍 Título puesto. En cuanto el clip esté guardado, la IA lo recorta y te lo deja listo.'; return; } if ($('seTitle').value.trim() && ezPref('stAutoX') !== '0' && !stTrimDone) stAiTrim(); } });
   $('seAiTrim').onclick = () => stAiTrim();
   $('seTT').onchange = async () => { const n = $('seTT').value; if (!loaded) return; if (n) { await ttPick(n); stCenter(); } else { titleDef = null; await saveTypeStore(); toast('Título del formato: se verá al cambiar de formato'); } };
   const trim = which => { if (!loaded || exporting) return; let a = +$('seA').value, b = +$('seB').value; if (b - a < 2) { if (which === 'a') a = b - 2; else b = a + 2; } ezA = a; ezB = b; ezApplyTrim(); stEdTrimUI(); if (which === 'b') { try { seekOut(Math.max(0, b - a - 2)); } catch {} } };
