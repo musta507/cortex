@@ -1488,11 +1488,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .ttc-x{width:32px!important;height:32px;padding:0!important;border-radius:9px!important}
 .ttc-b{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);min-height:0}
 .ttc-pv{display:grid;align-content:start;gap:10px;padding:18px;border-right:1px solid #26262C}
-.ttc-stage{position:relative;aspect-ratio:9/12;max-height:calc(100vh - 290px);border-radius:14px;overflow:hidden;display:grid;place-items:center;transition:background .25s}
+.ttc-stage{position:relative;aspect-ratio:3/4;max-height:calc(100vh - 370px);margin:0 auto;width:100%;border-radius:14px;overflow:hidden;display:grid;place-items:center;transition:background .25s}
 .ttc-stage[data-bg=vid]{background:linear-gradient(160deg,#3b4658 0%,#6b5a4a 45%,#2c3b2f 100%)}
 .ttc-stage[data-bg=dark]{background:#0b0b0d}.ttc-stage[data-bg=light]{background:#f2f2f2}
-.ttc-t{width:100%;text-align:center;padding:0 4%}
-.ttc-t span{transition:font-size .12s,padding .12s,border-radius .12s}
+.ttc-cv{width:100%;height:100%;display:block;object-fit:contain}
+.ttc-f em{font-style:normal;font-weight:500;color:#71717A}
+.ttc-f textarea{resize:vertical;min-height:52px}
 .ttc-bgs{display:flex;align-items:center;gap:6px;font-size:12px;color:#A1A1AA}.ttc-bgs span{margin-right:auto}
 .ttc-bgs button{width:auto;padding:4px 10px;font-size:12px;border-radius:99px!important}.ttc-bgs button.on{background:#fff!important;color:#111!important}
 .ttc-c{overflow:auto;padding:16px 18px;display:grid;gap:14px;align-content:start}
@@ -4037,7 +4038,7 @@ call "Grabador Clipzi.bat" prueba "%~1"
 </script>
 <script>
 const $ = id => document.getElementById(id);
-const cv = $('cv'), ctx = cv.getContext('2d');
+const cv = $('cv'); let ctx = cv.getContext('2d');   // «let»: la vista previa de las plantillas de título lo cambia un momento para dibujar con lo mismo
 const W = 1080, H = 1920;
 const vid = $('vid');
 let file = null, loaded = false, exporting = false;
@@ -10689,6 +10690,33 @@ function ttcStyle(t, tp, k) {   // pinta el título de muestra con CSS, a escala
   t.style.boxShadow = box && op > 0.98 ? `0 ${4 * k}px ${18 * k}px rgba(0,0,0,.28)` : 'none';
   t.style.maxWidth = (+c.titleW > 0 ? +c.titleW : 940) * k + 'px'; t.style.whiteSpace = 'normal'; t.style.textAlign = 'center';
 }
+// la vista previa del creador se pinta con el mismo dibujo que el vídeo (cajas por línea incluidas)
+function ttcPaint(canvas, tp, text, bg) {
+  const W2 = 1080, H2 = 1440; if (canvas.width !== W2) { canvas.width = W2; canvas.height = H2; }
+  const real = ctx, x2 = canvas.getContext('2d'); ctx = x2;
+  try {
+    x2.setTransform(1, 0, 0, 1, 0, 0); x2.clearRect(0, 0, W2, H2);
+    if (bg === 'dark') x2.fillStyle = '#0b0b0d'; else if (bg === 'light') x2.fillStyle = '#f2f2f2'; else { const g = x2.createLinearGradient(0, 0, W2, H2); g.addColorStop(0, '#3b4658'); g.addColorStop(0.45, '#6b5a4a'); g.addColorStop(1, '#2c3b2f'); x2.fillStyle = g; }
+    x2.fillRect(0, 0, W2, H2);
+    const c = { ...TTC_DEF.c, ...(tp.c || {}) }, [fam, wt] = String(c.titleFont).split('|'), isBox = tp.titleStyle === 'box', mode = tp.boxMode || 'single';
+    const size = +c.titleSize, lh = size * (+c.titleLH / 100), padX = isBox ? +c.boxPX : 0, padY = isBox ? +c.boxPY : 0, tW = +c.titleW || 0;
+    x2.font = `${wt || 800} ${size}px "${fam}", Inter, "Helvetica Neue", Arial, sans-serif`; x2.textAlign = 'left'; x2.textBaseline = 'alphabetic'; x2.letterSpacing = (+c.tLS || 0) + 'px';
+    const rgbOf = h => [1, 3, 5].map(i => parseInt(String(h).slice(i, i + 2), 16) || 0), hd = (a, b) => { const A = rgbOf(a), B = rgbOf(b); return Math.abs(A[0] - B[0]) + Math.abs(A[1] - B[1]) + Math.abs(A[2] - B[2]); };
+    const hlOk = hd(c.titleHl, isBox ? c.boxColor : '#808080') > 120 && hd(c.titleHl, isBox ? c.boxText : c.titleColor) > 60;   // la palabra destacada de muestra, solo si se distingue
+    const maxW = tW > 0 ? Math.max(120, tW) : Math.max(320, W2 - 140 - padX * 2), lines = []; let gi = 0;
+    for (const para of String(text || 'Título').split('\n')) { const ws = para.split(/\s+/).filter(Boolean).map(t => ({ t: c.titleUpper ? t.toLocaleUpperCase('es') : t, red: gi++ === 1 && hlOk })); if (ws.length) lines.push(...wrapBalanced(ws, maxW).lines); }
+    if (!lines.length) return;
+    const n = lines.length, blockH = (n - 1) * lh + size, top = H2 / 2 - blockH / 2, cx = W2 / 2, maxLW = Math.max(...lines.map(l => l.w)), space = x2.measureText(' ').width, mid = bodyMid(c.titleUpper || !hasLower(text));
+    if (isBox) {
+      x2.save(); x2.fillStyle = c.boxColor; x2.globalAlpha = c.boxOp == null ? 1 : +c.boxOp / 100;
+      const drawBoxes = () => { if (mode === 'single') roundBox(cx - maxLW / 2 - padX, top - padY, maxLW + 2 * padX, blockH + 2 * padY, +c.boxR); else drawRowBoxes(lines.map((l, i) => { const m2 = top + size / 2 + i * lh; return { x0: cx - l.w / 2 - padX, x1: cx + l.w / 2 + padX, y0: m2 - size / 2 - padY, y1: m2 + size / 2 + padY }; }), +c.boxR); };
+      if (x2.globalAlpha > 0.98) { x2.shadowColor = 'rgba(0,0,0,.28)'; x2.shadowBlur = 18; x2.shadowOffsetY = 4; drawBoxes(); }
+      x2.shadowColor = 'transparent'; x2.shadowBlur = 0; x2.shadowOffsetY = 0; drawBoxes(); x2.restore();
+    } else { const k = c.tShadow == null ? 0.6 : +c.tShadow / 100; x2.shadowColor = `rgba(0,0,0,${Math.min(1, k * 1.1).toFixed(2)})`; x2.shadowBlur = k ? 4 + 12 * k : 0; }
+    if (+c.tStrokeW > 0) { x2.save(); x2.strokeStyle = c.tStrokeC || '#000'; x2.lineWidth = +c.tStrokeW * 2; x2.lineJoin = 'round'; x2.miterLimit = 2; lines.forEach((l, i) => { const m2 = top + size / 2 + i * lh; let x = cx - l.w / 2; for (const w of l.words) { drawR(w.t, x, m2 + mid, true); x += w.w + space; } }); x2.restore(); x2.shadowColor = 'transparent'; x2.shadowBlur = 0; }
+    lines.forEach((l, i) => { const m2 = top + size / 2 + i * lh; let x = cx - l.w / 2; for (const w of l.words) { x2.fillStyle = w.red ? c.titleHl : (isBox ? c.boxText : c.titleColor); drawR(w.t, x, m2 + mid); x += w.w + space; } });
+  } finally { try { ctx.letterSpacing = '0px'; ctx.shadowBlur = 0; } catch {} ctx = real; }
+}
 function ttcOpen(editName, base, suggest) {
   const tp = JSON.parse(JSON.stringify(base || TTC_DEF)); tp.c = { ...TTC_DEF.c, ...(tp.c || {}) }; if (!tp.titleStyle) tp.titleStyle = 'plain'; if (!tp.boxMode) tp.boxMode = 'single';
   ttc = { edit: editName, tp };
@@ -10697,9 +10725,9 @@ function ttcOpen(editName, base, suggest) {
   ov.innerHTML = `<div class="ttc" role="dialog" aria-label="Plantilla de título">
     <div class="ttc-h"><b>${editName ? 'Editar plantilla de título' : 'Nueva plantilla de título'}</b><button class="ttc-x" title="Cerrar (Esc)">✕</button></div>
     <div class="ttc-b">
-      <div class="ttc-pv"><div class="ttc-stage" data-bg="vid"><div class="ttc-t"><span></span></div></div>
+      <div class="ttc-pv"><div class="ttc-stage" data-bg="vid"><canvas class="ttc-cv"></canvas></div>
         <div class="ttc-bgs"><span>Fondo de prueba</span><button data-bg="vid" class="on">Vídeo</button><button data-bg="dark">Oscuro</button><button data-bg="light">Claro</button></div>
-        <label class="ttc-f">Texto de prueba<input type="text" id="ttcTxt" value="Westcol no se lo puede creer 🔥" maxlength="120"></label></div>
+        <label class="ttc-f">Texto de prueba <em>(Enter: línea nueva)</em><textarea id="ttcTxt" rows="2" maxlength="160">Westcol no se lo puede creer 🔥</textarea></label></div>
       <div class="ttc-c">
         <label class="ttc-f">Nombre<input type="text" id="ttcName" maxlength="40" placeholder="Por ejemplo: Caja roja WestCOL"></label>
         <div class="ttc-s"><span>Letra</span><div class="ttc-fonts" id="ttcFonts"></div></div>
@@ -10743,13 +10771,13 @@ function ttcOpen(editName, base, suggest) {
     for (const b of fb.children) b.classList.toggle('on', b.dataset.v === c.titleFont);
     const mode = box ? tp.boxMode : 'none'; for (const b of q('#ttcBox').children) b.classList.toggle('on', b.dataset.v === mode);
     q('#ttcBoxO').hidden = !box; q('#ttcShR').hidden = box;
-    const t = q('.ttc-t span'), words = (q('#ttcTxt').value || 'Título').split(/\s+/).filter(Boolean); t.innerHTML = '';
-    words.forEach((w, i) => { if (i) t.append(' '); if (i === 1 && words.length > 2) { const h = document.createElement('b'); h.textContent = w; h.style.color = c.titleHl; h.style.font = 'inherit'; t.append(h); } else t.append(w); });
-    const st = q('.ttc-stage'); ttcStyle(t, tp, st.clientWidth / 1080 || 0.4);
+    ttcPaint(q('.ttc-cv'), tp, q('#ttcTxt').value || 'Título', q('.ttc-stage').dataset.bg);
   };
   ov.addEventListener('input', e => { const el = e.target, k = el.dataset && el.dataset.k; if (k) { const v = el.type === 'checkbox' ? el.checked : el.value; if (k === '__txt') { c.titleColor = v; c.boxText = v; } else c[k] = v; } draw(); });
   q('#ttcBox').onclick = e => { const v = e.target.dataset && e.target.dataset.v; if (!v) return; if (v === 'none') tp.titleStyle = 'plain'; else { if (tp.titleStyle !== 'box') { const tc = c.titleColor; c.boxText = c.boxText && c.boxText.toLowerCase() !== (c.boxColor || '').toLowerCase() ? c.boxText : (tc && tc.toLowerCase() !== '#ffffff' ? tc : '#111111'); } tp.titleStyle = 'box'; tp.boxMode = v; } draw(); };
-  ov.querySelector('.ttc-bgs').onclick = e => { const v = e.target.dataset && e.target.dataset.bg; if (!v) return; q('.ttc-stage').dataset.bg = v; for (const b of ov.querySelectorAll('.ttc-bgs button')) b.classList.toggle('on', b === e.target); };
+  ov.querySelector('.ttc-bgs').onclick = e => { const v = e.target.dataset && e.target.dataset.bg; if (!v) return; q('.ttc-stage').dataset.bg = v; for (const b of ov.querySelectorAll('.ttc-bgs button')) b.classList.toggle('on', b === e.target); draw(); };
+  q('#ttcTxt').addEventListener('keydown', e => e.stopPropagation());
+  const emoT = setInterval(() => { if (!document.body.contains(ov)) { clearInterval(emoT); return; } draw(); }, 700);   // los emojis llegan un poco después
   const close = () => { ov.classList.add('out'); setTimeout(() => ov.remove(), 180); ttc = null; document.removeEventListener('keydown', esc, true); };
   const esc = e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
   document.addEventListener('keydown', esc, true);
