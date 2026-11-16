@@ -1485,6 +1485,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .pmx-z svg{width:42cqw;max-height:78%;height:auto;position:relative;z-index:1;filter:drop-shadow(0 1.5cqw 3.5cqw rgba(0,0,0,.25))}
 .pmx-z.sm svg{width:32cqw}
 .pmx-z.pb{place-items:end center}.pmx-z.pb svg{width:auto;height:92%;max-height:none;transform:translateY(17%)}
+.pmx-z.pb.zm svg{height:128%;transform:translateY(24%)}
 .pmx-z.close{place-items:end center}.pmx-z.close svg{width:auto;height:72%;max-height:none;transform:translateY(16%)}
 .pmx-z.lbl{align-content:center;gap:2.5cqw;justify-items:center}
 .pmx-z.lbl svg{width:16cqw}
@@ -7909,8 +7910,8 @@ function mockFrom(st, isDefault, kind) {
     if (close) { zone(0, 100, 'pmx-teal', PMX_IC.per, 'close'); ty = 11; sy = 21; }
     else {
       const big = +c.zoom >= 150, top = big ? 26 : 33, h = big ? 48 : 34;
-      zone(0, 100, 'pmx-dark', ''); zone(top, h, k === 'horizontal_cam' ? 'pmx-teal' : 'pmx-blue', PMX_IC.per, 'pb');
-      ty = +c.titleY >= 0 ? +c.titleY : top / 2 + 4; sy = +c.titleY >= 0 ? Math.min(92, +c.titleY + 12) : top + h + (100 - top - h) / 3;
+      zone(0, 100, 'pmx-dark', ''); zone(top, h, k === 'horizontal_cam' ? 'pmx-teal' : 'pmx-blue', PMX_IC.per, 'pb zm');
+      ty = top; sy = +c.titleY >= 0 ? Math.min(92, +c.titleY + 12) : top + h + (100 - top - h) / 3;
     }
   }
   const t = document.createElement('span'); t.className = 'pmx-t'; t.textContent = 'TÍTULO'; t.style.top = ty + '%';
