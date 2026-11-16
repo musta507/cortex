@@ -1358,19 +1358,19 @@ header .tag{color:#71717A}
 @keyframes cxToast{from{opacity:0;transform:translate(-50%,12px) scale(.96)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes cxShimmer{to{background-position:-200% 0}}
 @keyframes cxGlow{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-.hsec:not([hidden]){animation:cxIn .38s var(--ease) both}
-.hsec:not([hidden])>*{animation:cxIn .45s var(--ease) both}
+.hsec:not([hidden]){animation:cxIn .38s var(--ease) backwards}
+.hsec:not([hidden])>*{animation:cxIn .45s var(--ease) backwards}
 .hsec:not([hidden])>*:nth-child(2){animation-delay:.04s}.hsec:not([hidden])>*:nth-child(3){animation-delay:.08s}.hsec:not([hidden])>*:nth-child(4){animation-delay:.12s}.hsec:not([hidden])>*:nth-child(n+5){animation-delay:.16s}
-.hbento>*{animation:cxIn .5s var(--ease) both}
+.hbento>*{animation:cxIn .5s var(--ease) backwards}
 .hbento>*:nth-child(2){animation-delay:.05s}.hbento>*:nth-child(3){animation-delay:.1s}.hbento>*:nth-child(4){animation-delay:.15s}.hbento>*:nth-child(5){animation-delay:.2s}
-.recents>*,.tpl-grid>*{animation:cxPop .4s var(--ease) both}
+.recents>*,.tpl-grid>*{animation:cxPop .4s var(--ease) backwards}
 .recents>*:nth-child(2),.tpl-grid>*:nth-child(2){animation-delay:.04s}.recents>*:nth-child(3),.tpl-grid>*:nth-child(3){animation-delay:.08s}.recents>*:nth-child(4),.tpl-grid>*:nth-child(4){animation-delay:.12s}.recents>*:nth-child(n+5),.tpl-grid>*:nth-child(n+5){animation-delay:.16s}
 .home:not([hidden]){animation:cxFade .3s ease-out}
-.ez-stage:not([hidden])>.ez-card:not([hidden]){animation:cxPop .4s var(--ease) both}
-#livePage:not([hidden])>*{animation:cxIn .4s var(--ease) both}
-.toast:not([hidden]){animation:cxToast .28s var(--ease-pop) both;border:1px solid var(--gline);border-radius:12px!important;padding:10px 16px!important;box-shadow:0 14px 40px rgba(0,0,0,.55);backdrop-filter:blur(16px)}
-.ctxm:not([hidden]){animation:cxPop .16s var(--ease) both;transform-origin:top left}
-.keys-card,.pv-card,.ezpop:not([hidden]),.emojipop:not([hidden]){animation:cxPop .22s var(--ease) both}
+.ez-stage:not([hidden])>.ez-card:not([hidden]){animation:cxPop .4s var(--ease) backwards}
+#livePage:not([hidden])>*{animation:cxIn .4s var(--ease) backwards}
+.toast:not([hidden]){animation:cxToast .28s var(--ease-pop) backwards;border:1px solid var(--gline);border-radius:12px!important;padding:10px 16px!important;box-shadow:0 14px 40px rgba(0,0,0,.55);backdrop-filter:blur(16px)}
+.ctxm:not([hidden]){animation:cxPop .16s var(--ease) backwards;transform-origin:top left}
+.keys-card,.pv-card,.ezpop:not([hidden]),.emojipop:not([hidden]){animation:cxPop .22s var(--ease) backwards}
 .ctxm button{transition:background-color .1s,color .1s}
 /* tarjetas: se levantan un poco al pasar */
 .rcard,.ccard,.tpl-card,.rnew{transition:transform .25s var(--ease),border-color .2s,box-shadow .25s,background-color .2s!important}
@@ -1387,7 +1387,7 @@ header .tag{color:#71717A}
 .hbento .hero h2 span{background-size:200% 100%!important;animation:cxGlow 6s ease-in-out infinite}
 .hbento .hin{transition:border-color .2s,box-shadow .2s}
 .hbento .hin:focus-within{border-color:rgba(110,151,255,.6);box-shadow:var(--ring)}
-.hbento .qp i b{transform-origin:left;animation:cxBar .9s var(--ease) both .25s}
+.hbento .qp i b{transform-origin:left;animation:cxBar .9s var(--ease) backwards .25s}
 @keyframes cxBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 /* menú lateral: el apartado activo con una rayita que se ve */
 .hnav .hi{position:relative;transition:background-color .15s,color .15s,border-color .15s}
@@ -1477,13 +1477,13 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .lg-ren{position:absolute;top:4px;left:6px;font-size:12px;opacity:0;background:none;border:0;color:inherit;cursor:pointer;padding:2px;transition:opacity .15s}
 .lg-card .tt-del{opacity:0;transition:opacity .15s}
 .lg-card:hover .lg-ren,.lg-card:hover .tt-del{opacity:.75}
-.lg-grid>*{animation:cxPop .4s var(--ease) both}
+.lg-grid>*{animation:cxPop .4s var(--ease) backwards}
 /* crear plantilla de título */
 .tt-ed{position:absolute;top:4px;left:6px;font-size:12px;opacity:0;background:none;border:0;color:inherit;cursor:pointer;padding:2px;transition:opacity .15s}
 .tt-card:hover .tt-ed{opacity:.8}.tt-ed:hover{opacity:1!important}
 .ttc-ov{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);animation:cxFade .18s ease-out}
 .ttc-ov.out{opacity:0;transition:opacity .18s}
-.ttc{width:min(1080px,100%);max-height:calc(100vh - 32px);display:grid;grid-template-rows:auto minmax(0,1fr) auto;border-radius:18px;background:#141418;border:1px solid #2E2E35;box-shadow:0 30px 90px rgba(0,0,0,.7);animation:cxPop .22s var(--ease-pop) both;overflow:hidden}
+.ttc{width:min(1080px,100%);max-height:calc(100vh - 32px);display:grid;grid-template-rows:auto minmax(0,1fr) auto;border-radius:18px;background:#141418;border:1px solid #2E2E35;box-shadow:0 30px 90px rgba(0,0,0,.7);animation:cxPop .22s var(--ease-pop) backwards;overflow:hidden}
 .ttc-h{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #26262C}.ttc-h b{font-size:16px}
 .ttc-x{width:32px!important;height:32px;padding:0!important;border-radius:9px!important}
 .ttc-b{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);min-height:0}
