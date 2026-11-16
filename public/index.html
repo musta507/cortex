@@ -85,6 +85,39 @@
 .tl-sg i{z-index:2}
 .tl-sg.mv{z-index:5;opacity:.9;cursor:grabbing;box-shadow:0 8px 20px rgba(0,0,0,.6);transition:none}
 .mt-zoom{display:inline-flex;align-items:center;gap:4px;margin-left:6px}.mt-zoom button{width:26px!important;padding:3px 0!important}.mt-zoom span{min-width:34px;text-align:center;font-size:11px;color:#A1A1AA}
+.se-tl.cc:focus{outline:none}
+.se-tl.cc{gap:0;padding:0;border-radius:12px;background:#121214;border:1px solid #232327;overflow:hidden}
+.cc-bar{display:flex;align-items:center;gap:2px;padding:6px 10px;border-bottom:1px solid #232327;background:#18181B}
+.cc-ic{display:inline-flex!important;align-items:center;gap:6px;width:auto!important;padding:6px 9px!important;border:0!important;background:transparent!important;color:#D4D4D8!important;border-radius:7px!important;font-size:12px!important;font-weight:600}
+.cc-ic:hover{background:#27272A!important;color:#fff!important}
+.cc-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cc-sep{width:1px;height:18px;background:#3F3F46;margin:0 6px}
+.cc-bar .tl-time{margin:0 auto;font:600 12px ui-monospace,monospace;color:#E4E4E7}
+.cc-zoom{display:inline-flex;align-items:center;gap:6px}.cc-zoom button{width:24px!important;height:24px;padding:0!important;border:0!important;background:transparent!important;color:#A1A1AA!important;font-size:16px!important}
+.cc-zoom input{width:110px;accent-color:#fff}
+.se-tl.cc .mt-wrap{grid-template-columns:34px 1fr;gap:0;padding:0 0 8px}
+.se-tl.cc .mt-labs{grid-template-rows:22px 18px 34px 58px;gap:6px;padding-top:0;border-right:1px solid #232327}
+.se-tl.cc .mt-labs span{text-align:center;font-size:12px;color:#71717A;font-weight:800}
+.se-tl.cc .mt-scroll{padding:0 14px 0 8px}
+.se-tl.cc .mt-in{grid-template-rows:22px 18px 34px 58px;gap:6px}
+.cc-ruler{display:block;width:100%;height:22px;cursor:pointer}
+.se-tl.cc .tl-tr{background:transparent;border-radius:4px}
+.cc-fmt .tl-sc{border-radius:4px;font-size:10px;height:18px;top:0;opacity:.9}
+.cc-txt .cc-t{position:absolute;top:2px;bottom:2px;display:flex;align-items:center;gap:4px;padding:0 6px;border-radius:4px;font-size:11px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;cursor:pointer}
+.cc-t.ti{background:#7C3AED;top:0;bottom:auto;height:15px;font-size:10px}.cc-t.su{background:#D97706;top:auto;bottom:0;height:15px;font-size:10px;padding:0 5px}
+.se-tl.cc .tl-clip{height:58px}
+.se-tl.cc .tl-sg{border-radius:6px;border:0;background:#27272A;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);cursor:pointer}
+.se-tl.cc .tl-sg canvas{opacity:1}
+.se-tl.cc .tl-sg span{position:absolute;left:4px;top:3px;font-size:10px;background:rgba(0,0,0,.55);padding:0 4px}
+.se-tl.cc .tl-sg i{display:none;width:12px;background:#fff}
+.se-tl.cc .tl-sg i::after{content:'';position:absolute;left:5px;top:50%;width:2px;height:16px;margin-top:-8px;background:#111;border-radius:2px}
+.se-tl.cc .tl-sg.sel{box-shadow:inset 0 0 0 2px #fff}
+.se-tl.cc .tl-sg.sel i{display:block}
+.se-tl.cc .tl-sg.sel i.l{left:0;border-radius:6px 0 0 6px}.se-tl.cc .tl-sg.sel i.r{right:0;border-radius:0 6px 6px 0}
+.se-tl.cc .tl-sg i.on{background:#fff;box-shadow:0 0 0 2px #22D3EE}
+.se-tl.cc .mt-ph{top:0;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+.se-tl.cc .mt-ph b{top:0;left:-5px;width:12px;height:14px;border-radius:2px 2px 6px 6px;background:#fff}
+.st-ed.full .se-pv{height:calc(100vh - 330px)!important}
 .tl-time{margin-left:auto;font:600 12px ui-monospace,monospace;color:#A1A1AA}
 .tl-row{display:grid;grid-template-columns:56px 1fr;gap:8px;align-items:center}
 .tl-lab{font-size:11px;font-weight:700;color:#71717A;text-align:right}
@@ -1620,10 +1653,19 @@ input[type=range],.check input{accent-color:var(--blue)}
               <div id="seRes"></div>
               <div class="se-btns"><button class="primary" id="seExp">⬇️ Exportar</button><button id="seFull" title="Abrir este clip en el editor completo">🛠️ Editor completo</button></div>
             </div>
-            <div class="se-tl" id="seTl">
-              <div class="tl-tools"><button id="tlCut" title="Partir el clip donde está la línea roja (tecla S)">✂️ Cortar aquí</button><button id="tlDel" title="Quitar el trozo donde está la línea roja (Supr)">🗑️ Quitar trozo</button><button id="tlScene" title="Que a partir de aquí vaya con otro formato">🎬 Cambiar formato desde aquí</button><button id="tlUndo" title="Deshacer (Ctrl+Z)">↶</button><span class="mt-zoom"><button id="mtZout" title="Alejar (Ctrl + rueda)">−</button><span id="mtZ">todo</span><button id="mtZin" title="Acercar (Ctrl + rueda)">+</button></span><span class="tl-time" id="tlTime"></span></div>
-              <div class="mt-wrap"><div class="mt-labs"><span>Formato</span><span>Clip</span></div>
-                <div class="mt-scroll" id="mtScroll"><div class="mt-in" id="mtIn"><div class="tl-tr" id="tlSc"></div><div class="tl-tr tl-clip" id="tlClip"></div><i class="mt-ph" id="tlPh"><b></b></i></div></div>
+            <div class="se-tl cc" id="seTl" tabindex="-1">
+              <div class="cc-bar">
+                <button class="cc-ic" id="tlCut" title="Dividir en la línea blanca (S)"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 7l-3 5 3 5M17 7l3 5-3 5"/></svg><span>Dividir</span></button>
+                <button class="cc-ic" id="tlDel" title="Eliminar el trozo seleccionado (Supr)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg><span>Eliminar</span></button>
+                <button class="cc-ic" id="tlScene" title="A partir de aquí, otra plantilla"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="8" height="14" rx="2"/><rect x="13" y="5" width="8" height="14" rx="2"/></svg><span>Plantilla desde aquí</span></button>
+                <i class="cc-sep"></i>
+                <button class="cc-ic" id="tlUndo" title="Deshacer (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 010 10h-2"/></svg></button>
+                <button class="cc-ic" id="tlRedo" title="Rehacer (Ctrl+Mayús+Z)"><svg viewBox="0 0 24 24"><path d="M15 7l5 5-5 5M20 12H9a5 5 0 000 10h2"/></svg></button>
+                <span class="tl-time" id="ccTime"></span>
+                <span class="cc-zoom"><button id="mtZout" title="Alejar">−</button><input type="range" id="mtZr" min="0" max="100" value="0" aria-label="Zoom de la línea de tiempo"><button id="mtZin" title="Acercar">+</button><span id="mtZ" hidden></span></span>
+              </div>
+              <div class="mt-wrap"><div class="mt-labs"><span></span><span title="Plantilla">▦</span><span title="Texto">T</span><span title="Vídeo">▶</span></div>
+                <div class="mt-scroll" id="mtScroll"><div class="mt-in" id="mtIn"><canvas class="cc-ruler" id="ccRuler"></canvas><div class="tl-tr cc-fmt" id="tlSc"></div><div class="tl-tr cc-txt" id="ccTxt"></div><div class="tl-tr tl-clip" id="tlClip"></div><i class="mt-ph" id="tlPh"><b></b></i></div></div>
               </div>
             </div>
           </div>
@@ -12653,7 +12695,13 @@ function stCenter() { pos.tx = 0; try { draw(vid.currentTime || 0, false); } cat
    Fila «Formato»: el clip por partes (cada una con su plantilla); los límites entre partes se arrastran.
    Fila «Clip»: los trozos con sus fotogramas; los bordes recortan, el cuerpo se arrastra para cambiar el orden.
    La línea roja se arrastra. Mientras ajustas cualquier cosa, el reproductor va enseñando ese punto. */
-let mtSig = '', mtDrag = null, mtZoom = 1, mtWantFn = null, mtSeekBusy = false;
+let mtSig = '', mtDrag = null, mtZoom = 1, mtWantFn = null, mtSeekBusy = false, mtSel = -1, mtWave = null;
+// ondas del audio (100 por segundo), como la pista de CapCut
+async function mtWaveLoad() {
+  if (!file || (mtWave && mtWave.file === file) || file.size > 4e8) return; const f = file; mtWave = { file: f, p: null };
+  try { const a = await decodeAudio16k(f), n = Math.floor(a.length / 160), p = new Float32Array(n); let mx = 1e-4; for (let i = 0; i < n; i++) { let m = 0; for (let j = i * 160; j < (i + 1) * 160; j++) { const v = Math.abs(a[j]); if (v > m) m = v; } p[i] = m; if (m > mx) mx = m; } for (let i = 0; i < n; i++) p[i] = Math.sqrt(p[i] / mx); if (mtWave.file === f) { mtWave.p = p; mtSig = ''; } }
+  catch (e) { console.warn('ondas', e); }
+}
 // el vídeo salta sin atascarse: solo se pide otro salto cuando ha terminado el anterior
 function mtSeek(fn) {
   mtWantFn = fn; if (mtSeekBusy) return;
@@ -12673,20 +12721,25 @@ function mtBlocks() {   // partes de formato en tiempo del vídeo final
   return out;
 }
 const mtName = f => (SC_FMT[f] || (EZ_FMTS.find(x => x[0] === f) || ['', '▭', 'Horizontal']).slice(1))[1] || f;
-function mtFilm(cv, g, w) {   // fotogramas del trozo
-  const F = ezFrames; if (!F || F.file !== file || !w) return;
-  const dpr = Math.min(2, devicePixelRatio || 1), h = 40; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+function mtFilm(cv, g, w) {   // fotogramas y ondas del trozo
+  const F = ezFrames; if (!w) return; if (!F || F.file !== file) { mtWaveLoad(); return; }
+  mtWaveLoad();
+  const dpr = Math.min(2, devicePixelRatio || 1), H = 58, h = 40; cv.width = Math.round(w * dpr); cv.height = Math.round(H * dpr);
   const x = cv.getContext('2d'), tw = h * 16 / 9, n = Math.max(1, Math.ceil(w / tw));
+  x.fillStyle = '#1f1f23'; x.fillRect(0, 0, cv.width, cv.height);
   for (let k = 0; k < n; k++) {
     const t = g.s + (g.e - g.s) * (k + 0.5) / n; let i = Math.max(0, Math.min(F.n - 1, Math.round(t / F.D * (F.n - 1)))), c = F.list[i];
     for (let d = 1; !c && d < 6; d++) c = F.list[i - d] || F.list[i + d];
     if (c) x.drawImage(c, k * tw * dpr, 0, tw * dpr, h * dpr);
   }
+  // ondas del audio debajo de las imágenes
+  const P = mtWave && mtWave.file === file && mtWave.p; x.fillStyle = '#0E3B2E'; x.fillRect(0, h * dpr, cv.width, (H - h) * dpr);
+  if (P) { x.fillStyle = '#34D399'; const mid = (h + (H - h) / 2) * dpr, amp = (H - h) / 2 * dpr * 0.95; for (let px = 0; px < cv.width; px += 2) { const t = g.s + (g.e - g.s) * px / cv.width, v = P[Math.min(P.length - 1, Math.floor(t * 100))] || 0; const hh = Math.max(1, v * amp); x.fillRect(px, mid - hh, 1.5, hh * 2); } }
 }
 function mtRender() {
   const box = $('seTl'); if (!box || !loaded) return;
   const D = totalDur() || 1, bl = mtBlocks(), inn = $('mtIn'), W = inn.offsetWidth, loadedF = ezFrames && ezFrames.file === file ? ezFrames.list.filter(Boolean).length : 0;
-  const sig = JSON.stringify([D.toFixed(2), segs.map(g => [g.s.toFixed(2), g.e.toFixed(2)]), bl.map(b => [b.i, b.f, b.T0.toFixed(2)]), mtDrag && [mtDrag.k, mtDrag.h, mtDrag.i], W, Math.floor(loadedF / 20)]);
+  const sig = JSON.stringify([D.toFixed(2), segs.map(g => [g.s.toFixed(2), g.e.toFixed(2)]), bl.map(b => [b.i, b.f, b.T0.toFixed(2)]), mtDrag && [mtDrag.k, mtDrag.h, mtDrag.i], W, Math.floor(loadedF / 20), mtSel, !!(mtWave && mtWave.p), captions.length, $('title').value]);
   if (sig !== mtSig) {
     mtSig = sig; const sc = $('tlSc'), cl = $('tlClip'); sc.innerHTML = ''; cl.innerHTML = '';
     bl.forEach((b, n) => {
@@ -12698,9 +12751,10 @@ function mtRender() {
         const h = document.createElement('i'); h.className = 'mt-sb' + (mtDrag && mtDrag.i === b.i ? ' on' : ''); h.dataset.i = b.i; h.style.left = (b.T1 / D * 100) + '%'; h.title = 'Arrastra para mover el cambio de formato'; sc.append(h);
       }
     });
+    mtRuler(D, W); mtTexts(D);
     let acc = 0;
     segs.forEach((g, k) => {
-      const d = g.e - g.s, e = document.createElement('div'); e.className = 'tl-b tl-sg' + (mtDrag && mtDrag.k === k && mtDrag.mv ? ' mv' : ''); e.dataset.k = k;
+      const d = g.e - g.s, e = document.createElement('div'); e.className = 'tl-b tl-sg' + (k === mtSel ? ' sel' : '') + (mtDrag && mtDrag.k === k && mtDrag.mv ? ' mv' : ''); e.dataset.k = k;
       e.style.left = (acc / D * 100) + '%'; e.style.width = (d / D * 100) + '%';
       e.innerHTML = `<canvas></canvas><span>${d.toFixed(1).replace('.', ',')} s</span><i class="l" data-k="${k}" data-h="s"></i><i class="r" data-k="${k}" data-h="e"></i>`;
       if (mtDrag && mtDrag.k === k && mtDrag.h) e.querySelector(mtDrag.h === 's' ? 'i.l' : 'i.r').classList.add('on');
@@ -12708,9 +12762,28 @@ function mtRender() {
     });
   }
   const T = curT(); $('tlPh').style.left = (Math.min(1, T / D) * 100) + '%';
-  $('tlTime').textContent = `${fmtS(T)} / ${fmtS(D)}`;
+  $('ccTime').textContent = `${fmtS(T)} / ${fmtS(D)}`;
   // al reproducir, la vista sigue a la línea roja
   const sb = $('mtScroll'); if (mtZoom > 1 && !vid.paused && !mtDrag) { const x = T / D * W; if (x < sb.scrollLeft || x > sb.scrollLeft + sb.clientWidth - 30) sb.scrollLeft = x - 40; }
+}
+function mtRuler(D, W) {   // regla con los segundos
+  const cv = $('ccRuler'), dpr = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(W * dpr); cv.height = 22 * dpr;
+  const x = cv.getContext('2d'); x.scale(dpr, dpr); x.clearRect(0, 0, W, 22);
+  const pps = W / D, step = [0.5, 1, 2, 5, 10, 15, 30, 60, 120].find(v => v * pps >= 64) || 300, sub = step / 5;
+  x.fillStyle = '#52525B'; for (let t = 0; t <= D + 1e-6; t += sub) { const px = Math.round(t * pps) + 0.5; x.fillRect(px, 15, 1, 5); }
+  x.fillStyle = '#A1A1AA'; x.font = '600 10px ui-monospace,monospace';
+  for (let t = 0; t <= D + 1e-6; t += step) { const px = Math.round(t * pps) + 0.5, m = Math.floor(t / 60), sec = t - m * 60; x.fillRect(px, 11, 1, 9); x.fillText(`${String(m).padStart(2, '0')}:${(step < 1 ? sec.toFixed(1) : String(Math.round(sec))).padStart(step < 1 ? 4 : 2, '0')}`, px + 3, 9); }
+}
+function mtTexts(D) {   // pista de texto: el título y los subtítulos
+  const box = $('ccTxt'); box.innerHTML = '';
+  if (!titleIsDefault()) { const e = document.createElement('div'); e.className = 'cc-t ti'; e.style.left = '0'; e.style.width = '100%'; e.textContent = 'T  ' + $('title').value; e.onclick = ev => { ev.stopPropagation(); $('seTitle').focus(); }; box.append(e); }
+  if (!clipMeta.noSubs) for (const c of captions) {
+    const T = (srcToOutAll(c.start)[0]); if (T == null) continue; const T1 = Math.min(D, T + (c.end - c.start));
+    const e = document.createElement('div'); e.className = 'cc-t su'; e.style.left = (T / D * 100) + '%'; e.style.width = Math.max(0.3, (T1 - T) / D * 100) + '%';
+    e.textContent = (c.words || []).map(w => w.text).join(' ').trim() || c.text || ''; e.title = e.textContent;
+    e.onpointerdown = ev => ev.stopPropagation(); e.onclick = ev => { ev.stopPropagation(); vid.pause(); mtSeekOut(T + 0.02); };
+    box.append(e);
+  }
 }
 function mtScMenu(i, x, y) {
   if (i < 0) { ctxOpen(x, y, 'Formato de todo el clip', EZ_FMTS.map(([id, ic, n]) => ({ icon: ic, label: n, on: curFmtOf() === id, act: async () => { stNoScenes(); await ezSetFormat(id); stCenter(); stEdFmts(id); mtSig = ''; } }))); return; }
@@ -12722,11 +12795,11 @@ function mtScMenu(i, x, y) {
 function mtCut() {   // partir el trozo en la línea roja (las dos mitades siguen con su plantilla)
   if (!loaded || !segs.length) return; const L = locate(curT()), g = segs[L.i];
   if (L.t - g.s < 0.2 || g.e - L.t < 0.2) { toast('Muy cerca del borde de un trozo'); return; }
-  segs.splice(L.i, 1, { id: newId(), s: g.s, e: L.t }, { id: newId(), s: L.t, e: g.e }); pseg = L.i + 1; pushHistory(); mtSig = '';
+  segs.splice(L.i, 1, { id: newId(), s: g.s, e: L.t }, { id: newId(), s: L.t, e: g.e }); pseg = L.i + 1; mtSel = L.i + 1; pushHistory(); mtSig = '';
 }
 function mtDel() {
-  if (!loaded || segs.length < 2) { toast('Primero corta el clip (✂️) para separar el trozo que quieres quitar'); return; }
-  const L = locate(curT()); segs.splice(L.i, 1); pseg = Math.min(L.i, segs.length - 1); seekOut(segStart(pseg)); pushHistory(); mtSig = ''; renderFlags();
+  if (!loaded || segs.length < 2) { toast('Primero divide el clip para separar el trozo que quieres quitar'); return; }
+  const L = mtSel >= 0 && mtSel < segs.length ? { i: mtSel } : locate(curT()); segs.splice(L.i, 1); mtSel = -1; pseg = Math.min(L.i, segs.length - 1); seekOut(segStart(pseg)); pushHistory(); mtSig = ''; renderFlags();
 }
 function mtScene() {   // desde la línea roja, otra parte (empieza con la misma plantilla y te deja elegir otra)
   if (!loaded) return; const t = vid.currentTime || 0, base = curFmtOf();
@@ -12742,13 +12815,14 @@ function mtScene() {   // desde la línea roja, otra parte (empieza con la misma
 function mtT(ev) { const r = $('mtIn').getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * totalDur(); }
 function mtDown(ev) {
   if (!loaded || exporting || stPend || ev.button > 0) return; ev.preventDefault();
+  try { $('seTl').focus({ preventScroll: true }); } catch {}   // para que funcionen S, Supr, espacio…
   const h = ev.target.closest('i[data-h]'), sb = ev.target.closest('.mt-sb'), sg = ev.target.closest('.tl-sg'), sc = ev.target.closest('.tl-sc');
   vid.pause(); clearTimeout(histTimer); window.mtHoldHist = true;
   if (h) { const k = +h.dataset.k; mtDrag = { k, h: h.dataset.h, D0: totalDur(), T0: segStart(k), s0: segs[k].s }; }
   else if (sb) mtDrag = { i: +sb.dataset.i };
-  else if (sg && segs.length > 1) mtDrag = { k: +sg.dataset.k, body: true, x0: ev.clientX };
+  else if (sg) { mtSel = +sg.dataset.k; mtDrag = { k: +sg.dataset.k, body: segs.length > 1, x0: ev.clientX, seekOnly: segs.length < 2 }; if (mtDrag.seekOnly) mtDrag = { seek: true }; }
   else if (sc) mtDrag = { sc: +sc.dataset.i, x0: ev.clientX, el: sc };
-  else mtDrag = { seek: true };
+  else { mtSel = -1; mtDrag = { seek: true }; }
   try { $('mtIn').setPointerCapture(ev.pointerId); } catch {}
   if (mtDrag.seek || (mtDrag.body && !mtDrag.mv)) mtSeekOut(mtT(ev));
   mtSig = '';
@@ -12789,7 +12863,7 @@ function mtUp(ev) {
   mtSeek(() => { vid.currentTime = d.h === 's' ? g.s : Math.max(g.s, g.e - 1); }); setTimeout(() => vid.play().catch(() => {}), 30);   // al soltar: el principio, o el último segundo
 }
 function mtSetZoom(z, at) {
-  const sb = $('mtScroll'), old = mtZoom; mtZoom = Math.max(1, Math.min(12, z)); $('mtIn').style.width = (mtZoom * 100) + '%'; $('mtZ').textContent = mtZoom === 1 ? 'todo' : '×' + mtZoom.toFixed(mtZoom < 3 ? 1 : 0);
+  const sb = $('mtScroll'), old = mtZoom; mtZoom = Math.max(1, Math.min(12, z)); $('mtIn').style.width = (mtZoom * 100) + '%'; $('mtZ').textContent = mtZoom.toFixed(1); $('mtZr').value = Math.round(Math.log(mtZoom) / Math.log(12) * 100);
   const fx = at == null ? 0.5 : at; sb.scrollLeft = (sb.scrollLeft + sb.clientWidth * fx) * (mtZoom / old) - sb.clientWidth * fx; mtSig = '';
 }
 setTimeout(() => {
@@ -12797,6 +12871,8 @@ setTimeout(() => {
   inn.addEventListener('pointerdown', mtDown); inn.addEventListener('pointermove', mtMove); inn.addEventListener('pointerup', mtUp); inn.addEventListener('pointercancel', mtUp);
   $('mtScroll').addEventListener('wheel', e => { e.preventDefault(); const r = $('mtScroll').getBoundingClientRect(); if (e.ctrlKey || e.metaKey) mtSetZoom(mtZoom * (e.deltaY < 0 ? 1.25 : 0.8), (e.clientX - r.left) / r.width); else $('mtScroll').scrollLeft += e.deltaY + e.deltaX; }, { passive: false });
   $('mtZin').onclick = () => mtSetZoom(mtZoom * 1.5); $('mtZout').onclick = () => mtSetZoom(mtZoom / 1.5);
+  $('mtZr').oninput = () => mtSetZoom(Math.pow(12, +$('mtZr').value / 100));
+  $('tlRedo').onclick = () => { goHistory(1); mtSig = ''; };
   $('tlCut').onclick = mtCut; $('tlDel').onclick = mtDel; $('tlScene').onclick = mtScene; $('tlUndo').onclick = () => { goHistory(-1); mtSig = ''; };
   $('stEd').addEventListener('keydown', e => {
     if (e.target.closest('input,textarea,select')) return;
