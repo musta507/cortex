@@ -7892,7 +7892,7 @@ async function loadClientStore(id) {
   const gid = groupOf(id);
   let g = null; try { g = await kv.get('tplg:' + gid); } catch {}
   if (!g) { g = { overrides: presetOverrides, def: presetDefault, templates }; try { await kv.set('tplg:' + gid, g); } catch {} }
-  presetOverrides = g.overrides || {}; presetDefault = g.def || null; templates = g.templates || {}; presetHidden = g.hidden || []; titleTpls = g.titleTpls || {}; titleDef = g.titleDef || null;
+  presetOverrides = g.overrides || {}; presetDefault = g.def || null; templates = g.templates || {}; presetHidden = g.hidden || []; titleTpls = g.titleTpls || {}; titleDef = g.titleDef || null; if (titleDef && TT_ALIAS[titleDef] && !titleTpls[titleDef]) titleDef = TT_ALIAS[titleDef];
   activePreset = null; renderPresets(); renderTpl(); renderStreamers();
 }
 let persistT = null;
@@ -10802,15 +10802,18 @@ const TT_BUILTIN = {
   'Caja negra': { titleStyle: 'box', boxMode: 'single', c: { titleFont: 'TikTok Sans|800', titleSize: '54', titleUpper: false, boxColor: '#0b0b0b', boxText: '#ffffff', boxR: '22', boxPX: '34', boxPY: '20' } },
   'Caja amarilla': { titleStyle: 'box', boxMode: 'single', c: { titleFont: 'Montserrat|800', titleSize: '52', titleUpper: false, boxColor: '#ffe600', boxText: '#111111', boxR: '14', boxPX: '30', boxPY: '18' } },
   'Blanco clásico': { titleStyle: 'plain', boxMode: 'single', c: { titleFont: 'Inter|700', titleSize: '56', titleUpper: false, titleColor: '#ffffff' } },
-  'MAYÚSCULAS amarillo': { titleStyle: 'plain', boxMode: 'single', c: { titleFont: 'Montserrat|800', titleSize: '58', titleUpper: true, titleColor: '#ffe600' } },
-  'Coolvetica grande': { titleStyle: 'plain', boxMode: 'single', c: { titleFont: 'Coolvetica|400', titleSize: '66', titleUpper: false, titleColor: '#ffffff' } },
-  'TikTok TALLHAUS': { titleStyle: 'box', boxMode: 'single', c: { titleFont: 'Anton|400', titleSize: '58', titleUpper: true, boxColor: '#e4e4e4', boxText: '#111111', boxR: '10', boxPX: '26', boxPY: '14' } },
-  'TALLHAUS blanco': { titleStyle: 'plain', boxMode: 'single', c: { titleFont: 'Anton|400', titleSize: '64', titleUpper: true, titleColor: '#ffffff' } },
+  'Amarillo': { titleStyle: 'plain', boxMode: 'single', c: { titleFont: 'Montserrat|800', titleSize: '58', titleUpper: true, titleColor: '#ffe600' } },
+  'Coolvetica': { titleStyle: 'plain', boxMode: 'single', c: { titleFont: 'Coolvetica|400', titleSize: '66', titleUpper: false, titleColor: '#ffffff' } },
+  'TikTok': { titleStyle: 'box', boxMode: 'single', c: { titleFont: 'Anton|400', titleSize: '58', titleUpper: true, boxColor: '#e4e4e4', boxText: '#111111', boxR: '10', boxPX: '26', boxPY: '14' } },
+  'Impacto': { titleStyle: 'plain', boxMode: 'single', c: { titleFont: 'Anton|400', titleSize: '64', titleUpper: true, titleColor: '#ffffff' } },
+  'Caja mayúsculas': { titleStyle: 'box', boxMode: 'single', c: { titleFont: 'Montserrat|800', titleSize: '56', titleUpper: true, titleHl: '#ff1f1f', titleLH: '112', boxR: '18', boxPX: '28', boxPY: '14', boxColor: '#ffffff', boxText: '#111111' } },
 };
-const ttGet = n => titleTpls[n] || TT_BUILTIN[n] || null;
-// también los títulos de cada formato que trae Cortex, para poder usarlos en cualquier clip
-setTimeout(() => { try { const sig = tp => JSON.stringify([tp.titleStyle, Object.keys(tp.c || {}).sort().map(k => [k, String(tp.c[k])])]), seen = new Set(Object.values(TT_BUILTIN).map(sig));
-  for (const p of PRESETS) { if (!p.s || !p.s.c) continue; const tp = titlePart(p.s); delete tp.c.titleY; const g = sig(tp); if (seen.has(g)) continue; seen.add(g); TT_BUILTIN['Del formato «' + p.name + '»'] = tp; } } catch (e) { console.warn('títulos de formato', e); } }, 0);
+// nombres de antes (para quien ya tenía una fija)
+const TT_ALIAS = { 'MAYÚSCULAS amarillo': 'Amarillo', 'Coolvetica grande': 'Coolvetica', 'TikTok TALLHAUS': 'TikTok', 'TALLHAUS blanco': 'Impacto', 'Del formato «Podcast»': 'Caja mayúsculas', 'Del formato «Reacción»': 'Caja mayúsculas',
+  'Del formato «Título y subtítulos»': 'Blanco clásico', 'Del formato «Pantalla dividida»': 'Caja blanca', 'Del formato «Dos personas»': 'Caja blanca' };
+// parecido a simple vista: mismo tipo, letra, mayúsculas y colores (el tamaño o los márgenes no cuentan)
+const ttLook = tp => { const c = (tp && tp.c) || {}, box = tp && tp.titleStyle === 'box'; return [box ? 'box' : 'plain', String(c.titleFont || '').split('|')[0], !!c.titleUpper && c.titleUpper !== 'false', String(box ? c.boxText || '#111111' : c.titleColor || '#ffffff').toLowerCase(), box ? String(c.boxColor || '#ffffff').toLowerCase() : '', +c.tStrokeW > 0 ? c.tStrokeC : ''].join('|'); };
+const ttGet = n => titleTpls[n] || TT_BUILTIN[n] || (TT_ALIAS[n] && TT_BUILTIN[TT_ALIAS[n]]) || null;
 async function ttApply(n, quiet) {
   const tp = ttGet(n); if (!tp || !loaded) return false;
   await applyStyle(mergeTitle(getStyle(), JSON.parse(JSON.stringify(tp))));
@@ -10864,9 +10867,9 @@ async function ttRender() {
   for (const n of names) card(n, ttGet(n));
   card(null, null);
   // los títulos que ya has diseñado dentro de tus plantillas de formato (de este creador y de los demás)
-  const my = ++ttRenderN, sig = tp => JSON.stringify([tp.titleStyle, tp.boxMode, Object.keys(tp.c || {}).sort().map(k => [k, String(tp.c[k])])]);
-  const seen = new Set(names.map(n => sig(ttGet(n)))), found = [];
-  const add = (name, st) => { if (!st || !st.c) return; const tp = titlePart(st), g = sig(tp); if (seen.has(g)) return; seen.add(g); found.push([name, tp]); };
+  const my = ++ttRenderN, sig = ttLook;   // se comparan a simple vista: si se ve igual que otra, no se repite
+  const seen = new Set(names.map(n => sig(ttGet(n)))), found = [], used = new Set(names);
+  const add = (name, st) => { if (!st || !st.c) return; const tp = st.c && st.titleStyle !== undefined && !st.layoutMode && !st.crops ? st : titlePart(st), g = sig(tp); if (seen.has(g)) return; seen.add(g); let k = ttShortName(tp, used); used.add(k); found.push([k, tp]); };
   const me = c ? c.name : '';
   for (const p of PRESETS) if (presetOverrides[p.name]) add(me ? `${p.name} · ${me}` : p.name, presetOverrides[p.name]);
   for (const n of Object.keys(templates)) add(me ? `${n} · ${me}` : n, templates[n]);
@@ -10874,7 +10877,7 @@ async function ttRender() {
     if (!c || o.id === c.id || groupOf(o.id) === groupOf(c.id)) continue;
     let st; try { st = await tplStoreOf(o.id); } catch { continue; }
     if (my !== ttRenderN) return;
-    for (const n of Object.keys(st.titleTpls || {})) if (!ttGet(n)) { const g = sig(st.titleTpls[n]); if (!seen.has(g)) { seen.add(g); found.push([n, st.titleTpls[n]]); } }
+    for (const n of Object.keys(st.titleTpls || {})) if (!ttGet(n)) { const g = sig(st.titleTpls[n]); if (!seen.has(g)) { seen.add(g); const k = used.has(n) || n.length > 22 ? ttShortName(st.titleTpls[n], used) : n; used.add(k); found.push([k, st.titleTpls[n]]); } }
     for (const p of PRESETS) if (st.overrides && st.overrides[p.name]) add(`${p.name} · ${o.name}`, st.overrides[p.name]);
     for (const n of Object.keys(st.templates || {})) add(`${n} · ${o.name}`, st.templates[n]);
   }
@@ -10892,6 +10895,15 @@ async function ttRender() {
   box.after(w);
 }
 let ttRenderN = 0;
+// nombre corto a partir de cómo se ve: «Caja roja», «Texto amarillo», «Caja negra Anton»…
+function ttShortName(tp, used) {
+  const c = (tp && tp.c) || {}, box = tp && tp.titleStyle === 'box', P = [['blanc', 255, 255, 255], ['negr', 15, 15, 15], ['amarill', 255, 225, 0], ['roj', 230, 30, 40], ['azul', 40, 110, 245], ['verde', 40, 200, 90], ['ros', 245, 90, 170], ['morad', 140, 70, 230], ['naranja', 255, 140, 0], ['gris', 140, 140, 140]];
+  const col = (h, fem) => { const x = String(h || '#ffffff').replace('#', ''), r = parseInt(x.slice(0, 2), 16) || 0, g = parseInt(x.slice(2, 4), 16) || 0, b = parseInt(x.slice(4, 6), 16) || 0; let best = P[0], bd = 1e9; for (const q of P) { const d = (q[1] - r) ** 2 + (q[2] - g) ** 2 + (q[3] - b) ** 2; if (d < bd) { bd = d; best = q; } } const w = best[0]; return /^(azul|verde|naranja|gris)$/.test(w) ? w : w + (fem ? 'a' : 'o'); };
+  const font = String(c.titleFont || '').split('|')[0].replace(/ (Sans|Display|Neue)$/, '');
+  const base = box ? 'Caja ' + col(c.boxColor, true) : 'Texto ' + col(c.titleColor, false), tries = [base, base + (c.titleUpper ? ' mayúsculas' : ''), base + ' ' + font, base + ' ' + font + (c.titleUpper ? ' mayúsculas' : '')];
+  for (const n of tries) if (!used.has(n) && !ttGet(n)) return n;
+  for (let i = 2; ; i++) if (!used.has(base + ' ' + i) && !ttGet(base + ' ' + i)) return base + ' ' + i;
+}
 /* ---------- crear / editar una plantilla de título: todo a mano y viéndolo al momento ---------- */
 const TTC_DEF = { titleStyle: 'box', boxMode: 'single', c: { titleFont: 'Anton|400', titleSize: '58', titleUpper: false, titleColor: '#ffffff', titleHl: '#ff1f1f', titleLH: '118', boxR: '14', boxPX: '28', boxPY: '16', boxColor: '#ffffff', boxText: '#111111', boxOp: '100', tLS: '0', tStrokeW: '0', tStrokeC: '#000000', tShadow: '60', titleW: '0' } };
 let ttc = null;
