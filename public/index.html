@@ -1307,6 +1307,163 @@ input[type=range],.check input{accent-color:var(--blue)}
 .tpl-b .tpl-del:hover{background:rgba(248,113,113,.08)!important}
 .tpl-b .danger{background:#7a1f1f!important;color:#fff!important}
 
+/* ================= PULIDO: mismo estilo, más cuidado y con movimiento ================= */
+:root{--ease:cubic-bezier(.2,.8,.2,1);--ease-pop:cubic-bezier(.2,.9,.3,1.2);--ring:0 0 0 3px rgba(110,151,255,.28)}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+::selection{background:rgba(110,151,255,.35);color:#fff}
+*{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.16) transparent}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:99px;border:3px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.26);background-clip:padding-box;border:3px solid transparent}
+/* botones: todos con la misma respuesta al pasar y al pulsar */
+button{transition:background-color .15s,border-color .15s,color .15s,box-shadow .2s,transform .1s var(--ease),opacity .15s}
+button:active:not(:disabled){transform:scale(.97)}
+button:disabled{opacity:.38;cursor:not-allowed}
+button:focus-visible{outline:none!important;box-shadow:var(--ring)!important}
+.primary,button.primary{position:relative;overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 6px 20px rgba(255,255,255,.08)}
+.primary:hover:not(:disabled){box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 8px 28px rgba(157,187,255,.22)}
+.primary::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(110,151,255,.28) 50%,transparent 65%);transform:translateX(-120%);pointer-events:none}
+.primary:hover:not(:disabled)::after{transform:translateX(120%);transition:transform .7s var(--ease)}
+.primary:disabled{background:rgba(255,255,255,.12)!important;border-color:transparent!important;color:rgba(255,255,255,.55)!important;box-shadow:none!important;opacity:1}
+/* campos */
+textarea,input[type=text],input[type=search],input[type=url],input[type=password],input[type=number],select{transition:border-color .15s,box-shadow .2s,background-color .15s}
+textarea:hover,input[type=text]:hover,input[type=search]:hover,input[type=url]:hover,input[type=password]:hover,select:hover{border-color:rgba(255,255,255,.22)}
+textarea:focus,input:focus,select:focus{outline:none!important;border-color:rgba(110,151,255,.7)!important;box-shadow:var(--ring)}
+select{appearance:none;-webkit-appearance:none;padding-right:32px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A1A1AA' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 11px center!important;cursor:pointer}
+select option{background:#141418;color:#F5F5F7}
+::placeholder{color:#6E6E78;opacity:1}
+input[type=checkbox]{cursor:pointer}
+/* barra de arriba del editor */
+header{position:relative;z-index:30}
+header .brand{display:inline-flex;align-items:center;gap:0}
+header .brand::before{content:"";width:24px;height:24px;border-radius:8px;flex:none;margin-right:9px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 7l8 5-8 5z' fill='%2308080A'/%3E%3C/svg%3E") center/13px no-repeat,linear-gradient(135deg,#fff 30%,#8FB1FF);box-shadow:0 4px 14px rgba(110,151,255,.25)}
+header .tag{color:#71717A}
+.hdr-actions{gap:6px!important}
+.hdr-actions>button{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 11px!important;border-radius:9px!important;font-size:13px!important;font-weight:600;white-space:nowrap}
+.hdr-actions>button svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hdr-actions>button .chev{width:12px;height:12px;opacity:.6;margin-left:-2px}
+.hdr-actions>button.ico{width:32px;padding:0!important;justify-content:center}
+.hdr-actions>button:not(.primary):not(.modebtn){background:transparent;border-color:transparent;color:#D4D4D8}
+.hdr-actions>button:not(.primary):not(.modebtn):hover:not(:disabled){background:rgba(255,255,255,.07);color:#fff}
+.hdr-actions>button.fmt-btn{background:rgba(255,255,255,.05)!important;border-color:var(--gline)!important}
+.hdr-actions>button.fmt-btn:hover{background:rgba(255,255,255,.09)!important}
+.hdr-actions .sep{width:1px;height:20px;background:rgba(255,255,255,.1);margin:0 4px}
+.hdr-actions select{height:32px;width:auto;padding-top:0!important;padding-bottom:0!important;font-size:12.5px}
+.modebtn{background:rgba(110,151,255,.1)!important;border-color:rgba(110,151,255,.35)!important;color:#C7D6FF!important}
+.modebtn:hover{background:rgba(110,151,255,.18)!important}
+/* aparecer: pantallas, secciones y tarjetas */
+@keyframes cxIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes cxFade{from{opacity:0}to{opacity:1}}
+@keyframes cxPop{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes cxToast{from{opacity:0;transform:translate(-50%,12px) scale(.96)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes cxShimmer{to{background-position:-200% 0}}
+@keyframes cxGlow{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hsec:not([hidden]){animation:cxIn .38s var(--ease) both}
+.hsec:not([hidden])>*{animation:cxIn .45s var(--ease) both}
+.hsec:not([hidden])>*:nth-child(2){animation-delay:.04s}.hsec:not([hidden])>*:nth-child(3){animation-delay:.08s}.hsec:not([hidden])>*:nth-child(4){animation-delay:.12s}.hsec:not([hidden])>*:nth-child(n+5){animation-delay:.16s}
+.hbento>*{animation:cxIn .5s var(--ease) both}
+.hbento>*:nth-child(2){animation-delay:.05s}.hbento>*:nth-child(3){animation-delay:.1s}.hbento>*:nth-child(4){animation-delay:.15s}.hbento>*:nth-child(5){animation-delay:.2s}
+.recents>*,.tpl-grid>*{animation:cxPop .4s var(--ease) both}
+.recents>*:nth-child(2),.tpl-grid>*:nth-child(2){animation-delay:.04s}.recents>*:nth-child(3),.tpl-grid>*:nth-child(3){animation-delay:.08s}.recents>*:nth-child(4),.tpl-grid>*:nth-child(4){animation-delay:.12s}.recents>*:nth-child(n+5),.tpl-grid>*:nth-child(n+5){animation-delay:.16s}
+.home:not([hidden]){animation:cxFade .3s ease-out}
+.ez-stage:not([hidden])>.ez-card:not([hidden]){animation:cxPop .4s var(--ease) both}
+#livePage:not([hidden])>*{animation:cxIn .4s var(--ease) both}
+.toast:not([hidden]){animation:cxToast .28s var(--ease-pop) both;border:1px solid var(--gline);border-radius:12px!important;padding:10px 16px!important;box-shadow:0 14px 40px rgba(0,0,0,.55);backdrop-filter:blur(16px)}
+.ctxm:not([hidden]){animation:cxPop .16s var(--ease) both;transform-origin:top left}
+.keys-card,.pv-card,.ezpop:not([hidden]),.emojipop:not([hidden]){animation:cxPop .22s var(--ease) both}
+.ctxm button{transition:background-color .1s,color .1s}
+/* tarjetas: se levantan un poco al pasar */
+.rcard,.ccard,.tpl-card,.rnew{transition:transform .25s var(--ease),border-color .2s,box-shadow .25s,background-color .2s!important}
+.rcard:hover,.ccard:hover,.tpl-card:hover,.rnew:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.2)!important;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.rnew .rthumb{transition:background-color .2s,color .2s;background:repeating-linear-gradient(135deg,rgba(110,151,255,.06) 0 10px,rgba(110,151,255,.1) 10px 20px)!important}
+.rnew:hover .rthumb{background-color:rgba(110,151,255,.18)!important}
+.rthumb canvas,.rthumb img{transition:transform .4s var(--ease)}
+.rcard:hover .rthumb canvas,.rcard:hover .rthumb img{transform:scale(1.04)}
+.hbento>*{transition:border-color .2s,transform .25s var(--ease)}
+.hbento>*:hover{border-color:rgba(255,255,255,.14)}
+.hbento .hero{position:relative;overflow:hidden}
+.hbento .hero::before{content:"";position:absolute;inset:-40% -20% auto auto;width:420px;height:420px;border-radius:50%;background:radial-gradient(closest-side,rgba(110,151,255,.18),transparent);pointer-events:none;animation:cxFloat 9s ease-in-out infinite}
+@keyframes cxFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,30px)}}
+.hbento .hero h2 span{background-size:200% 100%!important;animation:cxGlow 6s ease-in-out infinite}
+.hbento .hin{transition:border-color .2s,box-shadow .2s}
+.hbento .hin:focus-within{border-color:rgba(110,151,255,.6);box-shadow:var(--ring)}
+.hbento .qp i b{transform-origin:left;animation:cxBar .9s var(--ease) both .25s}
+@keyframes cxBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+/* menú lateral: el apartado activo con una rayita que se ve */
+.hnav .hi{position:relative;transition:background-color .15s,color .15s,border-color .15s}
+.hnav .hi::before{content:"";position:absolute;left:-12px;top:50%;width:3px;height:0;border-radius:0 3px 3px 0;background:#fff;transform:translateY(-50%);transition:height .25s var(--ease)}
+.hnav .hi.on::before{height:20px}
+.hnav .hi svg{transition:transform .2s var(--ease)}
+.hnav .hi:hover svg{transform:scale(1.1)}
+.hnav .hb i{transition:transform .3s var(--ease-pop)}
+.hnav .hb:hover i{transform:rotate(-8deg) scale(1.06)}
+/* pantalla de meter el clip */
+.ez-stage{background:radial-gradient(70% 55% at 50% 0%,rgba(59,110,246,.12),transparent 70%),radial-gradient(120% 80% at 50% 0%,#141418 0%,var(--bg) 60%)!important}
+.ez-card{border-radius:22px!important;box-shadow:0 30px 80px rgba(0,0,0,.5)!important}
+.ez-drop{border:2px dashed rgba(255,255,255,.12)!important;transition:border-color .2s,background-color .2s,transform .25s var(--ease)!important}
+.ez-drop:hover,.ez-drop.over{border-color:rgba(110,151,255,.6)!important;background:rgba(110,151,255,.05)!important}
+.ez-drop.over{transform:scale(1.015)}
+.ez-drop svg{transition:transform .3s var(--ease-pop)}
+.ez-drop:hover svg,.ez-drop.over svg{transform:translateY(-4px) scale(1.06)}
+/* paneles del editor */
+.lpanel,.insp,.rail{transition:border-color .2s}
+#logDl{background:transparent!important;border-color:transparent!important;color:#8E8E96!important;font-weight:500!important}
+#logDl:hover{color:#fff!important;background:rgba(255,255,255,.05)!important}
+/* directo: interruptores de qué detecta, más claros */
+.lv-crit button{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.04)!important;border:1px solid var(--gline)!important;color:#D4D4D8!important}
+.lv-crit button.on{background:rgba(110,151,255,.14)!important;border-color:rgba(110,151,255,.45)!important;color:#fff!important}
+.lv-crit button.on::before{content:"";width:6px;height:6px;border-radius:50%;background:#34D399;box-shadow:0 0 8px #34D399}
+.lv-crit button.off{opacity:.5;text-decoration:none}
+.lv-crit button.off::before{content:"";width:6px;height:6px;border-radius:50%;background:#52525B}
+.lv-crit button:last-child{background:transparent!important;border-color:transparent!important;color:#A1A1AA!important}
+.lv-crit button:last-child::before{display:none}
+.lv-crit button:last-child:hover{color:#fff!important;background:rgba(255,255,255,.06)!important}
+.lv-agent,.lv-tr,.lv-fmt{border-radius:18px!important;transition:border-color .2s}
+/* barras de progreso con brillo */
+.bar i{position:relative;overflow:hidden;transition:width .3s var(--ease)}
+.bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);background-size:200% 100%;animation:cxShimmer 1.4s linear infinite}
+/* deslizadores: raya fina y bolita blanca */
+input[type=range]{-webkit-appearance:none;appearance:none;height:18px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:99px;background:linear-gradient(90deg,#9DBBFF var(--p,0%),rgba(255,255,255,.14) var(--p,0%))}
+input[type=range]::-moz-range-track{height:4px;border-radius:99px;background:rgba(255,255,255,.14)}
+input[type=range]::-moz-range-progress{height:4px;border-radius:99px;background:#9DBBFF}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;margin-top:-5px;border-radius:50%;background:#fff;border:0;box-shadow:0 0 0 3px rgba(110,151,255,.0),0 2px 6px rgba(0,0,0,.5);transition:transform .15s var(--ease),box-shadow .15s}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15);box-shadow:0 0 0 5px rgba(110,151,255,.22),0 2px 6px rgba(0,0,0,.5)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.25)}
+input[type=range]:focus{box-shadow:none!important}
+input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
+/* casillas */
+.check{transition:color .15s}
+.check:hover{color:#fff}
+/* panel de edición */
+.se-h{padding-bottom:4px}
+#seT{display:inline-flex;align-items:center;gap:10px;font:700 17px var(--f-display);letter-spacing:-.3px}
+#seT i{width:26px;height:26px;border-radius:8px;flex:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 7l8 5-8 5z' fill='%2308080A'/%3E%3C/svg%3E") center/13px no-repeat,linear-gradient(135deg,#fff 30%,#8FB1FF);box-shadow:0 4px 14px rgba(110,151,255,.25)}
+#seT em{font:600 12px var(--f-mono);font-style:normal;color:#A1A1AA;padding:3px 8px;border-radius:99px;background:rgba(255,255,255,.06);border:1px solid var(--gline)}
+#seX{width:34px!important;height:34px;padding:0!important;display:grid;place-items:center;border-radius:10px!important}
+#seX svg,.se-ai #seAiMore svg,.se-btns button svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#seX:hover{background:rgba(248,113,113,.12)!important;border-color:rgba(248,113,113,.35)!important;color:#FCA5A5}
+.se-ai #seAiMore{display:inline-flex;align-items:center;gap:4px}.se-ai #seAiMore .chev{width:12px;height:12px;opacity:.6;transition:transform .2s var(--ease)}
+.se-ai:has(.se-aid:not([hidden])) #seAiMore .chev{transform:rotate(180deg)}
+.se-ai #seAi{border-radius:12px!important;font:700 15px var(--f-body)!important;letter-spacing:-.1px}
+.se-btns{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+.se-btns button{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px!important;border-radius:12px!important;font-size:14px!important}
+.se-l{letter-spacing:.2px}
+.se-l textarea{border-radius:12px!important;font-size:15px!important;line-height:1.4}
+.se-fmts{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:7px}
+.se-fmts button{position:relative;display:flex!important;flex-direction:column;align-items:stretch;gap:4px;padding:5px!important;border-radius:10px!important;text-align:center;background:rgba(255,255,255,.03)!important;border-color:var(--gline)!important;transition:transform .15s var(--ease),border-color .15s,box-shadow .15s,background-color .15s!important}
+.se-fmts button:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.22)!important}
+.se-fmts button.on{background:rgba(255,255,255,.08)!important;color:#fff!important;border-color:#fff!important;box-shadow:0 0 0 1px #fff,0 8px 22px rgba(0,0,0,.4)}
+.se-fmts button .pm{margin:0;border-radius:5px}
+.se-fmts button b{font-size:10.5px;line-height:1.15;font-weight:700;color:#D4D4D8}
+.se-fmts button.on b{color:#fff}
+.se-fmts button.def::after{content:"★";position:absolute;top:2px;right:4px;font-size:12px;color:#FBBF24;text-shadow:0 1px 3px #000}
+.se-fi{display:grid;place-items:center;aspect-ratio:9/13;border-radius:5px;background:#27272A;font-size:18px}
+.se-pvb button{transition:transform .15s var(--ease),background-color .15s}
+.se-pvb button:hover{transform:scale(1.08);background:rgba(0,0,0,.85)}
+.st-ed.full{background:radial-gradient(900px 520px at 85% -10%,rgba(59,110,246,.10),transparent 70%),#0A0A0D}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important}}
 
 /* ===== versión pública ===== */
 #clientName,#agentBox,#vlBox,#liveBox,#homeClients,.linkf,#linkHint,.tpl-when,#tplImportBtn,#crumb,#ezRepBtn,#liveBack,#revBack{display:none!important}
@@ -1381,12 +1538,12 @@ input[type=range],.check input{accent-color:var(--blue)}
     <div class="hdr-actions">
       <button id="liveBack" class="primary" hidden title="Volver a la lista de momentos del directo">← Volver al directo</button>
       <button id="revBack" class="primary" hidden title="Volver a revisar los clips del agente">← Volver a la revisión</button>
-      <button id="homeBtn" title="Volver a los clips del cliente (se guarda solo)">⌂ Inicio</button>
-      <button id="ttBtn" class="fmt-btn" hidden title="Diseños de título: elige uno y se usará en todos los clips de este creador">🔤 Plantilla de título ▾</button>
-      <button id="tplBtn" class="fmt-btn" hidden title="Aplicar otra plantilla de este creador">🎨 Cambiar plantilla ▾</button>
-      <button id="fmtBtn" class="fmt-btn" hidden title="Si la IA eligió mal el formato, cámbialo aquí">🎞️ Cambiar formato ▾</button>
-      <button id="undo" disabled title="Deshacer (Ctrl+Z)">↶ Deshacer</button>
-      <button id="redo" disabled title="Rehacer (Ctrl+Y)">↷ Rehacer</button>
+      <button id="homeBtn" title="Volver a los clips del cliente (se guarda solo)"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z"/></svg>Inicio</button>
+      <button id="ttBtn" class="fmt-btn" hidden title="Diseños de título: elige uno y se usará en todos los clips de este creador"><svg viewBox="0 0 24 24"><path d="M4 7V5h16v2M9 19h6M12 5v14"/></svg>Plantilla de título<svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button id="tplBtn" class="fmt-btn" hidden title="Aplicar otra plantilla de este creador"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Cambiar plantilla<svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button id="fmtBtn" class="fmt-btn" hidden title="Si la IA eligió mal el formato, cámbialo aquí"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Cambiar formato<svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button id="undo" class="ico" disabled title="Deshacer (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 010 10h-2"/></svg></button>
+      <button id="redo" class="ico" disabled title="Rehacer (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M15 7l5 5-5 5M20 12H9a5 5 0 000 10h2"/></svg></button>
       <button id="resetPos" title="Devuelve título y subtítulos a su sitio">Recolocar textos</button>
       <span class="sep"></span>
       <select id="quality" aria-label="Calidad">
@@ -1398,8 +1555,8 @@ input[type=range],.check input{accent-color:var(--blue)}
         <option value="auto">FPS del original</option>
         <option value="30">30 fps</option>
       </select>
-      <button class="primary" id="export" disabled>Exportar vídeo <span id="fmt" hidden></span></button>
-      <button id="modeBtn" class="modebtn" hidden title="Abre el editor completo con todas las herramientas">⚙️ Editor avanzado</button>
+      <button class="primary" id="export" disabled><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar vídeo <span id="fmt" hidden></span></button>
+      <button id="modeBtn" class="modebtn" hidden title="Abre el editor completo con todas las herramientas"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Editor avanzado</button>
     </div>
   </header>
 
@@ -1624,11 +1781,11 @@ input[type=range],.check input{accent-color:var(--blue)}
           <div class="st-btns"><span class="hint">✂️ Sacar los últimos</span><button class="primary st-b" data-n="20">20 s</button><button class="primary st-b" data-n="30">30 s</button><button class="primary st-b" data-n="50">50 s</button><button class="st-b" data-n="90">1 min 30</button><span class="hint" id="stS"></span></div>
         </div>
         <aside class="st-ed" id="stEd" hidden aria-label="Editar el clip sin salir del directo">
-          <div class="se-h"><strong id="seT">✂️ Tu clip</strong><button id="seX" title="Cerrar (el clip queda guardado en Tus clips)">✕</button></div>
+          <div class="se-h"><strong id="seT">✂️ Tu clip</strong><button id="seX" title="Cerrar (el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
           <div class="se-body">
             <div class="se-pv"><canvas id="seCv" width="540" height="960"></canvas><span class="se-tip">Arrastra para mover · rueda del ratón para el zoom</span><div class="se-pvb"><button id="sePlay" title="Reproducir / parar">▶</button><button id="seSnd" title="Oír o no el sonido del clip (apagado: sigues oyendo el directo)">🔇</button></div></div>
             <div class="se-ctl">
-              <div class="se-ai"><button class="primary" id="seAi">✨ Editar con IA</button><button id="seAiMore" title="Elegir qué hace la IA">⚙️ ▾</button>
+              <div class="se-ai"><button class="primary" id="seAi">✨ Editar con IA</button><button id="seAiMore" title="Elegir qué hace la IA"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
                 <div class="se-aid" id="seAiD" hidden>
                   <strong>Al pulsar «Editar con IA», la IA hace:</strong>
                   <label class="check"><input type="checkbox" id="seAutoT">El título</label>
@@ -1646,7 +1803,7 @@ input[type=range],.check input{accent-color:var(--blue)}
               <div hidden><span id="seTrimT"></span><button id="seAiTrim"></button><input type="range" id="seA" step="0.1"><input type="range" id="seB" step="0.1"></div>
               <div class="se-bar" id="seBarW" hidden><i id="seBar"></i></div>
               <div id="seRes"></div>
-              <div class="se-btns"><button class="primary" id="seExp">⬇️ Exportar</button><button id="seFull" title="Abrir este clip en el editor completo">🛠️ Editor completo</button></div>
+              <div class="se-btns"><button class="primary" id="seExp"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar</button><button id="seFull" title="Abrir este clip en el editor completo"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Editor completo</button></div>
             </div>
             <div class="se-tl cc" id="seTl" tabindex="-1">
               <div class="cc-bar">
@@ -9269,7 +9426,7 @@ function setEasy(on) {
   ezMode = on;
   $('app').classList.toggle('easy', on); document.body.classList.toggle('easy', on);
   $('modeBtn').hidden = false;
-  $('modeBtn').textContent = on ? '⚙️ Editor avanzado' : '✨ Modo fácil';
+  $('modeBtn').innerHTML = on ? '<svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Editor avanzado' : '<svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>Modo fácil';
   $('modeBtn').title = on ? 'Abre el editor completo con todas las herramientas' : 'Vuelve a la vista sencilla: solo el clip y clic derecho';
   if (!on) { ezShow('edit'); showLeft('media'); showInsp('video'); tlSig = ''; }
   ctxClose(); ezPopClose();
@@ -12613,7 +12770,7 @@ let stDock = false, stEdSound = false, stEdR = null, stEdRaf = 0;
 function stEdFmts(cur) {
   const box = $('seFmts'); box.innerHTML = '';
   setTimeout(stEdAutoUI, 0);
-  for (const [id, ic, n] of EZ_FMTS) { const b = document.createElement('button'); b.textContent = ic + ' ' + n; b.dataset.id = id; b.className = cur === id ? 'on' : '';
+  for (const [id, ic, n] of EZ_FMTS) { const b = document.createElement('button'); b.type = 'button'; b.title = n; b.dataset.id = id; b.className = cur === id ? 'on' : ''; let pv = null; try { pv = mockFrom(fmtStyle(id)); } catch {} if (!pv) { pv = document.createElement('span'); pv.className = 'se-fi'; pv.textContent = ic; } const lb = document.createElement('b'); lb.textContent = n; b.append(pv, lb);
     b.onclick = async () => { if (stPend) { stPendFmt = id; for (const o of box.children) o.classList.toggle('on', o === b); return; } if (!loaded || exporting) return; $('seS').textContent = '⏳ Cambiando de formato…'; try { stNoScenes(); await ezSetFormat(id); stCenter(); stEdFmts(id); } catch (e) { console.warn(e); } $('seS').textContent = fmtNeedsImage() ? '🖼️ Este formato lleva una imagen abajo: cópiala y pulsa Ctrl+V' : ''; }; box.append(b); }
 }
 function stEdTT() {
@@ -12641,7 +12798,7 @@ function stEdLoop() {
 let stPend = null, stPendFmt = '';
 function stEdPend(m) {
   stPend = m.id; stPendFmt = ''; stDock = true; $('livePage').classList.add('dock'); $('stEd').classList.remove('full'); $('stEd').hidden = false;
-  $('seT').textContent = `✂️ Tu clip · ${Math.round(m.t1 - m.t0)} s`; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = ''; $('seExp').disabled = true;
+  $('seT').innerHTML = `<i></i>Tu clip <em>${Math.round(m.t1 - m.t0)} s</em>`; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = ''; $('seExp').disabled = true;
   $('seS').textContent = '⏳ Guardando el clip… Mientras, ve poniendo el título y el formato.';
   const c = $('seCv'), x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#A1A1AA'; x.font = '600 26px system-ui'; x.textAlign = 'center'; x.fillText('⏳ Guardando el clip…', c.width / 2, c.height / 2);
   stEdFmts(''); stEdTT(); try { mtBlank(); } catch {} cancelAnimationFrame(stEdRaf); stEdLoop(); setTimeout(() => $('seTitle').focus(), 50);
@@ -13397,6 +13554,10 @@ setTimeout(() => {
   document.addEventListener('pointerdown', e => { if (mtInspI == null) return; const t = e.target; if (t === cv0 || (t.closest && (t.closest('#mtPop') || t.closest('#seTl') || t.closest('.se-pv') || t.closest('#ctxMenu')))) return; mtInspClose(); }, true);
   addEventListener('resize', () => { mtDirty(); if (mtInspI != null) mtInspPlace(); });
 }, 0);
+/* deslizadores: la parte recorrida se pinta de color (también cuando la cambia el programa, p. ej. al reproducir) */
+{ const fill = el => { const a = +el.min || 0, b = el.max === '' ? 100 : +el.max, v = ((+el.value - a) / ((b - a) || 1)) * 100, t = Math.max(0, Math.min(100, v)).toFixed(1) + '%'; if (el.style.getPropertyValue('--p') !== t) el.style.setProperty('--p', t); };
+  document.addEventListener('input', e => { if (e.target && e.target.type === 'range') fill(e.target); }, true);
+  setInterval(() => { for (const el of document.querySelectorAll('input[type=range]')) if (el.offsetParent) fill(el); }, 150); }
 /* ---------- botón «Editar con IA» con sus casillas (se guardan) ---------- */
 let stAiBusy = false;
 async function stAiRun() {
@@ -13425,7 +13586,7 @@ function stEdAutoUI() {
   $('seAutoT').checked = ezPref('stAutoT') !== '0'; $('seAutoF').checked = ezPref('stAutoF') !== '0'; $('seAutoS').checked = ezPref('stAutoS') !== '0';
   const d = ezPref('stFmtDef'), n = (EZ_FMTS.find(x => x[0] === d) || [])[2];
   $('seAutoFh').textContent = $('seAutoF').checked ? '' : `(si no, usa ${n || 'Horizontal'})`;
-  for (const b of $('seFmts').children) b.textContent = b.textContent.replace(/^⭐ /, ''), (b.dataset.id === d && !$('seAutoF').checked) && (b.textContent = '⭐ ' + b.textContent);
+  for (const b of $('seFmts').children) b.classList.toggle('def', b.dataset.id === d && !$('seAutoF').checked);
 }
 // el mismo panel, a pantalla completa, nada más meter un clip (subido o por enlace): la IA lo prepara y tú solo corriges
 let stQuick = false;
@@ -13433,7 +13594,7 @@ async function stQuickOpen(fresh = true) {
   const ed = $('stEd'); if (ed.parentNode !== document.body) document.body.append(ed);   // fuera del panel en directo, para que se vea en cualquier pantalla
   stQuick = true; stDock = true; ed.classList.add('full'); ed.hidden = false;
   stEdSound = true; $('seSnd').textContent = '🔊';   // aquí no hay directo que escuchar: el clip suena
-  $('seT').textContent = `✂️ Tu clip · ${Math.round(ezDur())} s`; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = ''; $('seExp').disabled = true;
+  $('seT').innerHTML = `<i></i>Tu clip <em>${Math.round(ezDur())} s</em>`; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = ''; $('seExp').disabled = true;
   const auto = ezPref('stAutoO') !== '0', aT = auto && ezPref('stAutoT') !== '0', aF = auto && ezPref('stAutoF') !== '0', aS = auto && ezPref('stAutoS') !== '0';
   $('seS').textContent = aT || aF || aS ? '✨ La IA está preparando el clip… puedes ir escribiendo el título' : '⏳ Abriendo el clip…';
   stEdFmts(''); stEdTT(); stEdAutoUI(); cancelAnimationFrame(stEdRaf); stEdLoop(); setTimeout(() => $('seTitle').focus(), 60);
@@ -13841,7 +14002,7 @@ async function clipLogDownload() {
 }
 setTimeout(() => {
   const b1 = $('lvData'); if (b1) b1.onclick = clipLogDownload;
-  const st = $('eStatus'); if (st && !$('logDl')) { const b = document.createElement('button'); b.id = 'logDl'; b.type = 'button'; b.textContent = '📥 Descargar datos de mis clips'; b.title = 'Un archivo con todo lo que has exportado, abierto y descartado, para analizarlo'; b.style.cssText = 'width:auto;margin-top:8px;font-size:12.5px;padding:6px 12px'; b.onclick = clipLogDownload; st.after(b); }
+  const st = $('eStatus'); if (st && !$('logDl')) { const b = document.createElement('button'); b.id = 'logDl'; b.type = 'button'; b.textContent = 'Descargar datos de mis clips'; b.title = 'Un archivo con todo lo que has exportado, abierto y descartado, para analizarlo'; b.style.cssText = 'width:auto;margin-top:8px;font-size:12.5px;padding:6px 12px'; b.onclick = clipLogDownload; st.after(b); }
 }, 0);
 async function liveDrop(g) {
   try { const S = Object.values(liveSessions).find(s => (s.moments || []).some(m => g.items.some(i => i.id === m.id))); if (S) clipLogAdd({ tipo: 'descartado', directo: momentInfo(S, g) }); } catch (e) { console.warn(e); }
