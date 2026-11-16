@@ -1509,6 +1509,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .lgx-st canvas.grab{cursor:grab}.lgx-st canvas.grabbing{cursor:grabbing}
 .lgx-empty{position:absolute;left:12px;right:12px;top:46%;margin:0;text-align:center;font-size:13px;color:#e4e4e7;text-shadow:0 1px 4px #000;pointer-events:none}
 .lgx-c{display:grid;gap:14px}
+.lgx-zm{position:absolute;right:10px;bottom:10px;z-index:2;width:auto!important;padding:6px 11px!important;font-size:12px;font-weight:800;border-radius:99px!important;background:rgba(0,0,0,.62)!important;color:#fff!important;border:1px solid rgba(255,255,255,.25)!important;backdrop-filter:blur(6px)}
+.lgx-zm.on{background:#fff!important;color:#111!important}
 .lgx[hidden]{display:none}.lgx{animation:cxPop .3s var(--ease) backwards}
 .lgx-ok{justify-self:start;width:auto;padding:8px 18px}
 .lg-edit{width:100%;margin-top:auto;padding:6px 8px;font-size:12px;font-weight:700;border-radius:8px}
@@ -2026,7 +2028,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <div class="lg-grid" id="lgGrid"></div>
             <input type="file" id="lgFile" accept="image/*" multiple hidden>
             <div class="lgx" id="lgx" hidden>
-              <div class="lgx-st"><canvas id="lgxCv" width="540" height="960"></canvas><p class="lgx-empty" id="lgxEmpty">Elige un logo arriba para ajustarlo aquí</p></div>
+              <div class="lgx-st"><canvas id="lgxCv" width="540" height="960"></canvas><button type="button" class="lgx-zm" id="lgxZm" title="Ver la pantalla más de cerca, centrada en el logo">🔍 200 %</button><p class="lgx-empty" id="lgxEmpty">Elige un logo arriba para ajustarlo aquí</p></div>
               <div class="lgx-c">
                 <div class="tpl-h"><strong>Ajustar el logo</strong><span class="hint">Arrástralo en la pantalla vertical para moverlo (o usa la rueda del ratón encima para el tamaño). Prueba fondos distintos para ver si se lee bien en cualquier clip.</span></div>
                 <div class="lgx-f"><span>Fondo de prueba</span><div class="lgx-bgs" id="lgxBgs"></div></div>
@@ -11273,23 +11275,31 @@ function lgxBox() {
   if (!logo) return null; const lw = W * (+$('logoSize').value) / 100, lh = lw * logo.img.naturalHeight / logo.img.naturalWidth;
   return { x: logoPos.x - lw / 2, y: logoPos.y - lh / 2, w: lw, h: lh };
 }
+// la pantalla de prueba puede verse al 100 % o al 200 % (centrada en el logo)
+function lgxView() {
+  const z = LGX.zoom ? 2 : 1; if (z === 1) return { x: 0, y: 0, z };
+  if (LGX.drag && LGX.drag.view) return LGX.drag.view;
+  const cl = (v, a, b) => Math.max(a, Math.min(b, v));
+  return { x: cl(logoPos.x - W / (2 * z), 0, W - W / z), y: cl(logoPos.y - H / (2 * z), 0, H - H / z), z };
+}
 function lgxDraw() {
-  const cv = $('lgxCv'); if (!cv) return; const g = cv.getContext('2d'), k = cv.width / W;
-  const bg = lgxBg(LGX.bg); g.save(); g.clearRect(0, 0, cv.width, cv.height);
-  const s = Math.max(cv.width / bg.width, cv.height / bg.height); g.drawImage(bg, (cv.width - bg.width * s) / 2, (cv.height - bg.height * s) / 2, bg.width * s, bg.height * s);
+  const cv = $('lgxCv'); if (!cv) return; const g = cv.getContext('2d'), v = lgxView(), m = cv.width / W * v.z, px = 1 / m;
+  const bg = lgxBg(LGX.bg); g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
+  g.setTransform(m, 0, 0, m, -v.x * m, -v.y * m);
+  const s = Math.max(W / bg.width, H / bg.height); g.drawImage(bg, (W - bg.width * s) / 2, (H - bg.height * s) / 2, bg.width * s, bg.height * s);
   if ($('lgxTk').checked) {
-    g.fillStyle = 'rgba(0,0,0,.42)'; g.font = '700 22px Inter, system-ui, sans-serif'; g.textBaseline = 'middle';
-    const z = (x, y, w, h, t) => { g.fillStyle = 'rgba(0,0,0,.42)'; g.fillRect(x * k, y * k, w * k, h * k); g.strokeStyle = 'rgba(255,255,255,.35)'; g.setLineDash([6, 5]); g.strokeRect(x * k + .5, y * k + .5, w * k - 1, h * k - 1); g.setLineDash([]); g.fillStyle = 'rgba(255,255,255,.75)'; g.fillText(t, x * k + 12, y * k + 22); };
+    g.font = `700 ${22 * px}px Inter, system-ui, sans-serif`; g.textBaseline = 'middle';
+    const z = (x, y, w, h, t) => { g.fillStyle = 'rgba(0,0,0,.42)'; g.fillRect(x, y, w, h); g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = px; g.setLineDash([6 * px, 5 * px]); g.strokeRect(x + px / 2, y + px / 2, w - px, h - px); g.setLineDash([]); g.fillStyle = 'rgba(255,255,255,.75)'; g.fillText(t, x + 12 * px, y + 22 * px); };
     z(0, 0, W, 170, 'Arriba: Siguiendo · Para ti');
     z(930, 820, 150, 760, '');
     z(0, 1560, W, 360, 'Abajo: nombre, descripción y música');
-    g.save(); g.translate(1005 * k, 1200 * k); g.rotate(-Math.PI / 2); g.textAlign = 'center'; g.fillStyle = 'rgba(255,255,255,.75)'; g.fillText('Botones', 0, 0); g.restore();
+    g.save(); g.translate(1005, 1200); g.rotate(-Math.PI / 2); g.textAlign = 'center'; g.fillStyle = 'rgba(255,255,255,.75)'; g.fillText('Botones', 0, 0); g.restore();
   }
   const b = lgxBox();
   if (b) {
-    g.globalAlpha = (+$('logoOp').value) / 100; g.drawImage(logo.img, b.x * k, b.y * k, b.w * k, b.h * k); g.globalAlpha = 1;
-    if (LGX.drag || LGX.hover) { g.strokeStyle = trk.logo.lock ? 'rgba(255,190,80,.9)' : 'rgba(255,255,255,.9)'; g.lineWidth = 2; g.setLineDash([5, 4]); g.strokeRect(b.x * k - 3, b.y * k - 3, b.w * k + 6, b.h * k + 6); g.setLineDash([]); }
-    if (LGX.drag && LGX.drag.sx) { g.strokeStyle = 'rgba(110,151,255,.9)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(cv.width / 2, 0); g.lineTo(cv.width / 2, cv.height); g.stroke(); }
+    g.globalAlpha = (+$('logoOp').value) / 100; g.drawImage(logo.img, b.x, b.y, b.w, b.h); g.globalAlpha = 1;
+    if (LGX.drag || LGX.hover) { g.strokeStyle = trk.logo.lock ? 'rgba(255,190,80,.9)' : 'rgba(255,255,255,.9)'; g.lineWidth = 2 * px; g.setLineDash([5 * px, 4 * px]); g.strokeRect(b.x - 3 * px, b.y - 3 * px, b.w + 6 * px, b.h + 6 * px); g.setLineDash([]); }
+    if (LGX.drag && LGX.drag.sx) { g.strokeStyle = 'rgba(110,151,255,.9)'; g.lineWidth = 1.5 * px; g.beginPath(); g.moveTo(W / 2, 0); g.lineTo(W / 2, H); g.stroke(); }
   }
   g.restore();
 }
@@ -11323,14 +11333,15 @@ setTimeout(() => {
   $('lgxSz').addEventListener('input', e => { setRange('logoSize', e.target.value); $('lgxSzV').textContent = e.target.value + '%'; lgxDraw(); });
   ['logoOp', 'logoSize'].forEach(id => $(id).addEventListener('input', () => { if (document.activeElement && document.activeElement.id && document.activeElement.id.startsWith('lgx')) return; lgxSync(); }));
   $('lgxTk').addEventListener('change', lgxDraw);
+  $('lgxZm').onclick = () => { LGX.zoom = !LGX.zoom; $('lgxZm').textContent = LGX.zoom ? '↺ 100 %' : '🔍 200 %'; $('lgxZm').classList.toggle('on', !!LGX.zoom); lgxDraw(); };
   $('lgxOk').onclick = () => { LGX.open = false; lgxSync(); toast('Logo guardado'); };
   $('lgxLock').addEventListener('change', () => { trk.logo.lock = $('lgxLock').checked; $('logoLock').checked = trk.logo.lock; syncTrackUI(); saveLogoCfg(); lgxSync(); toast(trk.logo.lock ? 'Logo bloqueado' : 'Logo desbloqueado'); });
   $('logoLock').addEventListener('change', lgxSync);
-  const at = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; };
+  const at = e => { const r = cv.getBoundingClientRect(), v = lgxView(); return { x: v.x + (e.clientX - r.left) / r.width * W / v.z, y: v.y + (e.clientY - r.top) / r.height * H / v.z }; };
   const inB = (p, b) => b && p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
   cv.addEventListener('pointerdown', e => { const p = at(e), b = lgxBox(); if (!inB(p, b)) return;
     if (trk.logo.lock) { toast('Logo bloqueado: quita el candado para moverlo'); return; }
-    cv.setPointerCapture(e.pointerId); LGX.drag = { px: p.x, py: p.y, lx: logoPos.x, ly: logoPos.y }; cv.className = 'grabbing'; });
+    cv.setPointerCapture(e.pointerId); LGX.drag = { px: p.x, py: p.y, lx: logoPos.x, ly: logoPos.y, view: lgxView() }; cv.className = 'grabbing'; });
   cv.addEventListener('pointermove', e => { const p = at(e);
     if (!LGX.drag) { const h = inB(p, lgxBox()); if (h !== !!LGX.hover) { LGX.hover = h; lgxDraw(); } return; }
     const d = LGX.drag, b = lgxBox(); let x = d.lx + p.x - d.px, y = d.ly + p.y - d.py;
