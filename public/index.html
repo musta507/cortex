@@ -2036,6 +2036,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
                 <div class="lgx-f"><span>Fondo de prueba</span><div class="lgx-bgs" id="lgxBgs"></div></div>
                 <label class="f">Opacidad <span class="val" id="lgxOpV">85%</span><input type="range" id="lgxOp" min="5" max="100" value="85"></label>
                 <label class="f">Tamaño <span class="val" id="lgxSzV">18%</span><input type="range" id="lgxSz" min="2" max="100" value="18"></label>
+                <label class="f">Girar <span class="val" id="lgxRotV">0°</span><input type="range" id="lgxRot" min="-180" max="180" value="0"></label>
                 <div class="lgx-f"><span>Posición rápida</span><div class="lgx-pos" id="lgxPos"></div></div>
                 <label class="toggle"><input type="checkbox" id="lgxTk" checked><span></span>Ver lo que tapa TikTok (botones y descripción)</label>
                 <label class="toggle"><input type="checkbox" id="lgxLock"><span></span>Candado: fijar posición y tamaño</label>
@@ -2524,6 +2525,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
               <label class="f">Tamaño <span class="val" id="logoSizeV">18%</span><input type="range" id="logoSize" min="2" max="100" value="18"></label>
               <label class="f">Opacidad <span class="val" id="logoOpV">85%</span><input type="range" id="logoOp" min="5" max="100" value="85"></label>
             </div>
+            <label class="f">Girar <span class="val" id="logoRotV">0°</span><input type="range" id="logoRot" min="-180" max="180" value="0"></label>
             <details class="more"><summary>Posición y opciones</summary>
               <div class="more-b">
                 <div class="presets">
@@ -4406,6 +4408,7 @@ const S0 = () => ({
   imgZoom: +$('imgZoom').value / 100,
   logoSize: +$('logoSize').value / 100,
   logoOp: +$('logoOp').value / 100,
+  logoRot: +$('logoRot').value,
   subBold: $('subBold').checked, subItalic: $('subItalic').checked, subUnder: $('subUnder').checked,
   subCase: $('subCase').value !== 'none' ? $('subCase').value : ($('upper').checked ? 'upper' : 'none'),
   subLS: +$('subLS').value, subAlign: $('subAlign').value,
@@ -5136,11 +5139,14 @@ function draw0(t, forExport, src, T) {
   if (logo && !trk.logo.hide) {
     const lw = W * s.logoSize, lh = lw * logo.img.naturalHeight / logo.img.naturalWidth;
     const x = logoPos.x - lw / 2, y = logoPos.y + logoAuto.dy - lh / 2;
+    const rot = (s.logoRot || 0) * Math.PI / 180;
     ctx.save(); ctx.globalAlpha = s.logoOp;
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(logo.img, x, y, lw, lh);
+    if (rot) { ctx.translate(x + lw / 2, y + lh / 2); ctx.rotate(rot); ctx.drawImage(logo.img, -lw / 2, -lh / 2, lw, lh); }
+    else ctx.drawImage(logo.img, x, y, lw, lh);
     ctx.restore();
-    boxes.logo = { x, y, w: lw, h: lh };
+    if (rot) { const c = Math.abs(Math.cos(rot)), sn = Math.abs(Math.sin(rot)), bw = lw * c + lh * sn, bh = lw * sn + lh * c; boxes.logo = { x: x + lw / 2 - bw / 2, y: y + lh / 2 - bh / 2, w: bw, h: bh }; }
+    else boxes.logo = { x, y, w: lw, h: lh };
   }
   ctx.restore();
 
@@ -6318,7 +6324,7 @@ async function doExport(opts = {}) {
 const labels = {
   titleSize: v => v, subSize: v => v, subY: v => v + '%', zoom: v => v + '%', offY: v => v, offX: v => v,
   titleLH: v => (v / 100).toFixed(2), subLH: v => (v / 100).toFixed(2), boxR: v => v, boxPX: v => v, boxPY: v => v,
-  logoSize: v => v + '%', logoOp: v => v + '%',
+  logoSize: v => v + '%', logoOp: v => v + '%', logoRot: v => v + '°',
   shOp: v => v + '%', shBlur: v => v, strokeW: v => v, ratio: v => v + '%', imgZoom: v => v + '%',
   mVol: v => v + '%', vVol: v => v + '%', mStart: v => mmss(+v), mFadeIn: v => v + ' s', mFadeOut: v => v + ' s',
 };
@@ -6579,6 +6585,7 @@ cv.addEventListener('wheel', e => {
     const tx = txtById(+k.slice(4)); tx.size = Math.min(400, Math.max(16, tx.size + (e.deltaY < 0 ? 4 : -4))); fillTextPanel(); pushHistory(); return;
   }
   if (k === 'logo' && trk.logo.lock) { e.preventDefault(); return; }
+  if (k === 'logo' && e.shiftKey) { e.preventDefault(); let v = +$('logoRot').value + (e.deltaY < 0 ? 5 : -5); if (v > 180) v -= 360; if (v < -180) v += 360; setRange('logoRot', v); return; }
   if (k === 'title' || k === 'sub' || k === 'logo') {
     e.preventDefault();
     const id = { title: 'titleSize', sub: 'subSize', logo: 'logoSize' }[k];
@@ -7015,7 +7022,7 @@ const kv = {
 };
 
 /* ---------- estado: estilo (plantilla) y proyecto completo ---------- */
-const STYLE_SKIP = new Set(['title', 'tplName', 'tplSel', 'musicSearch', 'model', 'lang', 'gemKey', 'gemKey2', 'streamer', 'ctxSearch', 'logoSize', 'logoOp', 'logoLock', 'logoShow',
+const STYLE_SKIP = new Set(['title', 'tplName', 'tplSel', 'musicSearch', 'model', 'lang', 'gemKey', 'gemKey2', 'streamer', 'ctxSearch', 'logoSize', 'logoOp', 'logoRot', 'logoLock', 'logoShow',
   'txtLH', 'txtText', 'txtFont', 'txtSize', 'txtRot', 'txtColor', 'txtStrokeC', 'txtBgC', 'txtStroke', 'txtShadow', 'txtBg']);
 function styleControls() {
   return [...document.querySelectorAll('.sec input, .sec select, #quality, #fps')]
@@ -7055,7 +7062,7 @@ async function applyStyle(st) {
 function getProject() {
   return { v: 2, style: getStyle(), title: $('title').value, titleHL: [...titleHL], captions, allWords, crop,
            clipName: file ? file.name : null, segs, texts, zones, trk, pseg, streamer: $('streamer').value.trim(), mutes, clipMeta,
-           logo: { x: logoPos.x, y: logoPos.y, size: $('logoSize').value, op: $('logoOp').value } };
+           logo: { x: logoPos.x, y: logoPos.y, size: $('logoSize').value, op: $('logoOp').value, rot: $('logoRot').value } };
 }
 async function applyProject(p) {
   restoring = true;
@@ -7072,7 +7079,7 @@ async function applyProject(p) {
   if (!segs.length && loaded) resetSegs();
   const lk = trk.logo.lock; trk = Object.assign(TRK0(), JSON.parse(JSON.stringify(p.trk || {}))); trk.logo.lock = lk;
   nid = Math.max(nid, 1 + Math.max(0, ...segs.map(g => g.id), ...texts.map(t => t.id)));
-  if (p.logo) { logoPos.x = p.logo.x; logoPos.y = p.logo.y; $('logoSize').value = p.logo.size; $('logoOp').value = p.logo.op; ['logoSize', 'logoOp'].forEach(id => $(id + 'V').textContent = $(id).value + '%'); }
+  if (p.logo) { logoPos.x = p.logo.x; logoPos.y = p.logo.y; $('logoSize').value = p.logo.size; $('logoOp').value = p.logo.op; $('logoRot').value = p.logo.rot || 0; ['logoSize', 'logoOp'].forEach(id => $(id + 'V').textContent = $(id).value + '%'); $('logoRotV').textContent = $('logoRot').value + '°'; }
   // conservar la posición en el vídeo final
   if (segs.length) { const T = Math.min(totalDur(), curT()); pseg = Math.min(p.pseg || 0, segs.length - 1); if (vid.paused && !exporting) { const g = segs[pseg]; if (!(vid.currentTime >= g.s && vid.currentTime <= g.e)) seekOut(Math.min(T, totalDur())); } }
   if (selTextId() != null && !txtById(selTextId())) selected = null;
@@ -7304,12 +7311,12 @@ function callOptsSync() {
 setTimeout(() => { const g = $('callNSeg'); if (!g) return; g.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { setCallN(+b.dataset.n); callOptsSync(); } });
   $('callFind').onclick = () => { camDetectedFor = null; callDetect().then(() => { pushHistory(); callOptsSync(); }); }; }, 0);
 // configuración del logo: se recuerda siempre, aparte de plantillas y proyectos
-const logoCfgNow = () => ({ size: $('logoSize').value, op: $('logoOp').value, x: logoPos.x, y: logoPos.y, lock: trk.logo.lock });
+const logoCfgNow = () => ({ size: $('logoSize').value, op: $('logoOp').value, rot: $('logoRot').value, x: logoPos.x, y: logoPos.y, lock: trk.logo.lock });
 function saveLogoCfg() { persistClient(); }   // posición, tamaño, opacidad y candado: de cada cliente
 function applyLogoCfg(c) {
   if (!c) return;
-  $('logoSize').value = c.size; $('logoOp').value = c.op; logoPos.x = c.x; logoPos.y = c.y; trk.logo.lock = !!c.lock;
-  ['logoSize', 'logoOp'].forEach(id => $(id + 'V').textContent = $(id).value + '%');
+  $('logoSize').value = c.size; $('logoOp').value = c.op; $('logoRot').value = c.rot || 0; logoPos.x = c.x; logoPos.y = c.y; trk.logo.lock = !!c.lock;
+  ['logoSize', 'logoOp'].forEach(id => $(id + 'V').textContent = $(id).value + '%'); $('logoRotV').textContent = $('logoRot').value + '°';
 }
 function loadLogoCfg() {
   try {
@@ -7318,7 +7325,9 @@ function loadLogoCfg() {
     ['logoSize', 'logoOp'].forEach(id => $(id + 'V').textContent = $(id).value + '%');
   } catch {}
 }
-['logoSize', 'logoOp'].forEach(id => $(id).addEventListener('input', saveLogoCfg));
+['logoSize', 'logoOp', 'logoRot'].forEach(id => $(id).addEventListener('input', saveLogoCfg));
+// el giro se pega a 0°, 90°, −90° y 180°
+$('logoRot').addEventListener('input', () => { const v = +$('logoRot').value; for (const m of [-180, -90, 0, 90, 180]) if (v !== m && Math.abs(v - m) <= 3) { $('logoRot').value = m; $('logoRotV').textContent = m + '°'; } });
 
 /* ====== editor tipo CapCut: paneles, pestañas y línea de tiempo ====== */
 const LEFT = { media: ['s1'], subs: ['s3'], text: ['sX'], audio: ['s6'], tpl: ['sT'] };
@@ -11433,7 +11442,7 @@ function lgxDraw() {
   }
   const b = lgxBox();
   if (b) {
-    g.globalAlpha = (+$('logoOp').value) / 100; g.drawImage(logo.img, b.x, b.y, b.w, b.h); g.globalAlpha = 1;
+    g.globalAlpha = (+$('logoOp').value) / 100; const rr = (+$('logoRot').value || 0) * Math.PI / 180; g.save(); g.translate(b.x + b.w / 2, b.y + b.h / 2); g.rotate(rr); g.drawImage(logo.img, -b.w / 2, -b.h / 2, b.w, b.h); g.restore(); g.globalAlpha = 1;
     if (LGX.drag || LGX.hover) { g.strokeStyle = trk.logo.lock ? 'rgba(255,190,80,.9)' : 'rgba(255,255,255,.9)'; g.lineWidth = 2 * px; g.setLineDash([5 * px, 4 * px]); g.strokeRect(b.x - 3 * px, b.y - 3 * px, b.w + 6 * px, b.h + 6 * px); g.setLineDash([]); }
     if (LGX.drag && LGX.drag.sx) { g.strokeStyle = 'rgba(110,151,255,.9)'; g.lineWidth = 1.5 * px; g.beginPath(); g.moveTo(W / 2, 0); g.lineTo(W / 2, H); g.stroke(); }
   }
@@ -11445,8 +11454,9 @@ function lgxSync() {
   $('lgxWho').textContent = c ? c.name : 'este creador'; $('lgxEmpty').hidden = has;
   $('lgxOp').value = $('logoOp').value; $('lgxOpV').textContent = $('logoOp').value + '%';
   $('lgxSz').value = $('logoSize').value; $('lgxSzV').textContent = $('logoSize').value + '%';
+  $('lgxRot').value = $('logoRot').value; $('lgxRotV').textContent = $('logoRot').value + '°';
   $('lgxLock').checked = lk;
-  ['lgxOp', 'lgxSz'].forEach(id => $(id).disabled = !has || lk); $('lgxLock').disabled = !has;
+  ['lgxOp', 'lgxSz', 'lgxRot'].forEach(id => $(id).disabled = !has || lk); $('lgxLock').disabled = !has;
   box.querySelectorAll('.lgx-pos button').forEach(x => x.disabled = !has || lk);
   $('lgxCv').className = has && !lk ? 'grab' : '';
   lgxDraw();
@@ -11466,8 +11476,9 @@ setTimeout(() => {
     pos.append(b);
   }
   $('lgxOp').addEventListener('input', e => { setRange('logoOp', e.target.value); $('lgxOpV').textContent = e.target.value + '%'; lgxDraw(); });
+  $('lgxRot').addEventListener('input', e => { setRange('logoRot', e.target.value); $('lgxRotV').textContent = $('logoRot').value + '°'; $('lgxRot').value = $('logoRot').value; lgxDraw(); });
   $('lgxSz').addEventListener('input', e => { setRange('logoSize', e.target.value); $('lgxSzV').textContent = e.target.value + '%'; lgxDraw(); });
-  ['logoOp', 'logoSize'].forEach(id => $(id).addEventListener('input', () => { if (document.activeElement && document.activeElement.id && document.activeElement.id.startsWith('lgx')) return; lgxSync(); }));
+  ['logoOp', 'logoSize', 'logoRot'].forEach(id => $(id).addEventListener('input', () => { if (document.activeElement && document.activeElement.id && document.activeElement.id.startsWith('lgx')) return; lgxSync(); }));
   $('lgxTk').addEventListener('change', lgxDraw);
   $('lgxZm').onclick = () => { LGX.zoom = !LGX.zoom; $('lgxZm').textContent = LGX.zoom ? '↺ 100 %' : '🔍 200 %'; $('lgxZm').classList.toggle('on', !!LGX.zoom); lgxDraw(); };
   $('lgxOk').onclick = () => { LGX.open = false; lgxSync(); toast('Logo guardado'); };
@@ -11615,6 +11626,8 @@ function ctxItems(k) {
   if (k === 'logo') return ['Logo', [
     { icon: 'A+', label: 'Más grande', act: () => { step('logoSize', 2); saveLogoCfg(); } },
     { icon: 'A−', label: 'Más pequeño', act: () => { step('logoSize', -2); saveLogoCfg(); } },
+    { icon: '↻', label: 'Girar 90°', key: 'Mayús + rueda', act: () => { let v = +$('logoRot').value + 90; if (v > 180) v -= 360; setRange('logoRot', v); saveLogoCfg(); pushHistory(); } },
+    +$('logoRot').value ? { icon: '⟲', label: 'Quitar el giro', act: () => { setRange('logoRot', 0); saveLogoCfg(); pushHistory(); } } : null,
     { icon: '⬇', label: 'Abajo, en el centro', act: () => { logoAuto.manual = true; logoAuto.dy = 0; logoPos.x = W / 2; logoPos.y = H - 230; saveLogoCfg(); pushHistory(); } },
     { icon: '↗', label: 'Arriba a la derecha', act: () => { logoAuto.manual = true; logoAuto.dy = 0; logoPos.x = W - 170; logoPos.y = 240; saveLogoCfg(); pushHistory(); } },
     { icon: trk.logo.lock ? '🔓' : '🔒', label: trk.logo.lock ? 'Desbloquear (poder moverlo)' : 'Bloquear en su sitio', act: () => { trk.logo.lock = !trk.logo.lock; syncTrackUI(); saveLogoCfg(); pushHistory(); } },
@@ -14655,7 +14668,7 @@ async function ccBuild() {
     try { const bl = await (await fetch(logo.src)).blob(), nm = 'logo.' + ((bl.type.split('/')[1] || 'png').replace('jpeg', 'jpg').replace('svg+xml', 'svg')); files[nm] = bl;
       const iw = logo.img.naturalWidth, ih = logo.img.naturalHeight, lw = W * S0v.logoSize, lh = lw * ih / iw, lt = trackOf('video', 2);
       const m = vMat('image', '__CXDIR__/cortex/' + nm, iw, ih, ccCrop({ x: 0, y: 0, w: iw, h: ih }, iw, ih), 0); metaFiles.push({ name: nm, kind: 'photo', w: iw, h: ih });
-      vSeg(lt, m, 0, D, 0, ccClipOf({ x: 0, y: 0, w: iw, h: ih }, { x: logoPos.x - lw / 2, y: logoPos.y + logoAuto.dy - lh / 2, w: lw, h: lh }, S0v.logoOp), null, 1.0, 50); } catch (e) { console.warn('logo a CapCut', e); }
+      vSeg(lt, m, 0, D, 0, Object.assign(ccClipOf({ x: 0, y: 0, w: iw, h: ih }, { x: logoPos.x - lw / 2, y: logoPos.y + logoAuto.dy - lh / 2, w: lw, h: lh }, S0v.logoOp), { rotation: +S0v.logoRot || 0 }), null, 1.0, 50); } catch (e) { console.warn('logo a CapCut', e); }
   }
   // 4) música
   if (music.cur && music.cur.blob) {
