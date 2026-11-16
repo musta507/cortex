@@ -22,13 +22,20 @@ const panelPage = fs.readFileSync(path.join(__dirname, 'public', 'panel.html'));
 const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function loginPage(o) {
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(o.title)}</title>
-<style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0A0A0C radial-gradient(1200px 600px at 50% -10%,#1d1d2b,transparent);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:#F4F4F5;padding:16px}
-.c{width:min(400px,100%);background:#111114;border:1px solid #27272A;border-radius:18px;padding:30px 26px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
-.b{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;margin-bottom:18px}.b i{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:#fff;color:#111;font-style:normal;font-size:15px}
-h1{font-size:22px;margin:0 0 6px}p{color:#A1A1AA;margin:0 0 18px;font-size:14px}label{display:block;font-size:13px;font-weight:600;color:#D4D4D8;margin-bottom:6px}
-input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #3F3F46;background:#0A0A0C;color:#fff;font-size:16px;outline:none}input:focus{border-color:#fff}
-button{width:100%;margin-top:14px;padding:12px;border:0;border-radius:10px;background:#fff;color:#111;font-weight:800;font-size:15px;cursor:pointer}
-.e{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.4);color:#FCA5A5;padding:9px 12px;border-radius:10px;font-size:13px;margin-bottom:14px}.n{margin-top:16px;font-size:12px;color:#71717A}</style></head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>:root{color-scheme:dark}*{box-sizing:border-box}html{-webkit-font-smoothing:antialiased}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(900px 520px at 50% -10%,rgba(59,110,246,.2),transparent 70%),radial-gradient(600px 400px at 100% 100%,rgba(110,151,255,.08),transparent 70%),#08080A;font:15px/1.5 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;color:#F5F5F7;padding:16px;overflow:hidden}
+body::before{content:"";position:fixed;width:520px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(110,151,255,.14),transparent);top:-160px;left:50%;margin-left:-260px;animation:f 10s ease-in-out infinite;pointer-events:none}
+@keyframes f{0%,100%{transform:translate(0,0)}50%{transform:translate(-60px,40px)}}
+@keyframes up{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes sh{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
+.c{position:relative;width:min(410px,100%);background:rgba(20,20,24,.72);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:32px 28px;box-shadow:0 40px 100px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);animation:up .5s cubic-bezier(.2,.8,.2,1) backwards}
+.b{display:flex;align-items:center;gap:11px;font-weight:800;font-size:21px;letter-spacing:-.3px;margin-bottom:22px}.b i{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#fff 30%,#8FB1FF);color:#08080A;font-style:normal;font-size:14px;box-shadow:0 8px 22px rgba(110,151,255,.35)}
+h1{font-size:24px;letter-spacing:-.5px;margin:0 0 6px}p{color:#A1A1AA;margin:0 0 20px;font-size:14px}label{display:block;font-size:13px;font-weight:700;color:#D4D4D8;margin-bottom:7px}
+input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.4);color:#fff;font-size:16px;outline:none;transition:border-color .15s,box-shadow .2s}input:focus{border-color:rgba(110,151,255,.75);box-shadow:0 0 0 3px rgba(110,151,255,.25)}
+button{width:100%;margin-top:16px;padding:13px;border:0;border-radius:12px;background:#fff;color:#08080A;font:800 15px Figtree,system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(255,255,255,.08);transition:transform .1s,box-shadow .2s}button:hover{box-shadow:0 10px 30px rgba(157,187,255,.3)}button:active{transform:scale(.98)}
+.e{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.4);color:#FCA5A5;padding:10px 12px;border-radius:12px;font-size:13px;margin-bottom:16px;animation:sh .45s}.n{margin-top:18px;font-size:12px;color:#71717A}
+@media (prefers-reduced-motion:reduce){*,*::before{animation:none!important}}</style></head>
 <body><form class="c" method="post" action="${o.action}"><div class="b"><i>▶</i>Cortex</div><h1>${esc(o.h)}</h1><p>${esc(o.sub)}</p>${o.msg ? `<div class="e">${esc(o.msg)}</div>` : ''}
 <label for="p">Contraseña</label><input id="p" name="pass" type="password" autocomplete="current-password" autofocus required><button>Entrar</button>${o.note ? `<div class="n">${esc(o.note)}</div>` : ''}</form></body></html>`;
 }
