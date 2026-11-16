@@ -12751,7 +12751,19 @@ function mtSeek(fn) {
   const go = () => { const f = mtWantFn; mtWantFn = null; if (!f) { mtSeekBusy = false; return; } mtSeekBusy = true; try { f(); } catch {} const done = () => { clearTimeout(t); go(); }, t = setTimeout(done, 250); vid.addEventListener('seeked', done, { once: true }); };
   go();
 }
-const mtSeekOut = T => mtSeek(() => seekOut(T));
+const mtSeekOut = T => { MT.phHold = { T, at: performance.now() }; mtSeek(() => seekOut(T)); };
+// dónde está la línea blanca: lo que pediste aunque el vídeo aún esté saltando, y al reproducir avanza en cada fotograma de la pantalla
+function mtPhSync() { const h = MT.phHold; if (h && (mtSeekBusy || performance.now() - h.at < 350) && Math.abs(curT() - h.T) > 1e-3) { try { seekOut(h.T); } catch {} } }
+function mtPhNow() { const h = MT.phHold; return h && (mtSeekBusy || (MT.drag && MT.drag.type === 'seek') || performance.now() - h.at < 350) ? h.T : curT(); }
+function mtPhStep(now) {
+  const D = totalDur() || 0, ct = vid.currentTime, h = MT.phHold;
+  if (h && (mtSeekBusy || (MT.drag && MT.drag.type === 'seek') || now - h.at < 350)) { MT.phD = h.T; MT.pm = null; return; }
+  const T = curT();
+  if (vid.paused || exporting) { MT.phD = T; MT.pm = null; return; }
+  if (!MT.pm || MT.pm.ct !== ct) MT.pm = { ct, T, at: now };
+  const est = Math.min(D, MT.pm.T + Math.min(0.25, (now - MT.pm.at) / 1000 * (vid.playbackRate || 1)));
+  MT.phD = MT.phD == null || Math.abs(est - MT.phD) > 0.3 ? est : Math.max(MT.phD, est);
+}
 const mtSeekSrc = (k, t) => mtSeek(() => { pseg = k; vid.currentTime = t; });
 function mtBlocks() {   // partes de plantilla en tiempo del vídeo final
   const out = [], sc = clipMeta.scenes; let acc = 0;
@@ -12822,7 +12834,7 @@ function mtViewStep(dt) {   // zoom y desplazamiento (suaves)
   // al arrastrar cerca de un borde, la línea se va moviendo sola
   if (d && MT.ptr && max > 0 && ['seek', 'trim', 'move', 'bound', 'cap'].includes(d.type)) { const e = 36, x = MT.ptr.x; const v = x < e ? x - e : x > MT.vw - e ? x - (MT.vw - e) : 0; if (v) { const o = MT.sx; MT.sx = mtClamp(MT.sx + mtClamp(v, -60, 60) * dt * 0.02, 0, max); if (MT.sx !== o) { MT.sxT = null; try { mtDragMove(); } catch {} moving = true; } } }
   // la vista sigue a la línea blanca cuando se sale
-  const T = curT();
+  const T = MT.phD == null ? curT() : MT.phD;
   if (!d && !MT.anchor && max > 0 && Math.abs(T - MT.lastT) > 1e-3) { const px = mtXofOut(T); if (px > MT.vw - 36 || px < ML.padL - 2) MT.sxT = MT.sx + px - (vid.paused ? MT.vw / 2 : 70); }
   MT.lastT = T;
   if (MT.sxT != null) { MT.sxT = mtClamp(MT.sxT, 0, max); if (Math.abs(MT.sxT - MT.sx) > 0.5) { MT.sx += (MT.sxT - MT.sx) * kz; moving = true; } else { MT.sx = MT.sxT; MT.sxT = null; } }
@@ -12961,9 +12973,10 @@ function mtDraw() {
   // línea fantasma bajo el ratón
   else if (!d && MT.ptr && MT.ptr.y < ML.bar[0] - 4 && MT.hover && MT.hover.t !== 'bar') { const px = MT.ptr.x, T = mtTofX(px); if (T >= 0 && T <= MT.span) { x.fillStyle = 'rgba(255,255,255,.3)'; x.fillRect(Math.round(px) - 0.5, 14, 1, bot - 14); if (Math.abs(px - mtXofOut(curT())) > 30) mtPill(x, px, 0, fmtS(T), { bg: '#27272A', fg: '#D4D4D8', h: 15, font: '600 10px ui-monospace,SFMono-Regular,Menlo,monospace' }); } }
   // línea blanca (por dónde va el vídeo)
-  { const T = curT(), px = Math.round(T >= D - 1e-3 && D ? mtXofOut(D, true) : mtXofOut(T));
-    if (px > -8 && px < VW + 8) { x.fillStyle = 'rgba(0,0,0,.5)'; x.fillRect(px - 2, 12, 4, bot - 12); x.fillStyle = '#fff'; x.fillRect(px - 1, 10, 2, bot - 10);
-      x.beginPath(); x.moveTo(px - 6, 3); x.arcTo(px - 6, 1, px - 4, 1, 2); x.lineTo(px + 4, 1); x.arcTo(px + 6, 1, px + 6, 3, 2); x.lineTo(px + 6, 10); x.lineTo(px, 16); x.lineTo(px - 6, 10); x.closePath(); x.fillStyle = '#fff'; x.fill(); x.strokeStyle = 'rgba(0,0,0,.45)'; x.lineWidth = 1; x.stroke(); }
+  { const T = MT.phD == null ? curT() : MT.phD, sn = MT.phSnap && d && d.type === 'seek' ? MT.phSnap : null, px = Math.round((T >= D - 1e-3 && D ? mtXofOut(D, true) : mtXofOut(T)) * 2) / 2;
+    if (px > -8 && px < VW + 8) { const col = sn ? '#FDE047' : '#fff', pop = sn ? 1 + 0.4 * Math.max(0, 1 - (now - sn.at) / 220) : 1;   // al pegarse a un corte: se pone amarilla y da un pequeño salto
+      x.fillStyle = 'rgba(0,0,0,.5)'; x.fillRect(px - 2, 12, 4, bot - 12); x.fillStyle = col; x.fillRect(px - 1, 10, 2, bot - 10);
+      x.save(); x.translate(px, 1); x.scale(pop, pop); x.beginPath(); x.moveTo(-6, 2); x.arcTo(-6, 0, -4, 0, 2); x.lineTo(4, 0); x.arcTo(6, 0, 6, 2, 2); x.lineTo(6, 9); x.lineTo(0, 15); x.lineTo(-6, 9); x.closePath(); x.fillStyle = col; if (sn) { x.shadowColor = '#FDE047'; x.shadowBlur = 10; } x.fill(); x.shadowBlur = 0; x.strokeStyle = 'rgba(0,0,0,.45)'; x.lineWidth = 1; x.stroke(); x.restore(); }
   }
   if (MT.bub && d) mtPill(x, MT.bub.x, MT.bub.y == null ? 2 : MT.bub.y, MT.bub.text, { bg: '#000', line: 'rgba(255,255,255,.35)', h: 19 });
   if (MT.say) { const q = (now - MT.say.at) / 1900; if (q >= 1) MT.say = null; else mtPill(x, VW / 2, ML.vid[0] + 20, MT.say.text, { bg: 'rgba(0,0,0,.88)', line: 'rgba(255,255,255,.25)', h: 26, font: '600 12px system-ui,sans-serif', a: q < 0.08 ? q / 0.08 : q > 0.8 ? (1 - q) / 0.2 : 1 }); }
@@ -12976,12 +12989,12 @@ function mtRender() {
   const now = performance.now(), dt = mtClamp(now - (MT.last || now), 0, 50); MT.last = now; MT.now = now;
   if (w !== MT.vw || dpr !== MT.dpr) { MT.vw = w; MT.dpr = dpr; cv.width = Math.round(w * dpr); cv.height = Math.round(ML.H * dpr); mtDirty(); }
   if (mtSig === '') { mtSig = '1'; MT.ver++; }
-  mtWaveLoad();
+  mtWaveLoad(); mtPhStep(now);
   let moving = mtEase(dt); if (mtViewStep(dt)) moving = true;
-  if (MT.say || (MT.snapL && now - MT.snapAt < 300)) moving = true;
+  if (MT.say || (MT.snapL && now - MT.snapAt < 300) || (MT.phSnap && now - MT.phSnap.at < 260)) moving = true;
   if (now - MT.fcAt > 300) { MT.fcAt = now; const F = mtFrames(); MT.fc = F ? F.list.reduce((n, c) => n + (c ? 1 : 0), 0) : 0; }
   if (mtInspI != null) mtInspSync();
-  const T = curT(), D = totalDur() || 0, sc = clipMeta.scenes, cl = captions.length, hv = MT.hover, s = MT.sel;
+  const T = MT.phD == null ? curT() : MT.phD, D = totalDur() || 0, sc = clipMeta.scenes, cl = captions.length, hv = MT.hover, s = MT.sel;
   const sig = [MT.pps.toFixed(3), MT.sx.toFixed(1), T.toFixed(3), MT.ver, MT.fc, mtWave && mtWave.p ? 1 : 0, segs.map(g => g.id + ':' + g.s.toFixed(3) + ':' + g.e.toFixed(3)).join(), sc ? sc.map(q => q.s.toFixed(2) + q.f + (q.ov ? 1 : 0)).join() : curFmtOf(), cl, cl ? captions[0].start + captions[cl - 1].end : 0, mtSubsOn(), mtTitleOn() ? $('title').value : '', hv ? [hv.t, hv.k, hv.i, hv.n, hv.h, hv.mode].join() : '', MT.ptr ? Math.round(MT.ptr.x) + ',' + (MT.ptr.y < ML.bar[0] - 4) : '', s ? s.t + (s.id ?? s.i) : '', MT.drag ? MT.drag.type : ''].join('|');
   if (moving || sig !== MT.sig || now - MT.drawn > 500) { MT.sig = sig; MT.drawn = now; try { mtDraw(); } catch (e) { if (!mtDraw.w) { mtDraw.w = 1; console.warn('línea de tiempo', e); } } }
   // barra de botones
@@ -13045,6 +13058,7 @@ function mtSnapSrc(k, t, d, more, skipCap) {   // lo mismo, en segundos del víd
 /* ----- lo que se puede hacer ----- */
 const mtSelSeg = () => MT.sel && MT.sel.t === 'seg' ? segs.findIndex(g => g.id === MT.sel.id) : -1;
 function mtCut() {   // partir el trozo en la línea blanca (las dos mitades siguen con su plantilla)
+  mtPhSync();
   if (!loaded || !segs.length || exporting) return; const L = locate(curT()), g = segs[L.i];
   if (L.t - g.s < 0.1 || g.e - L.t < 0.1) { mtSay('La línea está pegada al borde de un trozo: muévela un poco'); return; }
   const a = { id: newId(), s: g.s, e: L.t }, b = { id: newId(), s: L.t, e: g.e }, p = MT.disp.get(g.id);
@@ -13052,12 +13066,14 @@ function mtCut() {   // partir el trozo en la línea blanca (las dos mitades sig
   segs.splice(L.i, 1, a, b); pseg = L.i + 1; MT.sel = { t: 'seg', id: b.id }; MT.fx.push({ type: 'cut', l: a.id, r: b.id, at: performance.now() }); mtInspClose(); pushHistory(); mtDirty();
 }
 function mtTrimSide(side) {   // Q: quitar lo de antes de la línea · W: quitar lo de después (solo en el trozo donde está)
+  mtPhSync();
   if (!loaded || !segs.length || exporting) return; const L = locate(curT()), g = segs[L.i];
   if (side === 's') { if (L.t - g.s < 0.05) { mtSay('En este trozo no hay nada antes de la línea'); return; } if (g.e - L.t < 0.2) { mtSay('Quedaría vacío: mueve la línea'); return; } const p = MT.disp.get(g.id); if (p) p.anc = 'e'; g.s = L.t; pseg = L.i; }
   else { if (g.e - L.t < 0.05) { mtSay('En este trozo no hay nada después de la línea'); return; } if (L.t - g.s < 0.2) { mtSay('Quedaría vacío: mueve la línea'); return; } g.e = L.t; pseg = L.i; mtSeek(() => { vid.currentTime = Math.max(g.s, g.e - 0.03); }); }
   MT.sel = { t: 'seg', id: g.id }; pushHistory(); try { renderFlags(); } catch {} mtDirty();
 }
 function mtDel() {
+  mtPhSync();
   if (!loaded || exporting) return; const s = MT.sel;
   if (s && s.t === 'cap') { mtCapDel(s.i); return; }
   if (s && s.t === 'part' && s.i >= 0 && clipMeta.scenes && clipMeta.scenes.length > 1) { mtPartMerge(s.i, s.i > 0 ? -1 : 1); return; }
@@ -13066,18 +13082,21 @@ function mtDel() {
   segs.splice(k, 1); MT.sel = null; pseg = Math.min(k, segs.length - 1); seekOut(Math.min(totalDur() - 0.01, segStart(pseg))); pushHistory(); try { renderFlags(); } catch {} mtDirty();
 }
 function mtDup() {
+  mtPhSync();
   if (!loaded || !segs.length || exporting) return; let k = mtSelSeg(); if (k < 0) k = locate(curT()).i;
   const g = segs[k], n = { id: newId(), s: g.s, e: g.e }, p = MT.disp.get(g.id); if (p) MT.spawn.set(n.id, { t0: p.t0 + p.d, d: 0, a: 0, anc: 's' });
   segs.splice(k + 1, 0, n); if (pseg > k) pseg++; MT.sel = { t: 'seg', id: n.id }; pushHistory(); try { renderFlags(); } catch {} mtSay('Trozo duplicado'); mtDirty();
 }
 let mtClip = null;
 function mtCopy(cut) {
+  mtPhSync();
   if (!loaded || !segs.length || exporting) return; let k = mtSelSeg(); if (k < 0) k = locate(curT()).i; const g = segs[k];
   mtClip = { s: g.s, e: g.e }; MT.sel = { t: 'seg', id: g.id };
   if (cut) { if (segs.length < 2) { mtSay('Copiado (es el único trozo, no se quita)'); return; } segs.splice(k, 1); MT.sel = null; pseg = Math.min(k, segs.length - 1); seekOut(Math.min(totalDur() - 0.01, segStart(pseg))); pushHistory(); try { renderFlags(); } catch {} mtSay('✂️ Trozo cortado: pégalo con Ctrl+V'); }
   else mtSay('📋 Trozo copiado: pégalo con Ctrl+V donde esté la línea'); mtDirty();
 }
 function mtPaste() {   // se mete en la línea blanca (si cae en medio de un trozo, lo parte)
+  mtPhSync();
   if (!loaded || exporting) return; if (!mtClip) { mtSay('Primero copia un trozo (Ctrl+C)'); return; }
   const T = curT(), L = locate(T), g = segs[L.i]; let at;
   if (!g || L.t - g.s < 0.05) at = L.i; else if (g.e - L.t < 0.05) at = L.i + 1;
@@ -13086,6 +13105,7 @@ function mtPaste() {   // se mete en la línea blanca (si cae en medio de un tro
   segs.splice(at, 0, n); pseg = at; vid.currentTime = n.s; MT.sel = { t: 'seg', id: n.id }; pushHistory(); try { renderFlags(); } catch {} mtSay('Trozo pegado'); mtDirty();
 }
 function mtScene() {   // desde la línea blanca, otra parte (empieza con la misma plantilla y se abre para elegir otra)
+  mtPhSync();
   if (!loaded || exporting) return; const t = vid.currentTime || 0, base = curFmtOf();
   if (layoutMode === 'split') { mtSay('La pantalla dividida va en todo el clip: elige otro formato para partirlo'); return; }
   if (!clipMeta.scenes || !clipMeta.scenes.length) clipMeta.scenes = [{ s: 0, e: (vid.duration || 0) + 1, f: SC_FMT[base] ? base : 'horizontal', ov: null }];
@@ -13103,7 +13123,7 @@ function mtPartMerge(i, dir) {   // quitar un cambio de plantilla: la parte se u
   pushHistory(); scSig = ''; MT.sel = null; mtInspClose(); mtDirty();
 }
 function mtJump(dir) {   // a el corte o cambio de plantilla anterior / siguiente
-  const T = curT(), pts = [0, totalDur() - 0.001]; let acc = 0; for (const g of segs) { acc += g.e - g.s; pts.push(acc); } for (const b of MT.bounds) pts.push(b.T);
+  const T = mtPhNow(), pts = [0, totalDur() - 0.001]; let acc = 0; for (const g of segs) { acc += g.e - g.s; pts.push(acc); } for (const b of MT.bounds) pts.push(b.T);
   pts.sort((a, b) => a - b); const c = dir > 0 ? pts.find(v => v > T + 0.02) : [...pts].reverse().find(v => v < T - 0.02); if (c != null) { vid.pause(); mtSeekOut(Math.min(c, totalDur() - 0.001)); }
 }
 async function mtSubsAdd() {
@@ -13128,7 +13148,14 @@ function mtCapCommit(cancel) {
 }
 
 /* ----- arrastrar ----- */
-function mtScrub(vx) { const D = totalDur() || 0; let T = mtClamp(mtTofX(vx), 0, D); T = mtSnapOut(T, ['cuts', 'parts']); mtSeekOut(Math.min(T, D - 0.001)); MT.bub = { x: mtX(T) + 34, text: fmtS(T) }; }
+function mtScrub(vx) {   // la línea va pegada al ratón y tiene un pequeño imán en los cortes (se suelta al alejarte un poco)
+  const D = totalDur() || 0; let T = mtClamp(mtTofX(vx), 0, D); const pts = [0, D]; let acc = 0;
+  for (const g of segs) { acc += g.e - g.s; pts.push(acc); } for (const b of MT.bounds) pts.push(b.T);
+  const was = MT.phSnap, r = px => px / MT.pps; let best = null, bd = r(7);
+  for (const c of pts) { const dd = Math.abs(c - T), lim = was && Math.abs(was.T - c) < 1e-6 ? r(11) : bd; if (dd < lim && (!best || dd < Math.abs(best - T))) best = c; }
+  if (best != null) { T = best; if (!was || Math.abs(was.T - best) > 1e-6) MT.phSnap = { T: best, at: performance.now() }; mtSnapSet({ out: best, end: best > 0 }); } else { MT.phSnap = null; mtSnapSet(null); }
+  const Ts = Math.min(T, D - 0.001); mtSeekOut(Ts); MT.phD = Ts; MT.bub = { x: mtX(T) + 34, text: fmtS(T) };
+}
 function mtDown(ev) {
   if (!loaded || exporting || stPend) return;
   try { $('seTl').focus({ preventScroll: true }); } catch {}   // para que funcionen S, Q, W, Supr, espacio…
@@ -13249,7 +13276,7 @@ function mtKey(e) {   // atajos, como en CapCut
   else if (lk === 's') mtCut(); else if (lk === 'q') mtTrimSide('s'); else if (lk === 'w') mtTrimSide('e'); else if (lk === 'n') mtSnapToggle();
   else if (k === 'Delete' || (k === 'Backspace' && MT.sel)) mtDel();
   else if (k === ' ') { if (t && t.tagName === 'BUTTON') t.blur(); togglePlay(); }
-  else if (k === 'ArrowLeft' || k === 'ArrowRight') { vid.pause(); mtSeekOut(mtClamp(curT() + (k === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 1 : 1 / Math.max(24, srcFpsV())), 0, D - 0.001)); }
+  else if (k === 'ArrowLeft' || k === 'ArrowRight') { vid.pause(); mtSeekOut(mtClamp(mtPhNow() + (k === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 1 : 1 / Math.max(24, srcFpsV())), 0, D - 0.001)); }
   else if (k === 'ArrowUp' || k === 'ArrowDown') mtJump(k === 'ArrowUp' ? -1 : 1);
   else if (k === 'Home') { vid.pause(); mtSeekOut(0); } else if (k === 'End') { vid.pause(); mtSeekOut(D - 0.001); }
   else if (k === '+' || k === '=') mtZoomTo(MT.ppsT * 1.5); else if (k === '-') mtZoomTo(MT.ppsT / 1.5);
