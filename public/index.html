@@ -53,6 +53,11 @@
 .st-ed{position:fixed;top:0;right:0;bottom:0;width:min(54vw,780px);z-index:45;background:#0C0C0F;border-left:1px solid rgba(255,255,255,.14);box-shadow:-18px 0 50px rgba(0,0,0,.5);padding:14px 16px;overflow:auto;display:flex;flex-direction:column;gap:10px;animation:seIn .25s ease-out}
 @keyframes seIn{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
 .st-ed[hidden]{display:none}
+.st-ed.full{left:0;width:100%;z-index:60;padding:14px 22px;animation:seFade .2s ease-out}
+@keyframes seFade{from{opacity:0}to{opacity:1}}
+.st-ed.full .se-body{grid-template-columns:auto minmax(320px,440px);justify-content:center;gap:28px}
+.st-ed.full .se-pv{height:calc(100vh - 90px);max-width:none}
+@media (max-width:820px){.st-ed.full .se-body{grid-template-columns:1fr}.st-ed.full .se-pv{height:60vh;justify-self:center}}
 .se-h{display:flex;align-items:center;justify-content:space-between}
 .se-h button{width:auto;padding:4px 10px}
 .se-body{display:grid;grid-template-columns:auto minmax(220px,1fr);gap:16px;align-items:start;min-height:0}
@@ -9219,6 +9224,7 @@ async function ezInsertFile(f) {
   ezRetrim = false; ezA = 0; ezB = ezDur(); renderFlags(); ezClip = { f: '', t: '', s: '' };
   webOpened(f);
   ezShow('trim');
+  if (ezPref('quickEd') !== '0' && !stDock && !auBusy) stQuickOpen();
 }
 $('ezPick').onclick = ev => { ev.stopPropagation(); $('ezFile').value = ''; $('ezFile').click(); };
 $('ezInsert').onclick = () => { $('ezFile').value = ''; $('ezFile').click(); };
@@ -12602,7 +12608,39 @@ function stEdAutoUI() {
   $('seAutoFh').textContent = $('seAutoF').checked ? '' : `(si no, usa ${n || 'Horizontal'})`;
   for (const b of $('seFmts').children) b.textContent = b.textContent.replace(/^⭐ /, ''), (b.dataset.id === d && !$('seAutoF').checked) && (b.textContent = '⭐ ' + b.textContent);
 }
+// el mismo panel, a pantalla completa, nada más meter un clip (subido o por enlace): la IA lo prepara y tú solo corriges
+let stQuick = false;
+async function stQuickOpen() {
+  const ed = $('stEd'); if (ed.parentNode !== document.body) document.body.append(ed);   // fuera del panel en directo, para que se vea en cualquier pantalla
+  stQuick = true; stDock = true; ed.classList.add('full'); ed.hidden = false;
+  stEdSound = true; $('seSnd').textContent = '🔊';   // aquí no hay directo que escuchar: el clip suena
+  $('seT').textContent = `✂️ Tu clip · ${Math.round(ezDur())} s`; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = ''; $('seExp').disabled = true;
+  const aT = ezPref('stAutoT') !== '0', aF = ezPref('stAutoF') !== '0', aS = ezPref('stAutoS') !== '0';
+  $('seS').textContent = aT || aF || aS ? '✨ La IA está preparando el clip… puedes ir escribiendo el título' : '⏳ Abriendo el clip…';
+  stEdFmts(''); stEdTT(); stEdAutoUI(); cancelAnimationFrame(stEdRaf); stEdLoop(); setTimeout(() => $('seTitle').focus(), 60);
+  ezA = 0; ezB = ezDur(); ezApplyTrim(); ezShow('edit');
+  ezSkip.title = !aT; ezSkip.subs = !aS; ezSkip.scenes = ezPref('stAutoE') !== '1';
+  const fmt0 = aF ? null : (ezPref('stFmtDef') || 'horizontal');
+  if (fmt0) { $('ezFmtAuto').checked = false; ezFmtSel = fmt0; }
+  stPend = 'quick';   // mientras la IA trabaja, lo que escribas no se pisa
+  try { await ezRunAI(); } catch (e) { console.warn(e); } finally { ezSkip.title = ezSkip.subs = ezSkip.scenes = false; stPend = null; }
+  if (!stQuick) return;
+  const mine = $('seTitle').value.trim();
+  if (mine) { try { titleHL.clear(); } catch {} $('title').value = mine; $('title').dispatchEvent(new Event('input', { bubbles: true })); try { renderChips(); pushHistory(); } catch {} }
+  if (stPendFmt && clipMeta.fmt !== stPendFmt) { try { stNoScenes(); await ezSetFormat(stPendFmt); } catch (e) { console.warn(e); } } stPendFmt = '';
+  stCenter(); stEdR = [0, ezDur()];
+  for (const id of ['seA', 'seB']) { $(id).min = 0; $(id).max = ezDur(); }
+  stEdTrimUI(); stEdTT(); stEdFmts(clipMeta.fmt || ''); vid.muted = !stEdSound; $('seS').textContent = ''; stTrimDone = false;
+  if (ezPref('stAutoX') !== '0' && !titleIsDefault() && ezDur() > 40) await stAiTrim();
+  $('seExp').disabled = false;
+  if (titleIsDefault()) $('seS').textContent = '✍️ Escribe el título y pulsa Intro' + (ezDur() > 40 ? ': la IA recorta el clip y te lo deja listo.' : '.');
+}
 async function stEdClose(full) {
+  if (stQuick) {   // panel rápido: ✕ guarda y vuelve al inicio; «Editor completo» se queda en el editor
+    stEdSound = false; $('seSnd').textContent = '🔇'; stQuick = false; stPend = null; cancelAnimationFrame(stEdRaf); $('stEd').hidden = true; $('stEd').classList.remove('full'); vid.muted = false; stDock = false;
+    if (!full) { try { vid.pause(); await saveNow(); } catch (e) { console.warn(e); } try { $('homeBtn').click(); } catch {} }
+    return;
+  }
   if (stPend) { stPend = null; cancelAnimationFrame(stEdRaf); $('stEd').hidden = true; $('livePage').classList.remove('dock'); stDock = false; $('stS').textContent = ''; return; }
   cancelAnimationFrame(stEdRaf); $('stEd').hidden = true; $('livePage').classList.remove('dock'); vid.muted = false;
   if (full) { stDock = false; $('livePage').hidden = true; $('liveBack').hidden = false; return; }
@@ -12634,7 +12672,7 @@ setTimeout(() => {
   $('seSnd').onclick = () => { stEdSound = !stEdSound; vid.muted = !stEdSound; $('seSnd').textContent = stEdSound ? '🔊' : '🔇'; lvMiniCheck(); };
   $('seTitle').addEventListener('input', () => { if (stPend) return; try { titleHL.clear(); } catch {} $('title').value = $('seTitle').value; $('title').dispatchEvent(new Event('input', { bubbles: true })); });
   $('seTitle').addEventListener('change', () => { try { renderChips(); pushHistory(); } catch {} });
-  $('seTitle').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('seTitle').blur(); if (stPend) { $('seS').textContent = '👍 Título puesto. En cuanto el clip esté guardado, la IA lo recorta y te lo deja listo.'; return; } if ($('seTitle').value.trim() && ezPref('stAutoX') !== '0' && !stTrimDone) stAiTrim(); } });
+  $('seTitle').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('seTitle').blur(); if (stPend) { $('seS').textContent = stQuick ? '👍 Título puesto: se aplica en cuanto la IA termine.' : '👍 Título puesto. En cuanto el clip esté guardado, la IA lo recorta y te lo deja listo.'; return; } if ($('seTitle').value.trim() && ezPref('stAutoX') !== '0' && !stTrimDone) stAiTrim(); } });
   $('seAiTrim').onclick = () => stAiTrim();
   $('seTT').onchange = async () => { const n = $('seTT').value; if (!loaded) return; if (n) { await ttPick(n); stCenter(); } else { titleDef = null; await saveTypeStore(); toast('Título del formato: se verá al cambiar de formato'); } };
   const trim = which => { if (!loaded || exporting) return; let a = +$('seA').value, b = +$('seB').value; if (b - a < 2) { if (which === 'a') a = b - 2; else b = a + 2; } ezA = a; ezB = b; ezApplyTrim(); stEdTrimUI(); if (which === 'b') { try { seekOut(Math.max(0, b - a - 2)); } catch {} } };
