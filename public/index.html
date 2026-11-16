@@ -70,6 +70,21 @@
 .se-tl{grid-column:1/-1;position:relative;display:grid;gap:6px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#0C0C0F;user-select:none}
 .tl-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .tl-tools button{width:auto;padding:5px 10px;font-size:12px}
+.mt-wrap{display:grid;grid-template-columns:56px 1fr;gap:8px}
+.mt-labs{display:grid;grid-template-rows:30px 42px;gap:6px;padding-top:12px}.mt-labs span{align-self:center;font-size:11px;font-weight:700;color:#71717A;text-align:right}
+.mt-scroll{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;padding-top:12px}
+.mt-in{position:relative;width:100%;display:grid;grid-template-rows:30px 42px;gap:6px;touch-action:none;cursor:pointer}
+.mt-ph{position:absolute;top:-12px;bottom:0;width:2px;margin-left:-1px;background:#F87171;pointer-events:none;box-shadow:0 0 6px rgba(248,113,113,.8);z-index:4}
+.mt-ph b{position:absolute;top:0;left:-6px;width:14px;height:12px;border-radius:3px 3px 7px 7px;background:#F87171}
+.mt-sb{position:absolute;top:-3px;bottom:-3px;width:12px;margin-left:-6px;z-index:3;cursor:ew-resize;border-radius:4px;background:#fff;box-shadow:0 0 0 2px #0C0C0F}
+.mt-sb::after{content:'';position:absolute;left:5px;top:8px;bottom:8px;width:2px;background:#111;border-radius:2px}
+.mt-sb.on{background:#FDE047}
+.tl-sg{overflow:hidden;padding:0!important;cursor:grab}
+.tl-sg canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.85;pointer-events:none}
+.tl-sg span{position:relative;z-index:1;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,.6);color:#fff;font-size:11px}
+.tl-sg i{z-index:2}
+.tl-sg.mv{z-index:5;opacity:.9;cursor:grabbing;box-shadow:0 8px 20px rgba(0,0,0,.6);transition:none}
+.mt-zoom{display:inline-flex;align-items:center;gap:4px;margin-left:6px}.mt-zoom button{width:26px!important;padding:3px 0!important}.mt-zoom span{min-width:34px;text-align:center;font-size:11px;color:#A1A1AA}
 .tl-time{margin-left:auto;font:600 12px ui-monospace,monospace;color:#A1A1AA}
 .tl-row{display:grid;grid-template-columns:56px 1fr;gap:8px;align-items:center}
 .tl-lab{font-size:11px;font-weight:700;color:#71717A;text-align:right}
@@ -1606,10 +1621,10 @@ input[type=range],.check input{accent-color:var(--blue)}
               <div class="se-btns"><button class="primary" id="seExp">⬇️ Exportar</button><button id="seFull" title="Abrir este clip en el editor completo">🛠️ Editor completo</button></div>
             </div>
             <div class="se-tl" id="seTl">
-              <div class="tl-tools"><button id="tlCut" title="Partir el clip donde está la línea roja (tecla S)">✂️ Cortar aquí</button><button id="tlDel" title="Quitar el trozo donde está la línea roja (Supr)">🗑️ Quitar trozo</button><button id="tlScene" title="Que a partir de aquí vaya con otro formato">🎬 Cambiar formato desde aquí</button><button id="tlUndo" title="Deshacer (Ctrl+Z)">↶</button><span class="tl-time" id="tlTime"></span></div>
-              <div class="tl-row"><span class="tl-lab">Formato</span><div class="tl-tr" id="tlSc"></div></div>
-              <div class="tl-row"><span class="tl-lab">Clip</span><div class="tl-tr tl-clip" id="tlClip"></div></div>
-              <i class="tl-ph" id="tlPh"></i>
+              <div class="tl-tools"><button id="tlCut" title="Partir el clip donde está la línea roja (tecla S)">✂️ Cortar aquí</button><button id="tlDel" title="Quitar el trozo donde está la línea roja (Supr)">🗑️ Quitar trozo</button><button id="tlScene" title="Que a partir de aquí vaya con otro formato">🎬 Cambiar formato desde aquí</button><button id="tlUndo" title="Deshacer (Ctrl+Z)">↶</button><span class="mt-zoom"><button id="mtZout" title="Alejar (Ctrl + rueda)">−</button><span id="mtZ">todo</span><button id="mtZin" title="Acercar (Ctrl + rueda)">+</button></span><span class="tl-time" id="tlTime"></span></div>
+              <div class="mt-wrap"><div class="mt-labs"><span>Formato</span><span>Clip</span></div>
+                <div class="mt-scroll" id="mtScroll"><div class="mt-in" id="mtIn"><div class="tl-tr" id="tlSc"></div><div class="tl-tr tl-clip" id="tlClip"></div><i class="mt-ph" id="tlPh"><b></b></i></div></div>
+              </div>
             </div>
           </div>
         </aside>
@@ -6419,6 +6434,7 @@ function updUndo() { $('undo').disabled = hi <= 0; $('redo').disabled = hi >= hi
 function commitHistory() {
   histTimer = null;
   if (restoring) return;
+  if (window.mtHoldHist) { histTimer = setTimeout(commitHistory, 300); return; }
   const snap = JSON.stringify(getProject());
   if (hist[hi] === snap) return;
   hist = hist.slice(0, hi + 1); hist.push(snap);
@@ -12633,101 +12649,161 @@ async function stAiTrim() {
 // al elegir tú el formato, vale para todo el clip (se quita el «un formato por escena»)
 function stNoScenes() { try { if (clipMeta.scenes) { delete clipMeta.scenes; scSig = ''; } sceneOv = null; } catch (e) { console.warn(e); } }
 function stCenter() { pos.tx = 0; try { draw(vid.currentTime || 0, false); } catch {} }
-/* ---------- mini línea de tiempo del panel: recortar, cortar, quitar trozos y cambiar el formato por partes ---------- */
-let mtSig = '', mtDrag = null;
-function mtBlocks() {   // escenas en tiempo del vídeo final
+/* ---------- mini línea de tiempo del panel ----------
+   Fila «Formato»: el clip por partes (cada una con su plantilla); los límites entre partes se arrastran.
+   Fila «Clip»: los trozos con sus fotogramas; los bordes recortan, el cuerpo se arrastra para cambiar el orden.
+   La línea roja se arrastra. Mientras ajustas cualquier cosa, el reproductor va enseñando ese punto. */
+let mtSig = '', mtDrag = null, mtZoom = 1, mtWantFn = null, mtSeekBusy = false;
+// el vídeo salta sin atascarse: solo se pide otro salto cuando ha terminado el anterior
+function mtSeek(fn) {
+  mtWantFn = fn; if (mtSeekBusy) return;
+  const go = () => { const f = mtWantFn; mtWantFn = null; if (!f) { mtSeekBusy = false; return; } mtSeekBusy = true; try { f(); } catch {} const done = () => { clearTimeout(t); go(); }, t = setTimeout(done, 250); vid.addEventListener('seeked', done, { once: true }); };
+  go();
+}
+const mtSeekOut = T => mtSeek(() => seekOut(T));
+const mtSeekSrc = (k, t) => mtSeek(() => { pseg = k; vid.currentTime = t; });
+function mtBlocks() {   // partes de formato en tiempo del vídeo final
   const out = [], sc = clipMeta.scenes; let acc = 0;
   const list = segs.length ? segs : [{ s: 0, e: vid.duration || 0 }];
   for (const g of list) {
     if (!sc || !sc.length) { const pv = out[out.length - 1]; if (pv) pv.T1 = acc + g.e - g.s; else out.push({ i: -1, f: curFmtOf(), T0: acc, T1: acc + g.e - g.s }); }
-    else sc.forEach((x, i) => { const a = Math.max(x.s, g.s), b = Math.min(x.e, g.e); if (b - a < 0.02) return; const T0 = acc + a - g.s, pv = out[out.length - 1]; if (pv && pv.i === i && Math.abs(pv.T1 - T0) < 0.02) pv.T1 = acc + b - g.s; else out.push({ i, f: x.ov ? x.f : curFmtOf(), T0, T1: acc + b - g.s }); });
+    else sc.forEach((x, i) => { const a = Math.max(x.s, g.s), b = Math.min(x.e, g.e); if (b - a < 0.02) return; const T0 = acc + a - g.s, pv = out[out.length - 1]; if (pv && pv.i === i && Math.abs(pv.T1 - T0) < 0.02) pv.T1 = acc + b - g.s; else out.push({ i, f: x.ov ? x.f : curFmtOf(), T0, T1: acc + b - g.s, srcE: b }); });
     acc += g.e - g.s;
   }
   return out;
 }
 const mtName = f => (SC_FMT[f] || (EZ_FMTS.find(x => x[0] === f) || ['', '▭', 'Horizontal']).slice(1))[1] || f;
+function mtFilm(cv, g, w) {   // fotogramas del trozo
+  const F = ezFrames; if (!F || F.file !== file || !w) return;
+  const dpr = Math.min(2, devicePixelRatio || 1), h = 40; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const x = cv.getContext('2d'), tw = h * 16 / 9, n = Math.max(1, Math.ceil(w / tw));
+  for (let k = 0; k < n; k++) {
+    const t = g.s + (g.e - g.s) * (k + 0.5) / n; let i = Math.max(0, Math.min(F.n - 1, Math.round(t / F.D * (F.n - 1)))), c = F.list[i];
+    for (let d = 1; !c && d < 6; d++) c = F.list[i - d] || F.list[i + d];
+    if (c) x.drawImage(c, k * tw * dpr, 0, tw * dpr, h * dpr);
+  }
+}
 function mtRender() {
   const box = $('seTl'); if (!box || !loaded) return;
-  const D = totalDur() || 1, bl = mtBlocks(), sig = JSON.stringify([D.toFixed(2), segs.map(g => [g.s.toFixed(2), g.e.toFixed(2)]), bl.map(b => [b.i, b.f, b.T0.toFixed(2)]), mtDrag && mtDrag.k]);
+  const D = totalDur() || 1, bl = mtBlocks(), inn = $('mtIn'), W = inn.offsetWidth, loadedF = ezFrames && ezFrames.file === file ? ezFrames.list.filter(Boolean).length : 0;
+  const sig = JSON.stringify([D.toFixed(2), segs.map(g => [g.s.toFixed(2), g.e.toFixed(2)]), bl.map(b => [b.i, b.f, b.T0.toFixed(2)]), mtDrag && [mtDrag.k, mtDrag.h, mtDrag.i], W, Math.floor(loadedF / 20)]);
   if (sig !== mtSig) {
     mtSig = sig; const sc = $('tlSc'), cl = $('tlClip'); sc.innerHTML = ''; cl.innerHTML = '';
-    for (const b of bl) {
+    bl.forEach((b, n) => {
       const e = document.createElement('div'); e.className = 'tl-b tl-sc'; e.dataset.f = b.f; e.style.left = (b.T0 / D * 100) + '%'; e.style.width = ((b.T1 - b.T0) / D * 100) + '%';
-      e.textContent = (SC_FMT[b.f] ? SC_FMT[b.f][0] + ' ' : '') + mtName(b.f); e.title = 'Clic para cambiar el formato de esta parte';
-      e.onpointerdown = ev => ev.stopPropagation();
-      e.onclick = ev => { ev.stopPropagation(); const r = e.getBoundingClientRect(); mtScMenu(b.i, r.left, r.bottom + 6); };
-      sc.append(e);
-    }
+      e.innerHTML = `<span>${SC_FMT[b.f] ? SC_FMT[b.f][0] + ' ' : ''}${mtName(b.f)}</span>`; e.title = 'Clic: cambiar el formato de esta parte';
+      e.dataset.i = b.i; sc.append(e);
+      const nx = bl[n + 1];   // límite entre dos partes (no entre dos trozos): se puede arrastrar
+      if (nx && nx.i !== b.i && b.i >= 0 && Math.abs(nx.T0 - b.T1) < 0.03 && clipMeta.scenes && Math.abs(clipMeta.scenes[b.i].e - b.srcE) < 0.05) {
+        const h = document.createElement('i'); h.className = 'mt-sb' + (mtDrag && mtDrag.i === b.i ? ' on' : ''); h.dataset.i = b.i; h.style.left = (b.T1 / D * 100) + '%'; h.title = 'Arrastra para mover el cambio de formato'; sc.append(h);
+      }
+    });
     let acc = 0;
     segs.forEach((g, k) => {
-      const d = g.e - g.s, e = document.createElement('div'); e.className = 'tl-b tl-sg'; e.style.left = (acc / D * 100) + '%'; e.style.width = (d / D * 100) + '%';
-      e.innerHTML = `<i class="l" data-k="${k}" data-h="s"></i><span>${d.toFixed(1).replace('.', ',')} s</span><i class="r" data-k="${k}" data-h="e"></i>`;
-      if (mtDrag && mtDrag.k === k) e.querySelector(mtDrag.h === 's' ? 'i.l' : 'i.r').classList.add('on');
-      cl.append(e); acc += d;
+      const d = g.e - g.s, e = document.createElement('div'); e.className = 'tl-b tl-sg' + (mtDrag && mtDrag.k === k && mtDrag.mv ? ' mv' : ''); e.dataset.k = k;
+      e.style.left = (acc / D * 100) + '%'; e.style.width = (d / D * 100) + '%';
+      e.innerHTML = `<canvas></canvas><span>${d.toFixed(1).replace('.', ',')} s</span><i class="l" data-k="${k}" data-h="s"></i><i class="r" data-k="${k}" data-h="e"></i>`;
+      if (mtDrag && mtDrag.k === k && mtDrag.h) e.querySelector(mtDrag.h === 's' ? 'i.l' : 'i.r').classList.add('on');
+      cl.append(e); mtFilm(e.querySelector('canvas'), g, d / D * W); acc += d;
     });
   }
-  const T = curT(), cl = $('tlClip'); $('tlPh').style.left = (cl.offsetLeft + Math.min(1, T / D) * cl.offsetWidth) + 'px';
+  const T = curT(); $('tlPh').style.left = (Math.min(1, T / D) * 100) + '%';
   $('tlTime').textContent = `${fmtS(T)} / ${fmtS(D)}`;
+  // al reproducir, la vista sigue a la línea roja
+  const sb = $('mtScroll'); if (mtZoom > 1 && !vid.paused && !mtDrag) { const x = T / D * W; if (x < sb.scrollLeft || x > sb.scrollLeft + sb.clientWidth - 30) sb.scrollLeft = x - 40; }
 }
 function mtScMenu(i, x, y) {
-  if (i < 0) {   // sin partes: el formato de todo el clip
-    ctxOpen(x, y, 'Formato de todo el clip', EZ_FMTS.map(([id, ic, n]) => ({ icon: ic, label: n, on: curFmtOf() === id, act: async () => { stNoScenes(); await ezSetFormat(id); stCenter(); stEdFmts(id); mtSig = ''; } })));
-    return;
-  }
+  if (i < 0) { ctxOpen(x, y, 'Formato de todo el clip', EZ_FMTS.map(([id, ic, n]) => ({ icon: ic, label: n, on: curFmtOf() === id, act: async () => { stNoScenes(); await ezSetFormat(id); stCenter(); stEdFmts(id); mtSig = ''; } }))); return; }
   const sc = clipMeta.scenes[i], items = Object.entries(SC_FMT).map(([k, [ic, n]]) => ({ icon: ic, label: n, on: !!sc.ov && sc.f === k, act: async () => { await scSetFmt(i, k); mtSig = ''; } }));
   items.push({ icon: '↩️', label: 'Como el resto del clip', on: !sc.ov, act: async () => { await scSetFmt(i, 'base'); mtSig = ''; } });
   if (i > 0) items.push({ icon: '🔗', label: 'Unir con la parte anterior', act: () => { const pv = clipMeta.scenes[i - 1]; pv.e = sc.e; clipMeta.scenes.splice(i, 1); if (clipMeta.scenes.length < 2 && !clipMeta.scenes[0].ov) delete clipMeta.scenes; pushHistory(); scSig = ''; mtSig = ''; } });
   ctxOpen(x, y, `Parte ${i + 1}: formato`, items);
 }
-function mtCut() {   // partir el trozo en el punto rojo
+function mtCut() {   // partir el trozo en la línea roja (las dos mitades siguen con su plantilla)
   if (!loaded || !segs.length) return; const L = locate(curT()), g = segs[L.i];
   if (L.t - g.s < 0.2 || g.e - L.t < 0.2) { toast('Muy cerca del borde de un trozo'); return; }
-  segs.splice(L.i, 1, { id: newId(), s: g.s, e: L.t }, { id: newId(), s: L.t, e: g.e }); pseg = L.i + 1; pushHistory(); mtSig = ''; toast('✂️ Cortado: ahora puedes quitar uno de los trozos o moverle los bordes');
+  segs.splice(L.i, 1, { id: newId(), s: g.s, e: L.t }, { id: newId(), s: L.t, e: g.e }); pseg = L.i + 1; pushHistory(); mtSig = '';
 }
 function mtDel() {
   if (!loaded || segs.length < 2) { toast('Primero corta el clip (✂️) para separar el trozo que quieres quitar'); return; }
   const L = locate(curT()); segs.splice(L.i, 1); pseg = Math.min(L.i, segs.length - 1); seekOut(segStart(pseg)); pushHistory(); mtSig = ''; renderFlags();
 }
-function mtScene() {   // a partir de aquí, otra parte (con su propio formato)
+function mtScene() {   // desde la línea roja, otra parte (empieza con la misma plantilla y te deja elegir otra)
   if (!loaded) return; const t = vid.currentTime || 0, base = curFmtOf();
   if (!clipMeta.scenes || !clipMeta.scenes.length) clipMeta.scenes = [{ s: 0, e: (vid.duration || 0) + 1, f: base, ov: null }];
   const i = clipMeta.scenes.findIndex(x => t >= x.s && t < x.e); if (i < 0) return; const x = clipMeta.scenes[i];
   if (t - x.s < 0.3 || x.e - t < 0.3) { toast('Ya hay un cambio justo aquí'); return; }
   clipMeta.scenes.splice(i, 1, { ...x, e: +t.toFixed(3) }, { ...x, s: +t.toFixed(3), ov: x.ov ? JSON.parse(JSON.stringify(x.ov)) : null });
   pushHistory(); scSig = ''; mtSig = ''; mtRender();
-  const b = [...$('tlSc').children].find(e => { const r = e.getBoundingClientRect(), ph = $('tlPh').getBoundingClientRect(); return ph.left >= r.left - 1 && ph.left <= r.right + 1 && r.left > ph.left - 4; }) || $('tlSc').lastChild;
-  const r = b.getBoundingClientRect(); setTimeout(() => mtScMenu(i + 1, r.left, r.bottom + 6), 0);
+  const b = [...$('tlSc').querySelectorAll('.tl-sc')].find(e => +e.dataset.i === i + 1);
+  if (b) { const r = b.getBoundingClientRect(); setTimeout(() => mtScMenu(i + 1, r.left, r.bottom + 6), 0); }
 }
-// arrastrar: en la pista mueve la línea roja; en un borde blanco recorta ese trozo (el vídeo te sigue)
-function mtT(ev) { const r = $('tlClip').getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * totalDur(); }
+// ---------- arrastrar ----------
+function mtT(ev) { const r = $('mtIn').getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * totalDur(); }
 function mtDown(ev) {
-  if (!loaded || exporting || stPend) return; ev.preventDefault();
-  const h = ev.target.closest('i[data-h]'); vid.pause();
-  mtDrag = h ? { k: +h.dataset.k, h: h.dataset.h, D0: totalDur() } : { seek: true };
-  try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch {}
-  mtMove(ev);
-}
-function mtMove(ev) {
-  if (!mtDrag) return;
-  if (mtDrag.seek) { seekOut(mtT(ev)); return; }
-  const g = segs[mtDrag.k]; if (!g) return; const r = $('tlClip').getBoundingClientRect(), dx = (ev.clientX - r.left) / r.width * mtDrag.D0, Ts = segStart(mtDrag.k), D = vid.duration || g.e;
-  if (mtDrag.h === 's') { const s = Math.max(0, Math.min(g.e - 0.3, g.s + (dx - Ts))); g.s = s; pseg = mtDrag.k; vid.currentTime = s; }
-  else { const e = Math.min(D, Math.max(g.s + 0.3, g.s + (dx - Ts))); g.e = e; pseg = mtDrag.k; vid.currentTime = Math.max(g.s, e - 0.04); }
+  if (!loaded || exporting || stPend || ev.button > 0) return; ev.preventDefault();
+  const h = ev.target.closest('i[data-h]'), sb = ev.target.closest('.mt-sb'), sg = ev.target.closest('.tl-sg'), sc = ev.target.closest('.tl-sc');
+  vid.pause(); clearTimeout(histTimer); window.mtHoldHist = true;
+  if (h) { const k = +h.dataset.k; mtDrag = { k, h: h.dataset.h, D0: totalDur(), T0: segStart(k), s0: segs[k].s }; }
+  else if (sb) mtDrag = { i: +sb.dataset.i };
+  else if (sg && segs.length > 1) mtDrag = { k: +sg.dataset.k, body: true, x0: ev.clientX };
+  else if (sc) mtDrag = { sc: +sc.dataset.i, x0: ev.clientX, el: sc };
+  else mtDrag = { seek: true };
+  try { $('mtIn').setPointerCapture(ev.pointerId); } catch {}
+  if (mtDrag.seek || (mtDrag.body && !mtDrag.mv)) mtSeekOut(mtT(ev));
   mtSig = '';
 }
-function mtUp() {
-  const d = mtDrag; mtDrag = null; mtSig = ''; if (!d) return;
+function mtMove(ev) {
+  const d = mtDrag; if (!d) return;
+  if (d.seek) { mtSeekOut(mtT(ev)); return; }
+  if (d.sc != null) { if (Math.abs(ev.clientX - d.x0) > 5) { mtDrag = { seek: true }; mtSeekOut(mtT(ev)); } return; }
+  if (d.body) {   // mover el trozo de sitio
+    if (!d.mv && Math.abs(ev.clientX - d.x0) < 6) return;
+    d.mv = true; const el = $('tlClip').querySelector(`.tl-sg[data-k="${d.k}"]`); if (el) { el.classList.add('mv'); el.style.transform = `translateX(${ev.clientX - d.x0}px)`; }
+    return;
+  }
+  if (d.i != null) {   // límite entre dos partes de formato
+    const sc = clipMeta.scenes, a = sc[d.i], b = sc[d.i + 1]; if (!a || !b) return;
+    const t = Math.max(a.s + 0.3, Math.min(b.e - 0.3, locate(mtT(ev)).t)); a.e = b.s = +t.toFixed(3); scSig = ''; mtSig = '';
+    const k = segs.findIndex(g => t >= g.s && t <= g.e); if (k >= 0) mtSeekSrc(k, t);
+    return;
+  }
+  const g = segs[d.k]; if (!g) return; const r = $('mtIn').getBoundingClientRect(), x = (ev.clientX - r.left) / r.width * d.D0 - d.T0, Dv = vid.duration || g.e;
+  if (d.h === 's') { const s = Math.max(0, Math.min(g.e - 0.3, d.s0 + x)); g.s = s; mtSeekSrc(d.k, s); }
+  else { const e = Math.min(Dv, Math.max(g.s + 0.3, g.s + x)); g.e = e; mtSeekSrc(d.k, Math.max(g.s, e - 0.04)); }
+  mtSig = '';
+}
+function mtUp(ev) {
+  const d = mtDrag; mtDrag = null; window.mtHoldHist = false; mtSig = ''; if (!d) return;
+  if (d.sc != null) { mtScMenu(d.sc, d.el.getBoundingClientRect().left, d.el.getBoundingClientRect().bottom + 6); return; }
   if (d.seek) return;
+  if (d.body) {
+    if (!d.mv) return;
+    const T = mtT(ev); let to = 0, acc = 0; for (let k = 0; k < segs.length; k++) { const len = segs[k].e - segs[k].s; if (T > acc + len / 2) to = k + 1; acc += len; }
+    const [g] = segs.splice(d.k, 1); if (to > d.k) to--; segs.splice(to, 0, g); pseg = to; seekOut(segStart(to)); pushHistory(); renderFlags();
+    return;
+  }
   pushHistory(); renderFlags();
-  const g = segs[d.k]; if (!g) return; pseg = d.k; vid.currentTime = d.h === 's' ? g.s : Math.max(g.s, g.e - 1); vid.play().catch(() => {});   // al soltar: el principio, o el último segundo
+  if (d.i != null) { vid.play().catch(() => {}); return; }   // al soltar un cambio de formato: se ve cómo pasa de uno a otro
+  const g = segs[d.k]; if (!g) return; pseg = d.k;
+  mtSeek(() => { vid.currentTime = d.h === 's' ? g.s : Math.max(g.s, g.e - 1); }); setTimeout(() => vid.play().catch(() => {}), 30);   // al soltar: el principio, o el último segundo
+}
+function mtSetZoom(z, at) {
+  const sb = $('mtScroll'), old = mtZoom; mtZoom = Math.max(1, Math.min(12, z)); $('mtIn').style.width = (mtZoom * 100) + '%'; $('mtZ').textContent = mtZoom === 1 ? 'todo' : '×' + mtZoom.toFixed(mtZoom < 3 ? 1 : 0);
+  const fx = at == null ? 0.5 : at; sb.scrollLeft = (sb.scrollLeft + sb.clientWidth * fx) * (mtZoom / old) - sb.clientWidth * fx; mtSig = '';
 }
 setTimeout(() => {
-  for (const id of ['tlSc', 'tlClip']) { const t = $(id); if (!t) continue; t.addEventListener('pointerdown', mtDown); t.addEventListener('pointermove', mtMove); t.addEventListener('pointerup', mtUp); t.addEventListener('pointercancel', mtUp); }
-  if (!$('tlCut')) return;
+  const inn = $('mtIn'); if (!inn) return;
+  inn.addEventListener('pointerdown', mtDown); inn.addEventListener('pointermove', mtMove); inn.addEventListener('pointerup', mtUp); inn.addEventListener('pointercancel', mtUp);
+  $('mtScroll').addEventListener('wheel', e => { e.preventDefault(); const r = $('mtScroll').getBoundingClientRect(); if (e.ctrlKey || e.metaKey) mtSetZoom(mtZoom * (e.deltaY < 0 ? 1.25 : 0.8), (e.clientX - r.left) / r.width); else $('mtScroll').scrollLeft += e.deltaY + e.deltaX; }, { passive: false });
+  $('mtZin').onclick = () => mtSetZoom(mtZoom * 1.5); $('mtZout').onclick = () => mtSetZoom(mtZoom / 1.5);
   $('tlCut').onclick = mtCut; $('tlDel').onclick = mtDel; $('tlScene').onclick = mtScene; $('tlUndo').onclick = () => { goHistory(-1); mtSig = ''; };
   $('stEd').addEventListener('keydown', e => {
     if (e.target.closest('input,textarea,select')) return;
-    if (e.key === 's' || e.key === 'S') { e.preventDefault(); mtCut(); } else if (e.key === 'Delete') { e.preventDefault(); mtDel(); } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); goHistory(e.shiftKey ? 1 : -1); mtSig = ''; } else if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+    if (e.key === 's' || e.key === 'S') { e.preventDefault(); mtCut(); } else if (e.key === 'Delete') { e.preventDefault(); mtDel(); }
+    else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); goHistory(e.shiftKey ? 1 : -1); mtSig = ''; }
+    else if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); vid.pause(); mtSeekOut(Math.max(0, curT() + (e.key === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 1 : 1 / 30))); }
   });
 }, 0);
 /* ---------- botón «Editar con IA» con sus casillas (se guardan) ---------- */
