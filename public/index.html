@@ -14114,13 +14114,13 @@ function mtHit(vx, vy) {
   }
   return { t: 'empty' };
 }
-const MT_TIP = { bound: 'Arrastra para mover el cambio de plantilla', part: 'Clic: cambiar o ajustar la plantilla de esta parte · doble clic: partir aquí', title: 'Clic para cambiar el título', titleadd: 'Poner un título', subadd: 'Poner subtítulos (la IA los escribe)', cap: 'Arrastra para moverlo · los bordes cambian cuánto dura · doble clic para cambiar el texto' };
+const MT_TIP = { bound: 'Arrastra para mover el cambio de plantilla', part: 'Clic: cambiar o ajustar la plantilla de esta parte · arrastra para moverla · Ctrl+B: partirla en la línea', title: 'Clic para cambiar el título', titleadd: 'Poner un título', subadd: 'Poner subtítulos (la IA los escribe)', cap: 'Arrastra para moverlo · los bordes cambian cuánto dura · doble clic para cambiar el texto' };
 function mtBladeSet(on) { MT.blade = !!on; mtSay(on ? '✂️ Modo cuchilla: cada clic en el vídeo lo corta (A para volver)' : 'Modo normal'); mtHoverSet(MT.hover); mtDirty(); }
 function mtHoverSet(h) {
   MT.hover = h; const cv = $('mtCv'); let cur = 'default', tip = '';
   if (MT.blade && h && (h.t === 'seg' || h.t === 'edge')) { if (cv.style.cursor !== 'crosshair') cv.style.cursor = 'crosshair'; if (MT.tip !== 'c') { MT.tip = 'c'; cv.title = 'Clic para cortar aquí'; } return; }
   if (h) { tip = MT_TIP[h.t] || '';
-    cur = h.t === 'edge' || h.t === 'bound' || (h.t === 'cap' && h.mode !== 'move') ? 'ew-resize' : h.t === 'seg' ? (segs.length > 1 ? 'grab' : 'pointer') : ['part', 'title', 'titleadd', 'subadd', 'cap', 'ruler'].includes(h.t) ? 'pointer' : 'default'; }
+    cur = h.t === 'edge' || h.t === 'bound' || (h.t === 'cap' && h.mode !== 'move') ? 'ew-resize' : h.t === 'seg' ? (segs.length > 1 ? 'grab' : 'pointer') : h.t === 'part' && clipMeta.scenes && clipMeta.scenes.length > 1 ? 'grab' : ['part', 'title', 'titleadd', 'subadd', 'cap', 'ruler'].includes(h.t) ? 'pointer' : 'default'; }
   if (cv.style.cursor !== cur) cv.style.cursor = cur; if (MT.tip !== tip) { MT.tip = tip; cv.title = tip; }
 }
 
@@ -14191,7 +14191,7 @@ function mtPaste() {   // se mete en la línea blanca (si cae en medio de un tro
   const n = { id: newId(), s: mtClip.s, e: mtClip.e }, T0 = segStart(at); MT.spawn.set(n.id, { t0: T0, d: 0, a: 0, anc: 's' });
   segs.splice(at, 0, n); pseg = at; vid.currentTime = n.s; MT.sel = { t: 'seg', id: n.id }; pushHistory(); try { renderFlags(); } catch {} mtSay('Trozo pegado'); mtDirty();
 }
-function mtScene() {   // desde la línea blanca, otra parte (empieza con la misma plantilla y se abre para elegir otra)
+function mtScene(open = true) {   // desde la línea blanca, otra parte (empieza con la misma plantilla y se abre para elegir otra)
   mtPhSync();
   if (!loaded || exporting) return; const t = vid.currentTime || 0, base = curFmtOf();
   if (layoutMode === 'split') { mtSay('La pantalla dividida va en todo el clip: elige otro formato para partirlo'); return; }
@@ -14200,6 +14200,7 @@ function mtScene() {   // desde la línea blanca, otra parte (empieza con la mis
   if (t - x.s < 0.3 || x.e - t < 0.3) { mtSay('Ya hay un cambio de plantilla justo aquí'); if (clipMeta.scenes.length < 2 && !x.ov) delete clipMeta.scenes; return; }
   clipMeta.scenes.splice(i, 1, { ...x, e: +t.toFixed(3) }, { ...x, s: +t.toFixed(3), ov: x.ov ? JSON.parse(JSON.stringify(x.ov)) : null });
   pushHistory(); scSig = ''; MT.fx.push({ type: 'flash', T: curT(), at: performance.now() }); mtDirty();
+  if (!open) { MT.sel = { t: 'part', i: i + 1 }; mtSay('✂️ Formato partido en la línea: ahora puedes cambiar la plantilla de cada parte'); return; }
   vid.pause(); mtSeek(() => { vid.currentTime = Math.min(clipMeta.scenes[i + 1].e - 0.05, t + 0.04); });   // la línea, ya dentro de la parte nueva
   mtInsp(i + 1);
 }
@@ -14256,10 +14257,10 @@ function mtDown(ev) {
     window.mtHoldHist = false; const T = mtSnapOut(mtClamp(mtTofX(vx), 0, totalDur()), ['ph', 'caps', 'parts']); seekOut(Math.min(T, totalDur() - 0.001)); mtCut(); mtSnapSet(null); MT.drag = { type: 'blade' }; mtDirty(); return;
   }
   if (h.t === 'edge') { const g = segs[h.k]; MT.sel = { t: 'seg', id: g.id }; mtInspClose(); MT.drag = { ...base, type: 'trim', k: h.k, id: g.id, h: h.h, s0: g.s, e0: g.e, T0: segStart(h.k) }; cv.style.cursor = 'ew-resize'; }
-  else if (h.t === 'seg') { const g = segs[h.k], p = MT.disp.get(g.id); MT.sel = { t: 'seg', id: g.id }; mtInspClose(); MT.drag = { ...base, type: 'pseg', k: h.k, id: g.id, grab: mtTofX(vx) - (p ? p.t0 : segStart(h.k)) }; mtScrub(vx); }
+  else if (h.t === 'seg') { const g = segs[h.k], p = MT.disp.get(g.id); MT.sel = { t: 'seg', id: g.id }; mtInspClose(); MT.drag = { ...base, type: 'pseg', k: h.k, id: g.id, grab: mtTofX(vx) - (p ? p.t0 : segStart(h.k)) }; }
   else if (h.t === 'bound') { MT.drag = { ...base, type: 'bound', i: h.i }; }
-  else if (h.t === 'part') { MT.drag = { ...base, type: 'ppart', i: h.i }; mtScrub(vx); }
-  else if (h.t === 'cap') { const c = captions[h.i]; MT.sel = { t: 'cap', i: h.i }; mtInspClose(); MT.drag = { ...base, type: 'cap', i: h.i, mode: h.mode, start0: c.start, end0: c.end, w0: (c.words || []).map(w => ({ ...w })), moved: false }; const k = segs.findIndex(g => c.start >= g.s - 1e-3 && c.start < g.e); if (k >= 0) mtSeekSrc(k, Math.max(segs[k].s, c.start) + 0.02); }
+  else if (h.t === 'part') { const sc = clipMeta.scenes || [], x = sc[h.i]; MT.drag = { ...base, type: 'ppart', i: h.i, s0: x ? x.s : 0, e0: x ? x.e : 0, pe0: sc[h.i - 1] ? sc[h.i - 1].s : null, ne0: sc[h.i + 1] ? sc[h.i + 1].e : null }; }
+  else if (h.t === 'cap') { const c = captions[h.i]; MT.sel = { t: 'cap', i: h.i }; mtInspClose(); MT.drag = { ...base, type: 'cap', i: h.i, mode: h.mode, start0: c.start, end0: c.end, w0: (c.words || []).map(w => ({ ...w })), moved: false }; const k = segs.findIndex(g => c.start >= g.s - 1e-3 && c.start < g.e); }
   else if (h.t === 'title' || h.t === 'titleadd' || h.t === 'subadd') { MT.drag = { ...base, type: 'pclick', what: h.t }; }
   else { if (h.t === 'empty') { if (MT.sel && MT.sel.t !== 'part') MT.sel = null; } MT.drag = { ...base, type: 'seek' }; mtScrub(vx); }
   mtDirty();
@@ -14269,8 +14270,16 @@ function mtDragMove() {
   if (d.type === 'seek') { mtScrub(vx); return; }
   if (d.type === 'pan') { MT.sx = mtClamp(d.sx0 - (vx - d.x0), 0, MT.max); MT.sxT = null; return; }
   if (d.type === 'scroll') { MT.sx = mtClamp(d.sx0 + (vx - d.x0) / Math.max(1, MT.vw - d.tw) * MT.max, 0, MT.max); MT.sxT = null; return; }
-  if (d.type === 'ppart' || d.type === 'pclick') { if (Math.abs(vx - d.x0) > 5) { d.type = 'seek'; mtScrub(vx); } return; }
-  if (d.type === 'pseg') { if (Math.abs(vx - d.x0) < 6) return; if (segs.length < 2) { d.type = 'seek'; mtScrub(vx); return; } d.type = 'move'; d.to = d.k; MT.bub = null; mtSnapSet(null); $('mtCv').style.cursor = 'grabbing'; }
+  if (d.type === 'pclick') { if (Math.abs(vx - d.x0) > 5) { d.type = 'seek'; mtScrub(vx); } return; }
+  if (d.type === 'ppart') { if (Math.abs(vx - d.x0) < 6) return; const sc = clipMeta.scenes; if (!sc || sc.length < 2) { d.type = 'none'; return; } d.type = 'mpart'; mtInspClose(); MT.sel = { t: 'part', i: d.i }; $('mtCv').style.cursor = 'grabbing'; }
+  if (d.type === 'mpart') {   // mover una parte de plantilla (como un texto): las de al lado se acortan o se alargan
+    const sc = clipMeta.scenes, x = sc && sc[d.i], a = sc && sc[d.i - 1], b = sc && sc[d.i + 1]; if (!x) return; const len = d.e0 - d.s0;
+    if (a && b) { const s1 = mtClamp(d.s0 + dts, d.pe0 + 0.3, d.ne0 - 0.3 - len); x.s = a.e = +s1.toFixed(3); x.e = b.s = +(s1 + len).toFixed(3); }
+    else if (b) { const e1 = mtClamp(d.e0 + dts, d.s0 + 0.3, d.ne0 - 0.3); x.e = b.s = +e1.toFixed(3); }
+    else if (a) { const s1 = mtClamp(d.s0 + dts, d.pe0 + 0.3, d.e0 - 0.3); x.s = a.e = +s1.toFixed(3); }
+    scSig = ''; MT.bub = { x: vx, text: mtName(x.f) + ' · ' + (x.e - x.s > 900 ? '' : (Math.min(x.e, vid.duration || x.e) - x.s).toFixed(1).replace('.', ',') + ' s') }; mtDirty(); return;
+  }
+  if (d.type === 'pseg') { if (Math.abs(vx - d.x0) < 6) return; if (segs.length < 2) { d.type = 'none'; return; } d.type = 'move'; d.to = d.k; MT.bub = null; mtSnapSet(null); $('mtCv').style.cursor = 'grabbing'; }
   if (d.type === 'move') {   // cambiar el trozo de sitio: los demás le van haciendo hueco
     const g = segs[d.k]; if (!g) return; const len = g.e - g.s; d.dispT0 = mtTofX(vx) - d.grab; const c = d.dispT0 + len / 2; let to = 0, acc = 0;
     segs.forEach((o, k) => { if (k === d.k) return; const l = o.e - o.s; if (c > acc + l / 2) to++; acc += l; }); d.to = to; return;
@@ -14311,6 +14320,8 @@ function mtUp(ev) {
   if (d.type === 'blade') return;
   if (d.type === 'seek' || d.type === 'pan' || d.type === 'scroll' || d.type === 'pseg') { MT.snapAt = performance.now(); return; }
   if (d.type === 'ppart') { mtInsp(d.i); return; }
+  if (d.type === 'none') return;
+  if (d.type === 'mpart') { pushHistory(); MT.sel = { t: 'part', i: d.i }; return; }
   if (d.type === 'pclick') { if (d.what === 'subadd') mtSubsAdd(); else { const t = $('seTitle'); t.focus(); t.select(); } return; }
   if (d.type === 'move') {
     const [g] = segs.splice(d.k, 1), to = Math.min(d.to == null ? d.k : d.to, segs.length); segs.splice(to, 0, g); pseg = to; seekOut(segStart(to));
@@ -14352,7 +14363,7 @@ function mtKey(e) {   // atajos, como en CapCut
   if (!['Shift', 'Control', 'Meta', 'Alt'].includes(k)) MT.fit = false;   // desde que editas, la escala se queda quieta (como en CapCut)
   if (c && lk === 'z') goHistory(e.shiftKey ? 1 : -1).then(mtDirty);
   else if (c && lk === 'y') goHistory(1).then(mtDirty);
-  else if (c && lk === 'b') mtCut();   // Ctrl+B y Ctrl+Mayús+B: dividir (aquí solo hay una pista de vídeo)
+  else if (c && lk === 'b') { if (MT.sel && MT.sel.t === 'part') mtScene(false); else mtCut(); }   // Ctrl+B y Ctrl+Mayús+B: dividir (aquí solo hay una pista de vídeo)
   else if (c && lk === 'd') mtDup();
   else if (c && lk === 'c') mtCopy(false); else if (c && lk === 'x') mtCopy(true); else if (c && lk === 'v') mtPaste();
   else if (c && (k === '+' || k === '=' || e.code === 'NumpadAdd')) mtZoomTo(MT.ppsT * 1.5); else if (c && (k === '-' || e.code === 'NumpadSubtract')) mtZoomTo(MT.ppsT / 1.5);
