@@ -10509,6 +10509,9 @@ const TT_BUILTIN = {
   'Coolvetica grande': { titleStyle: 'plain', boxMode: 'single', c: { titleFont: 'Coolvetica|400', titleSize: '66', titleUpper: false, titleColor: '#ffffff' } },
 };
 const ttGet = n => titleTpls[n] || TT_BUILTIN[n] || null;
+// también los títulos de cada formato que trae Cortex, para poder usarlos en cualquier clip
+setTimeout(() => { try { const sig = tp => JSON.stringify([tp.titleStyle, Object.keys(tp.c || {}).sort().map(k => [k, String(tp.c[k])])]), seen = new Set(Object.values(TT_BUILTIN).map(sig));
+  for (const p of PRESETS) { if (!p.s || !p.s.c) continue; const tp = titlePart(p.s); delete tp.c.titleY; const g = sig(tp); if (seen.has(g)) continue; seen.add(g); TT_BUILTIN['Del formato «' + p.name + '»'] = tp; } } catch (e) { console.warn('títulos de formato', e); } }, 0);
 async function ttApply(n, quiet) {
   const tp = ttGet(n); if (!tp || !loaded) return false;
   await applyStyle(mergeTitle(getStyle(), JSON.parse(JSON.stringify(tp))));
@@ -10589,6 +10592,16 @@ async function ttRender() {
   box.after(w);
 }
 let ttRenderN = 0;
+// copia de todas las plantillas (títulos y formatos de cada creador) en la carpeta del grabador: plantillas-cortex.json
+let cxTplDone = false;
+async function cxExportTpls() {
+  if (cxTplDone || typeof CORTEX_PROXY !== 'undefined') return; const d = await getLiveDir(false); if (!d) return;
+  const out = { app: 'Cortex', generado: new Date().toISOString(), clientes: [] };
+  for (const c of clients) { let g = null, st = null; try { g = await kv.get('tplg:' + groupOf(c.id)); } catch {} try { st = await kv.get('client:' + c.id); } catch {}
+    out.clientes.push({ nombre: c.name, grupo: groupOf(c.id), titleTpls: (g && g.titleTpls) || {}, titleDef: (g && g.titleDef) || null, templates: (g && g.templates) || (st && st.templates) || {}, overrides: (g && g.overrides) || (st && st.overrides) || {}, def: (g && g.def) || (st && st.def) || null }); }
+  try { await wfile(d, 'plantillas-cortex.json', JSON.stringify(out, null, 1)); cxTplDone = true; } catch (e) { console.warn('plantillas', e); }
+}
+setInterval(() => { cxExportTpls().catch(() => {}); }, 20000); setTimeout(() => cxExportTpls().catch(() => {}), 4000);
 function ttMenu(x, y) {
   const c = clientOf(curClient), own = Object.keys(titleTpls), it = [];
   for (const n of own) it.push({ icon: '⭐', label: n, on: titleDef === n, act: () => ttPick(n) });
