@@ -1478,6 +1478,28 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .lg-card .tt-del{opacity:0;transition:opacity .15s}
 .lg-card:hover .lg-ren,.lg-card:hover .tt-del{opacity:.75}
 .lg-grid>*{animation:cxPop .4s var(--ease) backwards}
+/* miniaturas de formato con iconos */
+.pm.pmx{background:#0d0d12;container-type:inline-size;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.pmx-z{position:absolute;left:0;right:0;display:grid;place-items:center;overflow:hidden}
+.pmx-z::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 30% 0%,rgba(255,255,255,.18),transparent 55%);pointer-events:none}
+.pmx-z svg{width:42cqw;max-height:78%;height:auto;position:relative;z-index:1;filter:drop-shadow(0 1.5cqw 3.5cqw rgba(0,0,0,.25))}
+.pmx-z.sm svg{width:32cqw}
+.pmx-z.close{place-items:end center}.pmx-z.close svg{width:82cqw;max-height:none;margin-bottom:-26cqw}
+.pmx-z.lbl{align-content:center;gap:2.5cqw;justify-items:center}
+.pmx-z.lbl svg{width:16cqw}
+.pmx-z b{position:relative;z-index:1;font:900 9.5cqw/1 Inter,system-ui,sans-serif;letter-spacing:.1em;color:#fff;text-transform:uppercase;text-shadow:0 1cqw 3cqw rgba(0,0,0,.25)}
+.pmx-blue{background:linear-gradient(150deg,#5B8CFF,#7C4DFF)}
+.pmx-pink{background:linear-gradient(150deg,#FF5FA2,#FF8A4C)}
+.pmx-teal{background:linear-gradient(150deg,#22D3B6,#2F80ED)}
+.pmx-amber{background:linear-gradient(150deg,#FFC24B,#FF6A3D)}
+.pmx-violet{background:linear-gradient(150deg,#A66BFF,#5B4BFF)}
+.pmx-dark{background:linear-gradient(180deg,#17171f,#0d0d12)}
+.pmx-t{position:absolute;left:50%;z-index:3;transform:translate(-50%,-50%);background:#fff;color:#111;font:900 max(6px,7.5cqw)/1 Inter,system-ui,sans-serif;letter-spacing:.12em;padding:2.4cqw 5cqw;border-radius:2.8cqw;box-shadow:0 2cqw 6cqw rgba(0,0,0,.35);white-space:nowrap}
+.pmx-s{position:absolute;left:50%;z-index:3;transform:translate(-50%,-50%);display:flex;gap:1.6cqw}
+.pmx-s i{display:block;height:max(2px,2.4cqw);width:13cqw;border-radius:9px;background:#fff;box-shadow:0 .6cqw 2cqw rgba(0,0,0,.35)}
+.pmx-s i+i{width:9cqw;background:#FFE14A}
+.pmx .pm-def{z-index:5}
+@container (max-width:95px){.pmx-t{font-size:0;padding:3cqw 15cqw;border-radius:2cqw}.pmx-z b{font-size:12cqw;letter-spacing:.04em}.pmx-z.lbl svg{display:none}}
 /* ajustar logo sobre fondos 9:16 */
 .lgx{display:grid;grid-template-columns:auto minmax(260px,440px);justify-content:start;gap:32px;align-items:start;margin-top:14px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)}
 .lgx-st{position:relative;height:clamp(320px,calc(100vh - 260px),560px);aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:#0b0b0d;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 18px 40px rgba(0,0,0,.45)}
@@ -1980,7 +2002,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <div class="tpl-hid" id="tplHidden"></div>
             <div class="tpl-act" id="tplAct"><button class="primary" id="tplNewBtn">➕ Nueva plantilla</button><button id="tplImportBtn">📥 Añadir de otro proyecto</button></div>
             <div class="tpl-act" id="tplSugW" hidden><button class="primary" id="tplSugBtn">💡 Sugerir una plantilla</button><span class="hint">¿Echas en falta un formato o quieres uno cambiado? Cuéntanoslo y lo añadimos.</span></div>
-            <div class="tpl-new" id="tplNew" hidden><input type="text" id="tplNewName" placeholder="Nombre (por ejemplo: Podcast amarillo)"><label class="f">Basada en <select id="tplNewBase"></select></label><button class="primary" id="tplNewGo">Crear y editar</button></div>
+            <div class="tpl-new" id="tplNew" hidden><input type="text" id="tplNewName" placeholder="Nombre (por ejemplo: Primer plano amarillo)"><label class="f">Basada en <select id="tplNewBase"></select></label><button class="primary" id="tplNewGo">Crear y editar</button></div>
             <div class="tpl-imp" id="tplImp" hidden></div>
           </section>
           <section class="tplbox" id="ttBox">
@@ -2164,7 +2186,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <button class="primary" id="tplApply">Aplicar</button>
           </div>
           <div class="inline">
-            <input type="text" id="tplName" placeholder="Nombre de la nueva plantilla (ej. Podcast)" aria-label="Nombre de la plantilla">
+            <input type="text" id="tplName" placeholder="Nombre de la nueva plantilla (ej. Primer plano)" aria-label="Nombre de la plantilla">
             <button id="tplSave">Guardar estilo actual</button>
           </div>
           <details class="more"><summary>Gestionar plantilla elegida</summary>
@@ -7858,31 +7880,41 @@ async function applyPreset(p) {
 async function savePresetStore() {
   return saveTypeStore();   // cada tipo de proyecto guarda sus propias plantillas
 }
-function mockFrom(st, isDefault) {
-  const c = st.c || {}, lay = st.layoutMode;
-  const pm = document.createElement('span'); pm.className = 'pm' + (c.bg && c.bg.startsWith('blur') && lay === 'single' ? ' blur' : '');
-  const v = document.createElement('span');
-  v.className = 'pm-v' + (lay === 'single' ? (+c.zoom >= 250 ? ' full' : +c.zoom >= 150 ? ' big' : '') : lay === 'react' ? ' react' : ' split');
-  pm.append(v);
-  if (lay === 'split') { const u = document.createElement('span'); u.className = 'pm-img'; pm.append(u); }
-  if (lay === 'react') { const u = document.createElement('span'); u.className = 'pm-cam'; pm.prepend(u); }
-  const t = document.createElement('span'); t.className = 'pm-t ' + (st.titleStyle === 'box' ? 'box' : 'plain');
-  t.textContent = c.titleUpper ? 'TÍTULO' : 'Título';
-  const ty = lay === 'split' ? 55 : lay === 'react' ? (+c.ratio || 42) : (+c.titleY >= 0 ? +c.titleY : (+c.zoom >= 250 ? 12 : 26));
-  t.style.top = ty + '%';
-  const s = document.createElement('span'); s.className = 'pm-s';
-  const [fam, wt] = (c.subFont || 'Montserrat|900').split('|');
-  s.style.fontFamily = `"${fam}", system-ui, sans-serif`; s.style.fontWeight = wt;
-  s.style.fontSize = Math.max(8, Math.min(13, (+c.subSize || 72) / 6)) + 'px';
-  const sy = lay === 'split' ? 30 : lay === 'react' ? 80 : (+c.titleY >= 0 ? +c.titleY - 9 : 50);
-  s.style.top = sy + '%';
-  if (c.strokeOn) s.style.webkitTextStroke = '1px ' + (c.strokeC || '#000');
-  if (c.subColor) s.style.color = c.subColor;
-  if (c.subItalic) s.style.fontStyle = 'italic';
-  if (c.subUnder) s.style.textDecoration = 'underline';
-  if (c.subBg === true || c.subBg === 'true') { s.style.background = rgbaOf(c.subBgC || '#000', (+c.subBgOp || 70) / 100); s.style.padding = '0 4px'; s.style.borderRadius = '4px'; s.style.textShadow = 'none'; }
-  s.textContent = c.upper || c.subCase === 'upper' ? 'TEXTO AQUÍ' : 'texto aquí';
-  if (c.subsGen === false || c.subsGen === 'false') s.style.display = 'none';
+// miniatura de un formato: bloques de color con degradado y un icono grande (persona, vídeo o «IMAGEN»), barra de título y rayitas de subtítulos
+const PMX_IC = {
+  per: '<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="22" r="12" fill="#fff"/><path d="M8 60c0-14 10.7-24 24-24s24 10 24 24z" fill="#fff"/></svg>',
+  play: '<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="12" width="56" height="40" rx="10" fill="#fff"/><path d="M27 23v18l15-9z" fill="#5B4BFF"/></svg>',
+  pic: '<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="10" width="52" height="44" rx="9" fill="none" stroke="#fff" stroke-width="5"/><circle cx="22" cy="25" r="5" fill="#fff"/><path d="M10 50l15-15 10 10 8-8 15 13z" fill="#fff"/></svg>'
+};
+const fmtLbl = n => n === 'Podcast' ? 'Primer plano' : n;
+function mockFrom(st, isDefault, kind) {
+  const c = st.c || {}, lay = st.layoutMode, k = String(kind || '');
+  const pm = document.createElement('span'); pm.className = 'pm pmx';
+  const zone = (top, h, g, html, cls) => { const z = document.createElement('span'); z.className = 'pmx-z ' + g + (cls ? ' ' + cls : ''); z.style.top = top + '%'; z.style.height = h + '%'; z.innerHTML = html; pm.append(z); };
+  const imgLbl = PMX_IC.pic + '<b>Imagen</b>';
+  let ty, sy;
+  if (lay === 'split') {
+    const r = Math.max(25, Math.min(75, +c.ratio || 55)), imgTop = st.imgPos === 'top';
+    if (imgTop) { zone(0, 100 - r, 'pmx-pink', imgLbl, 'lbl'); zone(100 - r, r, 'pmx-blue', PMX_IC.per); }
+    else { zone(0, r, 'pmx-blue', PMX_IC.per); zone(r, 100 - r, 'pmx-pink', imgLbl, 'lbl'); }
+    ty = imgTop ? 100 - r : r; sy = imgTop ? 100 - r + r * .86 : r * .86;
+  } else if (lay === 'react') {
+    const r = Math.max(25, Math.min(75, +c.ratio || 42));
+    if (c.duo || k === 'duo' || k === 'Dos personas') { zone(0, r, 'pmx-teal', PMX_IC.per, 'sm'); zone(r, 100 - r, 'pmx-amber', PMX_IC.per, 'sm'); }
+    else { zone(0, r, 'pmx-amber', PMX_IC.per); zone(r, 100 - r, 'pmx-violet', PMX_IC.play); }
+    ty = r; sy = (c.duo || k === 'duo' || k === 'Dos personas') ? 93 : 91;
+  } else {
+    const close = k === 'podcast' || k === 'Podcast' || +c.zoom >= 250;
+    if (close) { zone(0, 100, 'pmx-teal', PMX_IC.per, 'close'); ty = +c.titleY >= 0 ? +c.titleY : 14; sy = +c.titleY >= 0 ? Math.max(8, +c.titleY - 10) : 80; }
+    else {
+      const big = +c.zoom >= 150, top = big ? 26 : 33, h = big ? 48 : 34;
+      zone(0, 100, 'pmx-dark', ''); zone(top, h, k === 'horizontal_cam' ? 'pmx-teal' : 'pmx-blue', PMX_IC.per);
+      ty = +c.titleY >= 0 ? +c.titleY : top / 2 + 4; sy = +c.titleY >= 0 ? Math.min(92, +c.titleY + 12) : top + h + (100 - top - h) / 3;
+    }
+  }
+  const t = document.createElement('span'); t.className = 'pmx-t'; t.textContent = 'TÍTULO'; t.style.top = ty + '%';
+  const s = document.createElement('span'); s.className = 'pmx-s'; s.innerHTML = '<i></i><i></i>'; s.style.top = sy + '%';
+  if (c.subsGen === false || c.subsGen === 'false') s.hidden = true;
   pm.append(t, s);
   if (isDefault) { const st2 = document.createElement('span'); st2.className = 'pm-def'; st2.textContent = '★ Al abrir'; pm.append(st2); }
   return pm;
@@ -7892,10 +7924,10 @@ function renderPresets() {
   for (const p of PRESETS) {
     const eff = effectivePreset(p);
     const b = document.createElement('button'); b.type = 'button'; b.className = 'pcard' + (activePreset === p.name ? ' on' : ''); b.dataset.n = p.name;
-    const n = document.createElement('span'); n.className = 'pn'; n.textContent = p.name + (presetOverrides[p.name] ? ' ·' : '');
+    const n = document.createElement('span'); n.className = 'pn'; n.textContent = fmtLbl(p.name) + (presetOverrides[p.name] ? ' ·' : '');
     if (presetOverrides[p.name]) n.title = 'Ajustada por ti';
     const d = document.createElement('span'); d.className = 'pd'; d.textContent = p.desc;
-    b.append(mockFrom(eff, presetDefault === p.name), n, d);
+    b.append(mockFrom(eff, presetDefault === p.name, p.name), n, d);
     b.onclick = () => applyPreset(p);
     box.append(b);
   }
@@ -9060,7 +9092,7 @@ $('camDetect').onclick = () => autoDetectCam(true);
 
 /* ====== AGENTE DE CLIPS: le das un directo y saca los clips como un clipper profesional ====== */
 const AG_FORMATS = {
-  podcast: { preset: 'Podcast', name: 'Podcast' },
+  podcast: { preset: 'Podcast', name: 'Primer plano' },
   reaccion: { preset: 'Reacción', name: 'Reacción' },
   dividida: { preset: 'Pantalla dividida', name: 'Pantalla dividida' },
   horizontal_cam: { preset: 'Título y subtítulos', name: 'Horizontal · solo cámara' },
@@ -10082,7 +10114,7 @@ function ezOptsUI() {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'ez-fmt' + (!fa.checked && ezFmtSel === id ? ' on' : '');
     b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(!fa.checked && ezFmtSel === id)); b.disabled = fa.checked;
     b.innerHTML = '<span></span><b></b>'; b.firstChild.textContent = ic; b.lastChild.textContent = name;
-    try { b.prepend(mockFrom(fmtStyle(id), false)); } catch {}
+    try { b.prepend(mockFrom(fmtStyle(id), false, id)); } catch {}
     b.onclick = () => { ezFmtSel = id; ezPref('fmt', id); ezClip.f = ''; ezOptsUI(); ezTplUI(); };
     box.append(b);
   }
@@ -10090,7 +10122,7 @@ function ezOptsUI() {
 /* ---------- 3) la IA lo edita sola ---------- */
 // cómo queda cada formato con la plantilla de este streamer (para las vistas previas)
 function fmtStyle(id) { const f = AG_FORMATS[id], p = f && PRESETS.find(x => x.name === f.preset); const st = p ? effectivePreset(p) : JSON.parse(JSON.stringify(BASE_STYLE)); if (id === 'duo') st.layoutMode = 'react'; return st; }
-const EZ_FMTS = [['podcast', '🎙️', 'Podcast'], ['reaccion', '📺', 'Reacción'], ['dividida', '🖼️', 'Pantalla dividida'], ['horizontal', '▭', 'Horizontal'], ['horizontal_cam', '🎥', 'Horizontal · solo cámara'], ['duo', '👥', 'Dos personas']];
+const EZ_FMTS = [['podcast', '🎙️', 'Primer plano'], ['reaccion', '📺', 'Reacción'], ['dividida', '🖼️', 'Pantalla dividida'], ['horizontal', '▭', 'Horizontal'], ['horizontal_cam', '🎥', 'Horizontal · solo cámara'], ['duo', '👥', 'Dos personas']];
 let ezSteps = [];
 function busy(title, steps) {
   if (title === false) { $('ezBusy').hidden = true; return; }
@@ -10466,7 +10498,7 @@ function ezRetrimOpen() { const [a, b] = srcRange(); ezA = a; ezB = b; ezRetrim 
 /* ---------- formato por escenas ----------
    1) una imagen por segundo para ver dónde cambia el plano, y luego se afina dónde está el corte exacto
    2) en cada escena se miran las caras y se decide el formato (sin IA de pago: todo en este ordenador) */
-const SC_FMT = { podcast: ['🎙️', 'Podcast'], duo: ['👥', 'Dos personas'], horizontal: ['🖥️', 'Horizontal'], reaccion: ['📺', 'Reacción'] };
+const SC_FMT = { podcast: ['🎙️', 'Primer plano'], duo: ['👥', 'Dos personas'], horizontal: ['🖥️', 'Horizontal'], reaccion: ['📺', 'Reacción'] };
 async function scTempVideo() {
   const tv = document.createElement('video'); tv.muted = true; tv.preload = 'auto'; tv.src = vid.src;
   await new Promise((res, rej) => { tv.onloadeddata = res; tv.onerror = () => rej(new Error('vídeo')); });
@@ -10858,7 +10890,7 @@ function ezTplUI() {
   const none = txt => { const e = document.createElement('span'); e.className = 'pv none'; e.textContent = txt; return e; };
   const fa = $('ezFmtAuto'), curF = ezClip.f || (!fa.checked && ezFmtSel ? 'f:' + ezFmtSel : '');
   ezPick(F, [{ v: '', label: fa.checked ? 'La que elija la IA' : 'La de arriba', el: none('✨') },
-    ...EZ_FMTS.map(([id, ic, n]) => ({ v: 'f:' + id, label: n, el: mockFrom(fmtStyle(id), false) })),
+    ...EZ_FMTS.map(([id, ic, n]) => ({ v: 'f:' + id, label: n, el: mockFrom(fmtStyle(id), false, id) })),
     ...Object.keys(templates || {}).map(n => ({ v: 't:' + n, label: '⭐ ' + n, el: mockFrom(templates[n], false) }))],
     curF, v => { ezClip.f = v; if (v.startsWith('f:')) { fa.checked = false; ezFmtSel = v.slice(2); } else if (!v) fa.checked = ezPref('fmtAuto') !== '0'; ezOptsUI(); });
   const tnames = [...Object.keys(titleTpls), ...Object.keys(TT_BUILTIN).filter(n => !titleTpls[n])];
@@ -10977,7 +11009,7 @@ function sugOpen() {
   let ov = $('sugOv'); if (ov) ov.remove(); ov = document.createElement('div'); ov.id = 'sugOv'; ov.className = 'ttc-ov';
   const fmts = PRESETS.filter(p => !presetHidden.includes(p.name)).map(p => p.name);
   ov.innerHTML = `<div class="ttc sug" role="dialog" aria-label="Sugerir una plantilla"><div class="ttc-h"><b>💡 Sugerir una plantilla</b><button class="ttc-x" title="Cerrar (Esc)">✕</button></div>
-    <div class="sug-b"><label class="ttc-f">¿Qué plantilla te gustaría?<textarea id="sugT" rows="5" maxlength="2000" placeholder="Ej.: como Podcast pero con la cara más grande y el título en caja amarilla, para los clips de WestCOL hablando"></textarea></label>
+    <div class="sug-b"><label class="ttc-f">¿Qué plantilla te gustaría?<textarea id="sugT" rows="5" maxlength="2000" placeholder="Ej.: como Primer plano pero con la cara más grande y el título en caja amarilla, para los clips de WestCOL hablando"></textarea></label>
       <label class="ttc-f">Basada en<select id="sugF"><option value="">Una nueva</option>${fmts.map(n => `<option>${n.replace(/[<>&]/g, '')}</option>`).join('')}</select></label>
       <div class="ttc-f">Imagen de ejemplo <em>(opcional: pega una captura con Ctrl+V, súbela, o usa cómo se ve tu clip)</em>
         <div class="sug-img"><div class="sug-pv" id="sugPv"><span>Sin imagen</span></div><div class="sug-ib"><button type="button" id="sugUp">📁 Subir imagen</button><button type="button" id="sugClip"${loaded ? '' : ' disabled title="Abre un clip para usarlo"'}>🎬 Cómo se ve mi clip</button><button type="button" id="sugNo" hidden>Quitar</button></div></div>
@@ -12811,8 +12843,8 @@ async function tplStoreOf(id) {
 }
 function tplCard(st, name, sub, isDef, btns) {
   const card = document.createElement('div'); card.className = 'tpl-card';
-  card.append(mockFrom(st, isDef));
-  const n = document.createElement('strong'); n.textContent = name; card.append(n);
+  card.append(mockFrom(st, isDef, name));
+  const n = document.createElement('strong'); n.textContent = fmtLbl(name); card.append(n);
   const h = document.createElement('span'); h.className = 'hint'; h.textContent = sub; card.append(h);
   const row = document.createElement('div'); row.className = 'tpl-b'; if (!btns.length) row.hidden = true;
   for (const [lab, fn, cls, tip] of btns) { const b = document.createElement('button'); b.textContent = lab; if (cls) b.className = cls; if (tip) b.title = tip; b.onclick = ev => { ev.stopPropagation(); fn(b); }; row.append(b); }
@@ -12910,7 +12942,7 @@ function tplCopyTitle(src, name) {
 function tplNewOpen() {
   const f = $('tplNew'); f.hidden = !f.hidden; $('tplImp').hidden = true; if (f.hidden) return;
   const sel = $('tplNewBase'); sel.innerHTML = '';
-  for (const p of PRESETS) { const o = document.createElement('option'); o.value = 'f:' + p.name; o.textContent = 'Formato ' + p.name; sel.append(o); }
+  for (const p of PRESETS) { const o = document.createElement('option'); o.value = 'f:' + p.name; o.textContent = 'Formato ' + fmtLbl(p.name); sel.append(o); }
   for (const n of Object.keys(templates)) { const o = document.createElement('option'); o.value = 't:' + n; o.textContent = 'Plantilla ' + n; sel.append(o); }
   $('tplNewName').value = ''; $('tplNewName').focus();
 }
@@ -13497,7 +13529,7 @@ let stDock = false, stEdSound = false, stEdR = null, stEdRaf = 0;
 function stEdFmts(cur) {
   const box = $('seFmts'); box.innerHTML = '';
   setTimeout(stEdAutoUI, 0);
-  for (const [id, ic, n] of EZ_FMTS) { const b = document.createElement('button'); b.type = 'button'; b.title = n; b.dataset.id = id; b.className = cur === id ? 'on' : ''; let pv = null; try { pv = mockFrom(fmtStyle(id)); } catch {} if (!pv) { pv = document.createElement('span'); pv.className = 'se-fi'; pv.textContent = ic; } const lb = document.createElement('b'); lb.textContent = n; b.append(pv, lb);
+  for (const [id, ic, n] of EZ_FMTS) { const b = document.createElement('button'); b.type = 'button'; b.title = n; b.dataset.id = id; b.className = cur === id ? 'on' : ''; let pv = null; try { pv = mockFrom(fmtStyle(id), false, id); } catch {} if (!pv) { pv = document.createElement('span'); pv.className = 'se-fi'; pv.textContent = ic; } const lb = document.createElement('b'); lb.textContent = n; b.append(pv, lb);
     b.onclick = async () => { if (stPend) { stPendFmt = id; for (const o of box.children) o.classList.toggle('on', o === b); return; } if (!loaded || exporting) return; $('seS').textContent = '⏳ Cambiando de formato…'; try { stNoScenes(); await ezSetFormat(id); stCenter(); stEdFmts(id); } catch (e) { console.warn(e); } $('seS').textContent = fmtNeedsImage() ? '🖼️ Este formato lleva una imagen abajo: cópiala y pulsa Ctrl+V' : ''; }; box.append(b); }
 }
 function stEdTT() {
@@ -14206,7 +14238,7 @@ function mtInspBuild() {
   // formatos, con su miniatura
   const fm = mk('div', 'mp-fm'), list = whole ? EZ_FMTS.map(([id, ic, n]) => [id, ic, n]) : [...Object.entries(SC_FMT).map(([id, [ic, n]]) => [id, ic, n]), ['base', '↩', 'Como el resto']];
   for (const [id, ic, n] of list) { const b = mk('button', 'mp-t' + (cur === id ? ' on' : '')); b.type = 'button'; b.title = id === 'base' ? 'Esta parte va igual que el resto del clip' : n;
-    let pv = null; if (id !== 'base') { try { pv = mockFrom(fmtStyle(id)); } catch {} } if (!pv) { pv = mk('span', 'mp-base', ic); }
+    let pv = null; if (id !== 'base') { try { pv = mockFrom(fmtStyle(id), false, id); } catch {} } if (!pv) { pv = mk('span', 'mp-base', ic); }
     b.append(pv, mk('b', '', n)); b.onclick = () => mtInspFmt(id); fm.append(b); }
   pop.append(fm, Object.assign(mk('div', 'mp-st'), { hidden: true }));
   // encuadre
