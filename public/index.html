@@ -7888,7 +7888,7 @@ const PMX_IC = {
   play: '<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="12" width="56" height="40" rx="10" fill="#fff"/><path d="M27 23v18l15-9z" fill="#5B4BFF"/></svg>',
   pic: '<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="10" width="52" height="44" rx="9" fill="none" stroke="#fff" stroke-width="5"/><circle cx="22" cy="25" r="5" fill="#fff"/><path d="M10 50l15-15 10 10 8-8 15 13z" fill="#fff"/></svg>'
 };
-const fmtLbl = n => n === 'Podcast' ? 'Primer plano' : n;
+const fmtLbl = n => n === 'Podcast' ? 'Primer plano' : n === 'Título y subtítulos' ? 'Horizontal' : n;
 function mockFrom(st, isDefault, kind) {
   const c = st.c || {}, lay = st.layoutMode, k = String(kind || '');
   const pm = document.createElement('span'); pm.className = 'pm pmx';
