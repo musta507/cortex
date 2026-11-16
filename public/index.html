@@ -1509,6 +1509,9 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .lgx-st canvas.grab{cursor:grab}.lgx-st canvas.grabbing{cursor:grabbing}
 .lgx-empty{position:absolute;left:12px;right:12px;top:46%;margin:0;text-align:center;font-size:13px;color:#e4e4e7;text-shadow:0 1px 4px #000;pointer-events:none}
 .lgx-c{display:grid;gap:14px}
+.lgx[hidden]{display:none}.lgx{animation:cxPop .3s var(--ease) backwards}
+.lgx-ok{justify-self:start;width:auto;padding:8px 18px}
+.lg-edit{width:100%;margin-top:auto;padding:6px 8px;font-size:12px;font-weight:700;border-radius:8px}
 .lgx-f{display:grid;gap:7px;font-size:12px;font-weight:700;color:#A1A1AA}
 .lgx-bgs{display:flex;flex-wrap:wrap;gap:6px}
 .lgx-bgs button{display:flex;align-items:center;gap:6px;width:auto;padding:4px 10px 4px 4px;font-size:12px;border-radius:99px!important}
@@ -2022,7 +2025,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <div class="tpl-h"><strong>🖼️ Logos</strong><span class="hint">Todos tus logos en un sitio. Pulsa uno para ponérselo a <b id="lgWho"></b>: saldrá en todos sus clips. Puedes subir varios a la vez.</span></div>
             <div class="lg-grid" id="lgGrid"></div>
             <input type="file" id="lgFile" accept="image/*" multiple hidden>
-            <div class="lgx" id="lgx">
+            <div class="lgx" id="lgx" hidden>
               <div class="lgx-st"><canvas id="lgxCv" width="540" height="960"></canvas><p class="lgx-empty" id="lgxEmpty">Elige un logo arriba para ajustarlo aquí</p></div>
               <div class="lgx-c">
                 <div class="tpl-h"><strong>Ajustar el logo</strong><span class="hint">Arrástralo en la pantalla vertical para moverlo (o usa la rueda del ratón encima para el tamaño). Prueba fondos distintos para ver si se lee bien en cualquier clip.</span></div>
@@ -2033,6 +2036,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
                 <label class="toggle"><input type="checkbox" id="lgxTk" checked><span></span>Ver lo que tapa TikTok (botones y descripción)</label>
                 <label class="toggle"><input type="checkbox" id="lgxLock"><span></span>Candado: fijar posición y tamaño</label>
                 <p class="hint">Se guarda para <b id="lgxWho">este creador</b> y se usa en todos sus clips.</p>
+                <button type="button" class="primary lgx-ok" id="lgxOk">✓ Listo</button>
               </div>
             </div>
           </section>
@@ -11201,11 +11205,13 @@ async function lgRender() {
     const nm = document.createElement('div'); nm.className = 'tt-n'; nm.textContent = x ? x.name : 'Ninguno'; b.append(pv, nm);
     if (b.classList.contains('on')) { const f = document.createElement('div'); f.className = 'tt-fix'; f.textContent = '✓ El de ' + (c ? c.name : 'este creador'); b.append(f); }
     if (x) {
-      const ed = document.createElement('button'); ed.className = 'lg-ren'; ed.title = 'Cambiar el nombre'; ed.textContent = '✏️';
+      const ed = document.createElement('button'); ed.className = 'lg-ren'; ed.title = 'Cambiar el nombre'; ed.textContent = '🏷️';
       ed.onclick = async e => { e.stopPropagation(); const n = (prompt('Nombre del logo:', x.name) || '').trim(); if (!n) return; const l = await lgLib(), it = l.find(y => y.id === x.id); if (it) { it.name = n.slice(0, 40); await kv.set('logoLib', l); } lgRender(); };
       const d = document.createElement('button'); d.className = 'tt-del'; d.title = 'Quitar de la biblioteca'; d.textContent = '🗑';
       d.onclick = async e => { e.stopPropagation(); if (!confirm(`¿Quitar «${x.name}» de tus logos?` + (cur === x.src ? ' (Este creador lo seguirá teniendo hasta que elijas otro.)' : ''))) return; await kv.set('logoLib', (await lgLib()).filter(y => y.id !== x.id)); lgRender(); };
-      b.append(ed, d);
+      const ad = document.createElement('button'); ad.type = 'button'; ad.className = 'lg-edit'; ad.textContent = '✏️ Editar'; ad.title = 'Ajustar opacidad, tamaño y posición';
+      ad.onclick = async e => { e.stopPropagation(); if (!curClient) { toast('Elige primero un creador'); return; } if (cur !== x.src) { await setLogo(x.src, false); await saveTypeStore(); } LGX.open = true; await lgRender(); const bx = $('lgx'); if (bx) bx.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); };
+      b.append(ed, d, ad);
     }
     b.onclick = async () => { if (!curClient) { toast('Elige primero un creador'); return; }
       if (x) await setLogo(x.src, false); else clearLogo(false); await saveTypeStore(); lgRender(); toast(x ? `«${x.name}» puesto para ${c ? c.name : 'este creador'}` : 'Sin logo para ' + (c ? c.name : 'este creador')); };
@@ -11223,7 +11229,7 @@ setTimeout(() => { const f = $('lgFile'); if (!f) return; f.addEventListener('ch
   if (n) toast(n === 1 ? 'Logo añadido: púlsalo para ponérselo a este creador' : `${n} logos añadidos`); lgRender();
 }); }, 0);
 /* ---------- ajustar el logo (opacidad, tamaño y posición) sobre fondos verticales 9:16 de prueba ---------- */
-const LGX = { bg: 'stream', img: null, drag: null, cache: {} };
+const LGX = { bg: 'stream', img: null, drag: null, cache: {}, open: false };
 const LGX_BGS = [
   { id: 'stream', n: 'Stream', sw: 'linear-gradient(135deg,#1e2a4a,#5b3b6e)' },
   { id: 'futbol', n: 'Fútbol', sw: '#2f7d3a' },
@@ -11289,6 +11295,7 @@ function lgxDraw() {
 }
 function lgxSync() {
   const box = $('lgx'); if (!box) return; const c = clientOf(curClient), has = !!logo, lk = !!trk.logo.lock;
+  if (!has) LGX.open = false; box.hidden = !LGX.open; if (!LGX.open) return;
   $('lgxWho').textContent = c ? c.name : 'este creador'; $('lgxEmpty').hidden = has;
   $('lgxOp').value = $('logoOp').value; $('lgxOpV').textContent = $('logoOp').value + '%';
   $('lgxSz').value = $('logoSize').value; $('lgxSzV').textContent = $('logoSize').value + '%';
@@ -11316,6 +11323,7 @@ setTimeout(() => {
   $('lgxSz').addEventListener('input', e => { setRange('logoSize', e.target.value); $('lgxSzV').textContent = e.target.value + '%'; lgxDraw(); });
   ['logoOp', 'logoSize'].forEach(id => $(id).addEventListener('input', () => { if (document.activeElement && document.activeElement.id && document.activeElement.id.startsWith('lgx')) return; lgxSync(); }));
   $('lgxTk').addEventListener('change', lgxDraw);
+  $('lgxOk').onclick = () => { LGX.open = false; lgxSync(); toast('Logo guardado'); };
   $('lgxLock').addEventListener('change', () => { trk.logo.lock = $('lgxLock').checked; $('logoLock').checked = trk.logo.lock; syncTrackUI(); saveLogoCfg(); lgxSync(); toast(trk.logo.lock ? 'Logo bloqueado' : 'Logo desbloqueado'); });
   $('logoLock').addEventListener('change', lgxSync);
   const at = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; };
