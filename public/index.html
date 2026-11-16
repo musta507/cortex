@@ -1484,7 +1484,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .pmx-z::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 30% 0%,rgba(255,255,255,.18),transparent 55%);pointer-events:none}
 .pmx-z svg{width:42cqw;max-height:78%;height:auto;position:relative;z-index:1;filter:drop-shadow(0 1.5cqw 3.5cqw rgba(0,0,0,.25))}
 .pmx-z.sm svg{width:32cqw}
-.pmx-z.close{place-items:end center}.pmx-z.close svg{width:82cqw;max-height:none;margin-bottom:-26cqw}
+.pmx-z.pb{place-items:end center}.pmx-z.pb svg{width:auto;height:92%;max-height:none;transform:translateY(17%)}
+.pmx-z.close{place-items:end center}.pmx-z.close svg{width:auto;height:72%;max-height:none;transform:translateY(16%)}
 .pmx-z.lbl{align-content:center;gap:2.5cqw;justify-items:center}
 .pmx-z.lbl svg{width:16cqw}
 .pmx-z b{position:relative;z-index:1;font:900 9.5cqw/1 Inter,system-ui,sans-serif;letter-spacing:.1em;color:#fff;text-transform:uppercase;text-shadow:0 1cqw 3cqw rgba(0,0,0,.25)}
@@ -1496,7 +1497,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .pmx-dark{background:linear-gradient(180deg,#17171f,#0d0d12)}
 .pmx-t{position:absolute;left:50%;z-index:3;transform:translate(-50%,-50%);background:#fff;color:#111;font:900 max(6px,7.5cqw)/1 Inter,system-ui,sans-serif;letter-spacing:.12em;padding:2.4cqw 5cqw;border-radius:2.8cqw;box-shadow:0 2cqw 6cqw rgba(0,0,0,.35);white-space:nowrap}
 .pmx-s{position:absolute;left:50%;z-index:3;transform:translate(-50%,-50%);display:flex;gap:1.6cqw}
-.pmx-s i{display:block;height:max(2px,2.4cqw);width:13cqw;border-radius:9px;background:#fff;box-shadow:0 .6cqw 2cqw rgba(0,0,0,.35)}
+.pmx-s i{display:block;height:max(2px,2.4cqw);width:13cqw;border-radius:9px;background:#fff;box-shadow:0 0 0 .5cqw rgba(0,0,0,.18),0 .6cqw 2cqw rgba(0,0,0,.35)}
 .pmx-s i+i{width:9cqw;background:#FFE14A}
 .pmx .pm-def{z-index:5}
 @container (max-width:95px){.pmx-t{font-size:0;padding:3cqw 15cqw;border-radius:2cqw}.pmx-z b{font-size:12cqw;letter-spacing:.04em}.pmx-z.lbl svg{display:none}}
@@ -7895,20 +7896,20 @@ function mockFrom(st, isDefault, kind) {
   let ty, sy;
   if (lay === 'split') {
     const r = Math.max(25, Math.min(75, +c.ratio || 55)), imgTop = st.imgPos === 'top';
-    if (imgTop) { zone(0, 100 - r, 'pmx-pink', imgLbl, 'lbl'); zone(100 - r, r, 'pmx-blue', PMX_IC.per); }
-    else { zone(0, r, 'pmx-blue', PMX_IC.per); zone(r, 100 - r, 'pmx-pink', imgLbl, 'lbl'); }
-    ty = imgTop ? 100 - r : r; sy = imgTop ? 100 - r + r * .86 : r * .86;
+    if (imgTop) { zone(0, 100 - r, 'pmx-pink', imgLbl, 'lbl'); zone(100 - r, r, 'pmx-blue', PMX_IC.per, 'pb'); }
+    else { zone(0, r, 'pmx-blue', PMX_IC.per, 'pb'); zone(r, 100 - r, 'pmx-pink', imgLbl, 'lbl'); }
+    ty = imgTop ? 100 - r : r; sy = imgTop ? 100 - r - 8 : r + 8;
   } else if (lay === 'react') {
     const r = Math.max(25, Math.min(75, +c.ratio || 42));
-    if (c.duo || k === 'duo' || k === 'Dos personas') { zone(0, r, 'pmx-teal', PMX_IC.per, 'sm'); zone(r, 100 - r, 'pmx-amber', PMX_IC.per, 'sm'); }
-    else { zone(0, r, 'pmx-amber', PMX_IC.per); zone(r, 100 - r, 'pmx-violet', PMX_IC.play); }
-    ty = r; sy = (c.duo || k === 'duo' || k === 'Dos personas') ? 93 : 91;
+    if (c.duo || k === 'duo' || k === 'Dos personas') { zone(0, r, 'pmx-teal', PMX_IC.per, 'pb'); zone(r, 100 - r, 'pmx-amber', PMX_IC.per, 'pb'); }
+    else { zone(0, r, 'pmx-amber', PMX_IC.per, 'pb'); zone(r, 100 - r, 'pmx-violet', PMX_IC.play); }
+    ty = r; sy = (c.duo || k === 'duo' || k === 'Dos personas') ? r + 8 : 91;
   } else {
     const close = k === 'podcast' || k === 'Podcast' || +c.zoom >= 250;
-    if (close) { zone(0, 100, 'pmx-teal', PMX_IC.per, 'close'); ty = +c.titleY >= 0 ? +c.titleY : 14; sy = +c.titleY >= 0 ? Math.max(8, +c.titleY - 10) : 80; }
+    if (close) { zone(0, 100, 'pmx-teal', PMX_IC.per, 'close'); ty = 11; sy = 21; }
     else {
       const big = +c.zoom >= 150, top = big ? 26 : 33, h = big ? 48 : 34;
-      zone(0, 100, 'pmx-dark', ''); zone(top, h, k === 'horizontal_cam' ? 'pmx-teal' : 'pmx-blue', PMX_IC.per);
+      zone(0, 100, 'pmx-dark', ''); zone(top, h, k === 'horizontal_cam' ? 'pmx-teal' : 'pmx-blue', PMX_IC.per, 'pb');
       ty = +c.titleY >= 0 ? +c.titleY : top / 2 + 4; sy = +c.titleY >= 0 ? Math.min(92, +c.titleY + 12) : top + h + (100 - top - h) / 3;
     }
   }
