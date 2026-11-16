@@ -2035,7 +2035,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
                 <div class="tpl-h"><strong>Ajustar el logo</strong><span class="hint">Arrástralo en la pantalla vertical para moverlo (o usa la rueda del ratón encima para el tamaño). Prueba fondos distintos para ver si se lee bien en cualquier clip.</span></div>
                 <div class="lgx-f"><span>Fondo de prueba</span><div class="lgx-bgs" id="lgxBgs"></div></div>
                 <label class="f">Opacidad <span class="val" id="lgxOpV">85%</span><input type="range" id="lgxOp" min="5" max="100" value="85"></label>
-                <label class="f">Tamaño <span class="val" id="lgxSzV">18%</span><input type="range" id="lgxSz" min="4" max="70" value="18"></label>
+                <label class="f">Tamaño <span class="val" id="lgxSzV">18%</span><input type="range" id="lgxSz" min="2" max="100" value="18"></label>
                 <div class="lgx-f"><span>Posición rápida</span><div class="lgx-pos" id="lgxPos"></div></div>
                 <label class="toggle"><input type="checkbox" id="lgxTk" checked><span></span>Ver lo que tapa TikTok (botones y descripción)</label>
                 <label class="toggle"><input type="checkbox" id="lgxLock"><span></span>Candado: fijar posición y tamaño</label>
@@ -2256,7 +2256,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <option value="Inter|800">Inter ExtraBold</option>
             <option value="TikTok Sans|900">TikTok Sans Black</option>
           </select>
-          <label class="f">Tamaño <span class="val" id="titleSizeV">54</span><input type="range" id="titleSize" min="30" max="110" value="54"></label>
+          <label class="f">Tamaño <span class="val" id="titleSizeV">54</span><input type="range" id="titleSize" min="20" max="180" value="54"></label>
           <label class="toggle"><input type="checkbox" id="titleUpper"><span></span>Título en MAYÚSCULAS</label>
           <input type="range" id="titleY" min="-1" max="100" value="-1" hidden aria-hidden="true">
           <div class="group" id="boxOpts" hidden>
@@ -2352,7 +2352,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <option value="Bebas Neue|400">Bebas Neue</option>
             <option value="Inter|800">Inter</option>
           </select>
-          <label class="f">Tamaño <span class="val" id="subSizeV">72</span><input type="range" id="subSize" min="40" max="130" value="72"></label>
+          <label class="f">Tamaño <span class="val" id="subSizeV">72</span><input type="range" id="subSize" min="24" max="200" value="72"></label>
           <label class="f">Palabras en pantalla a la vez (máximo) <span class="val" id="wpcV">3</span><input type="range" id="wpc" min="1" max="6" value="3"></label>
           <div class="row">
             <label class="sw">Color texto<input type="color" id="subColor" value="#ffffff"></label>
@@ -2400,7 +2400,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <button id="zFill">Pantalla completa</button>
             <button id="zCenter">Centrar</button>
           </div>
-          <label class="f">Zoom <span class="val" id="zoomV">100%</span><input type="range" id="zoom" min="100" max="600" value="100"></label>
+          <label class="f">Zoom <span class="val" id="zoomV">100%</span><input type="range" id="zoom" min="30" max="800" value="100"></label>
           <div class="field"><span class="lbl">Fondo</span>
             <div class="bgtiles" id="bgTiles">
               <button class="btile" data-v="black"><canvas width="90" height="160" data-l="0"></canvas>Negro</button>
@@ -2466,7 +2466,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             </div>
             <details class="more"><summary>Ajustar imagen</summary>
               <div class="more-b">
-                <label class="f">Zoom imagen <span class="val" id="imgZoomV">100%</span><input type="range" id="imgZoom" min="100" max="300" value="100"></label>
+                <label class="f">Zoom imagen <span class="val" id="imgZoomV">100%</span><input type="range" id="imgZoom" min="30" max="600" value="100"></label>
                 <div class="presets">
                   <button id="cropBtn" disabled>Recortar</button>
                   <button id="cropReset" disabled>Imagen original</button>
@@ -2521,7 +2521,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <label class="toggle"><input type="checkbox" id="logoShow" checked><span></span>Mostrar el logo en este clip</label>
             <p class="hint" id="logoLockHint" hidden>El logo está bloqueado. Quita el candado para moverlo o cambiar su tamaño.</p>
             <div class="row">
-              <label class="f">Tamaño <span class="val" id="logoSizeV">18%</span><input type="range" id="logoSize" min="4" max="70" value="18"></label>
+              <label class="f">Tamaño <span class="val" id="logoSizeV">18%</span><input type="range" id="logoSize" min="2" max="100" value="18"></label>
               <label class="f">Opacidad <span class="val" id="logoOpV">85%</span><input type="range" id="logoOp" min="5" max="100" value="85"></label>
             </div>
             <details class="more"><summary>Posición y opciones</summary>
@@ -6586,12 +6586,12 @@ cv.addEventListener('wheel', e => {
   }
   const scA = sceneAdj(), scCr = scA && scA.ov.mode === 'react' && scA.ov.crops ? scA.ov.crops : null;
   if (scA && !scCr && k === 'video') {   // parte con su propia plantilla: el zoom es el de esa parte
-    e.preventDefault(); const s = scA.ov.s || (scA.ov.s = {}); s.zoom = Math.max(1, Math.min(Math.max(330, +$('zoom').max || 330) / 100, Math.round(((s.zoom || 1) * 100 + (e.deltaY < 0 ? 5 : -5))) / 100));
+    e.preventDefault(); const s = scA.ov.s || (scA.ov.s = {}); s.zoom = Math.max(0.3, Math.min(Math.max(800, +$('zoom').max || 800) / 100, Math.round(((s.zoom || 1) * 100 + (e.deltaY < 0 ? 5 : -5))) / 100));
     clearTimeout(duoWheelT); duoWheelT = setTimeout(pushHistory, 400); return;
   }
   if ((scCr || (layoutMode === 'react' && $('duo').checked)) && (k === 'cam' || k === 'video' || /^p\d$/.test(k))) {
     e.preventDefault(); const c = cget(scCr || crops, k === 'cam' ? 'cam' : k === 'video' ? 'content' : k); if (!c) return;
-    let f = e.deltaY < 0 ? 0.94 : 1 / 0.94; f = Math.min(f, 1 / c.w, 1 / c.h); if (c.w * f < 0.08) return;
+    let f = e.deltaY < 0 ? 0.94 : 1 / 0.94; f = Math.min(f, 1 / c.w, 1 / c.h); if (c.w * f < 0.025) return;
     const cx = c.x + c.w / 2, cy = c.y + c.h / 2; c.w *= f; c.h *= f;
     c.x = Math.min(Math.max(0, cx - c.w / 2), 1 - c.w); c.y = Math.min(Math.max(0, cy - c.h / 2), 1 - c.h);
     tlSig = ''; clearTimeout(duoWheelT); duoWheelT = setTimeout(pushHistory, 400); return;
@@ -6685,7 +6685,7 @@ $('imgCenter').onclick = () => { imgOff.x = imgOff.y = 0; pushHistory(); };
 function fillZoom() { const vw = vid.videoWidth || 1920, vh = vid.videoHeight || 1080; return Math.min(560, Math.ceil(H / (W * vh / vw) * 100)); }
 // zoom: se puede pasar un poco de la pantalla completa, y al acercarse a ella se queda pegado (imán)
 let zPrev = 100;
-function zoomMax() { if (!loaded) return; const z = $('zoom'), mx = layoutMode === 'single' ? Math.max(330, Math.round(fillZoom() * 1.15)) : 330; if (+z.max !== mx) { z.max = mx; zPrev = +z.value; } }
+function zoomMax() { if (!loaded) return; const z = $('zoom'), mx = layoutMode === 'single' ? Math.max(800, Math.round(fillZoom() * 1.6)) : 800; if (+z.max !== mx) { z.max = mx; zPrev = +z.value; } }
 $('zoom').addEventListener('input', () => {
   const z = $('zoom'); let v = +z.value;
   if (layoutMode === 'single' && loaded) {
@@ -11247,7 +11247,7 @@ function ttcOpen(editName, base, suggest) {
         <label class="ttc-f">Nombre<input type="text" id="ttcName" maxlength="40" placeholder="Por ejemplo: Caja roja WestCOL"></label>
         <div class="ttc-s"><span>Letra</span><div class="ttc-fonts" id="ttcFonts"></div></div>
         <div class="ttc-s"><span>Texto</span>
-          <label class="ttc-r">Tamaño<input type="range" data-k="titleSize" min="30" max="110"><output></output></label>
+          <label class="ttc-r">Tamaño<input type="range" data-k="titleSize" min="20" max="180"><output></output></label>
           <label class="ttc-r">Entre letras<input type="range" data-k="tLS" min="-6" max="30"><output></output></label>
           <label class="ttc-r">Entre líneas<input type="range" data-k="titleLH" min="80" max="200"><output></output></label>
           <label class="ttc-r">Ancho<input type="range" data-k="titleW" min="0" max="1000" step="10"><output></output></label>
@@ -11487,7 +11487,7 @@ setTimeout(() => {
   const up = () => { if (!LGX.drag) return; LGX.drag = null; cv.className = 'grab'; pushHistory(); lgxSave(); };
   cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
   cv.addEventListener('pointerleave', () => { if (LGX.hover && !LGX.drag) { LGX.hover = false; lgxDraw(); } });
-  cv.addEventListener('wheel', e => { if (!inB(at(e), lgxBox()) || trk.logo.lock) return; e.preventDefault(); const v = Math.max(4, Math.min(70, +$('logoSize').value + (e.deltaY < 0 ? 1 : -1))); setRange('logoSize', v); lgxSync(); }, { passive: false });
+  cv.addEventListener('wheel', e => { if (!inB(at(e), lgxBox()) || trk.logo.lock) return; e.preventDefault(); const v = Math.max(2, Math.min(100, +$('logoSize').value + (e.deltaY < 0 ? 1 : -1))); setRange('logoSize', v); lgxSync(); }, { passive: false });
   lgxSync();
 }, 0);
 // copia de todas las plantillas (títulos y formatos de cada creador) en la carpeta del grabador: plantillas-cortex.json
@@ -14429,19 +14429,20 @@ function mtInspBuild() {
   const pct = v => v + '%', px = v => (v > 0 ? '+' : '') + v;
   if (tg.kind === 'global') {
     const rs = mk('button', '', '↺ Restablecer'); rs.onclick = () => { setRange('offX', 0); setRange('offY', 0); setRange('zoom', curFmtOf() === 'podcast' ? fillZoom() : 100); pushHistory(); mtInspSync(true); }; sec.append(rs);
-    row('Zoom', 100, +$('zoom').max || 330, () => +$('zoom').value, v => setRange('zoom', v), pct);
+    row('Zoom', 30, +$('zoom').max || 800, () => +$('zoom').value, v => setRange('zoom', v), pct);
     row('Mover ← →', -1700, 1700, () => +$('offX').value, v => setRange('offX', v), px); row('Mover ↑ ↓', -1000, 1000, () => +$('offY').value, v => setRange('offY', v), px);
     const r = mk('label', 'mp-row'), se = mk('select'); for (const o of $('bg').options) se.append(new Option(o.textContent, o.value)); se.value = $('bg').value; se.onchange = () => { $('bg').value = se.value; $('bg').dispatchEvent(new Event('change', { bubbles: true })); pushHistory(); }; r.append(mk('span', '', 'Fondo'), se); adj.append(r);
   } else if (tg.kind === 'ov') {
     const s = tg.s, rs = mk('button', '', '↺ Restablecer'); rs.onclick = () => mtInspFmt(sc.f); sec.append(rs);
-    row('Zoom', 100, Math.max(330, +$('zoom').max || 330), () => Math.round((s.zoom || 1) * 100), v => { s.zoom = v / 100; }, pct);
+    row('Zoom', 30, Math.max(800, +$('zoom').max || 800), () => Math.round((s.zoom || 1) * 100), v => { s.zoom = v / 100; }, pct);
     row('Mover ← →', -1700, 1700, () => Math.round(s.offX || 0), v => { s.offX = v; }, px); row('Mover ↑ ↓', -1000, 1000, () => Math.round(s.offY || 0), v => { s.offY = v; }, px);
     const r = mk('label', 'mp-row'), se = mk('select'); se.append(new Option('El del clip', '')); for (const o of $('bg').options) se.append(new Option(o.textContent, o.value)); se.value = s.bg || ''; se.onchange = () => { if (se.value) s.bg = se.value; else delete s.bg; pushHistory(); mtDirty(); }; r.append(mk('span', '', 'Fondo'), se); adj.append(r);
   } else if (tg.kind === 'crops' && tg.cr) {
-    const zrow = (label, key) => { const c = tg.cr[key]; if (!c || !(c.w > 0)) return; const maxW = () => c.w * Math.min(1 / c.w, 1 / c.h);
-      row(label, 100, 800, () => Math.round(maxW() / c.w * 100), v => { const f = Math.max(0.08 / c.w, (maxW() / (v / 100)) / c.w), cx = c.x + c.w / 2, cy = c.y + c.h / 2; c.w = Math.min(1, c.w * f); c.h = Math.min(1, c.h * f); c.x = mtClamp(cx - c.w / 2, 0, 1 - c.w); c.y = mtClamp(cy - c.h / 2, 0, 1 - c.h); try { tlSig = ''; } catch {} }, pct); };
+    const zrow = (label, key) => { const c = cget(tg.cr, key); if (!c || !(c.w > 0)) return; const maxW = () => c.w * Math.min(1 / c.w, 1 / c.h);
+      row(label, 100, 3000, () => Math.round(maxW() / c.w * 100), v => { const f = Math.max(0.025 / c.w, (maxW() / (v / 100)) / c.w), cx = c.x + c.w / 2, cy = c.y + c.h / 2; c.w = Math.min(1, c.w * f); c.h = Math.min(1, c.h * f); c.x = mtClamp(cx - c.w / 2, 0, 1 - c.w); c.y = mtClamp(cy - c.h / 2, 0, 1 - c.h); try { tlSig = ''; } catch {} }, pct); };
     if (tg.own) { const rs = mk('button', '', '↺ Restablecer'); rs.onclick = () => mtInspFmt(sc.f); sec.append(rs); }
-    zrow('Zoom de arriba', 'cam'); zrow('Zoom de abajo', 'content');
+    if (callOn() && (tg.cr.n || 2) > 2) { zrow('Zoom persona 1', 'cam'); zrow('Zoom persona 2', 'content'); for (let i = 2; i < (tg.cr.n || 2); i++) zrow('Zoom persona ' + (i + 1), 'p' + i); }
+    else { zrow('Zoom de arriba', 'cam'); zrow('Zoom de abajo', 'content'); }
   }
   adj.append(mk('p', 'mp-hint', tg.kind === 'none' ? 'Este formato se ajusta en el reproductor: arrastra el vídeo o la imagen, y usa la rueda del ratón para el zoom.' : tg.kind === 'crops' ? 'Para mover cada mitad, arrástrala en el reproductor. La rueda del ratón también hace zoom.' : 'También puedes arrastrar el vídeo en el reproductor y usar la rueda del ratón.'));
   pop.append(sec, adj);
