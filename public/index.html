@@ -4776,9 +4776,11 @@ function drawRowBoxes(rs, r) {
   }
   for (const g of groups) {
     // anchos casi iguales: mismo borde (sin escalones diminutos)
-    for (let i = 1; i < g.length; i++) {
-      if (Math.abs(g[i].x0 - g[i - 1].x0) < 6) g[i].x0 = g[i - 1].x0 = Math.min(g[i].x0, g[i - 1].x0);
-      if (Math.abs(g[i].x1 - g[i - 1].x1) < 6) g[i].x1 = g[i - 1].x1 = Math.max(g[i].x1, g[i - 1].x1);
+    // (escalones pequeños, hasta ~32 px o el radio de la esquina: se hace una línea recta con la caja más ancha)
+    const TOL = Math.max(32, (r || 0) * 1.2);
+    for (let pass = 0; pass < 3; pass++) for (let i = 1; i < g.length; i++) {
+      if (Math.abs(g[i].x0 - g[i - 1].x0) < TOL) g[i].x0 = g[i - 1].x0 = Math.min(g[i].x0, g[i - 1].x0);
+      if (Math.abs(g[i].x1 - g[i - 1].x1) < TOL) g[i].x1 = g[i - 1].x1 = Math.max(g[i].x1, g[i - 1].x1);
     }
     const n = g.length, V = [];
     // lado derecho, de arriba abajo: el escalón va en el borde de la caja más ancha
