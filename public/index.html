@@ -7415,6 +7415,7 @@ async function openProject(e) {
     }
     activePreset = null; renderPresets();
     if (!loaded) ezShow('insert');
+    else if (ezPref('quickEd') !== '0') stQuickOpen(false);
   } catch (err) { console.error(err); toast('No se pudo abrir el clip'); }
 }
 async function saveIndex() { try { await kv.set('projects', projIndex); } catch {} }
@@ -12536,7 +12537,7 @@ function stEdLoop() {
 // el panel se abre en cuanto pulsas: mientras el clip se guarda ya puedes escribir el título y elegir el formato
 let stPend = null, stPendFmt = '';
 function stEdPend(m) {
-  stPend = m.id; stPendFmt = ''; stDock = true; $('livePage').classList.add('dock'); $('stEd').hidden = false;
+  stPend = m.id; stPendFmt = ''; stDock = true; $('livePage').classList.add('dock'); $('stEd').classList.remove('full'); $('stEd').hidden = false;
   $('seT').textContent = `✂️ Tu clip · ${Math.round(m.t1 - m.t0)} s`; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = ''; $('seExp').disabled = true;
   $('seS').textContent = '⏳ Guardando el clip… Mientras, ve poniendo el título y el formato.';
   const c = $('seCv'), x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#A1A1AA'; x.font = '600 26px system-ui'; x.textAlign = 'center'; x.fillText('⏳ Guardando el clip…', c.width / 2, c.height / 2);
@@ -12610,7 +12611,7 @@ function stEdAutoUI() {
 }
 // el mismo panel, a pantalla completa, nada más meter un clip (subido o por enlace): la IA lo prepara y tú solo corriges
 let stQuick = false;
-async function stQuickOpen() {
+async function stQuickOpen(fresh = true) {
   const ed = $('stEd'); if (ed.parentNode !== document.body) document.body.append(ed);   // fuera del panel en directo, para que se vea en cualquier pantalla
   stQuick = true; stDock = true; ed.classList.add('full'); ed.hidden = false;
   stEdSound = true; $('seSnd').textContent = '🔊';   // aquí no hay directo que escuchar: el clip suena
@@ -12618,6 +12619,10 @@ async function stQuickOpen() {
   const aT = ezPref('stAutoT') !== '0', aF = ezPref('stAutoF') !== '0', aS = ezPref('stAutoS') !== '0';
   $('seS').textContent = aT || aF || aS ? '✨ La IA está preparando el clip… puedes ir escribiendo el título' : '⏳ Abriendo el clip…';
   stEdFmts(''); stEdTT(); stEdAutoUI(); cancelAnimationFrame(stEdRaf); stEdLoop(); setTimeout(() => $('seTitle').focus(), 60);
+  if (!fresh) {   // clip ya hecho: solo se enseña como está
+    stPend = null; stEdR = [0, ezDur()]; for (const id of ['seA', 'seB']) { $(id).min = 0; $(id).max = ezDur(); }
+    stEdTrimUI(); stEdTT(); stEdFmts(clipMeta.fmt || ''); vid.muted = !stEdSound; $('seS').textContent = ''; $('seExp').disabled = false; return;
+  }
   ezA = 0; ezB = ezDur(); ezApplyTrim(); ezShow('edit');
   ezSkip.title = !aT; ezSkip.subs = !aS; ezSkip.scenes = ezPref('stAutoE') !== '1';
   const fmt0 = aF ? null : (ezPref('stFmtDef') || 'horizontal');
@@ -12973,19 +12978,13 @@ async function liveCutFile0(S, g, pre) {
   }
   throw new Error('El grabador no responde: ¿tienes abierta la ventana del grabador?');
 }
-async function liveEdit(S, g, btn, fmt) {
+async function liveEdit(S, g, btn) {
   if (auBusy) { toast('El modo automático está terminando un clip: prueba en unos segundos'); return; }
-  // primero se elige el formato (marcado el que tengas por defecto en el panel)
-  if (!fmt) {
-    const cur = ezPref('liveFmt') || 'auto', r = (btn || $('lvMoments')).getBoundingClientRect();
-    const items = [['auto', '✨', 'Automático (la IA elige)'], ...EZ_FMTS].map(([id, ic, n]) => ({ icon: ic, label: n, on: cur === id, act: () => liveEdit(S, g, btn, id) }));
-    setTimeout(() => ctxOpen(Math.min(r.left, innerWidth - 300), Math.min(r.bottom + 6, innerHeight - 360), '¿En qué formato lo edito?', items), 0);
-    return;
-  }
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Preparando…'; }
-  try { const c = await liveCutFile(S, g); pvClose(); await openLiveClip(S, g, c.f, c.off, c.dur, fmt); }
-  catch (e) { console.warn(e); toast('No se pudo preparar el clip: ' + e.message); }
-  finally { if (btn) { btn.disabled = false; btn.textContent = '✂️ Editar'; } }
+  if (!$('stEd').hidden) { toast('Termina o cierra (✕) el clip que tienes abierto'); return; }
+  // el panel de edición se abre ya y el clip se prepara mientras escribes el título
+  pvClose(); stEdPend(g);
+  try { const c = await liveCutFile(S, g); if (stPend !== g.id) return; await stEdOpen(S, g, c); }
+  catch (e) { console.warn(e); $('seS').textContent = '⚠ No se pudo preparar el clip: ' + (e.message || e); stPend = null; }
 }
 /* ---------- registro de clips: qué se abrió, qué se exportó (con su momento exacto) y qué se descartó ----------
    Se va acumulando solo y se descarga en un archivo para analizarlo. */
