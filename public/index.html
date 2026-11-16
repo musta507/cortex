@@ -1509,6 +1509,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .lgx-st canvas.grab{cursor:grab}.lgx-st canvas.grabbing{cursor:grabbing}
 .lgx-empty{position:absolute;left:12px;right:12px;top:46%;margin:0;text-align:center;font-size:13px;color:#e4e4e7;text-shadow:0 1px 4px #000;pointer-events:none}
 .lgx-c{display:grid;gap:14px}
+.call-opts{display:grid;gap:8px;margin-bottom:10px}.call-opts .seg{display:flex;gap:6px}.call-opts .seg button{flex:1;padding:6px 0;font-weight:800}.call-opts .seg button.on{background:#fff;color:#111}
 .lgx-zm{position:absolute;right:10px;bottom:10px;z-index:2;width:auto!important;padding:6px 11px!important;font-size:12px;font-weight:800;border-radius:99px!important;background:rgba(0,0,0,.62)!important;color:#fff!important;border:1px solid rgba(255,255,255,.25)!important;backdrop-filter:blur(6px)}
 .lgx-zm.on{background:#fff!important;color:#111!important}
 .lgx[hidden]{display:none}.lgx{animation:cxPop .3s var(--ease) backwards}
@@ -2322,7 +2323,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
         <div class="sec-b">
           <label class="toggle"><input type="checkbox" id="subsGen" checked><span></span>Esta plantilla lleva subtítulos <em class="hint">(si lo apagas, la IA ni siquiera los genera)</em></label>
           <div hidden id="subExtra">
-            <input type="checkbox" id="duo">
+            <input type="checkbox" id="duo"><input type="checkbox" id="call">
+            <input type="range" id="edgeT" min="0" max="900" value="0"><input type="range" id="edgeB" min="0" max="900" value="0">
             <input type="checkbox" id="subBold" checked><input type="checkbox" id="subItalic"><input type="checkbox" id="subUnder">
             <select id="subCase"><option value="none">normal</option><option value="lower">minúsculas</option><option value="title">Tipo título</option></select>
             <input type="range" id="subLS" min="-5" max="40" value="0">
@@ -2429,6 +2431,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <button class="tile" id="lyReact" data-ly="react"><span class="ill ill-react"><u></u><b></b></span>Reacción</button>
           </div>
           <div class="group" id="reactOpts" hidden>
+            <div class="call-opts" id="callOpts" hidden>
+              <span class="lbl">Personas en la llamada</span>
+              <div class="seg" id="callNSeg"><button type="button" data-n="2">2</button><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button><button type="button" data-n="5">5</button></div>
+              <button type="button" id="callFind">🔍 Buscar las cámaras otra vez</button>
+              <p class="hint">Arrastra cada persona en la vista previa para encuadrarla; la rueda del ratón acerca o aleja. Puedes mover el borde de arriba y el de abajo.</p>
+            </div>
             <p class="hint">Se usa el mismo clip dos veces: arriba la cámara del streamer y abajo lo que está viendo. La cámara se detecta sola; si no es exacta, doble clic en cada parte de la vista previa para marcarla.</p>
             <p class="status" id="camStatus"></p>
             <label class="f">Clave de Gemini (detección máxima, gratis)<input type="password" id="gemKey" placeholder="Pega aquí tu clave AIza…" autocomplete="off"></label>
@@ -4389,6 +4397,7 @@ const S0 = () => ({
   strokeW: +$('strokeW').value,
   strokeC: $('strokeC').value,
   ratio: +$('ratio').value / 100,
+  edgeT: +$('edgeT').value, edgeB: +$('edgeB').value,
   imgZoom: +$('imgZoom').value / 100,
   logoSize: +$('logoSize').value / 100,
   logoOp: +$('logoOp').value / 100,
@@ -4795,26 +4804,33 @@ function drawRowBoxes(rs, r) {
 /* geometría de la composición: dónde va el vídeo, la imagen y la línea divisoria */
 const DEFAULT_CROPS = { cam: { x: 0.74, y: 0.66, w: 0.26, h: 0.34 }, content: { x: 0.05, y: 0.05, w: 0.68, h: 0.9 }, camFx: 0.5 };
 const crops = JSON.parse(JSON.stringify(DEFAULT_CROPS));   // zonas del clip (0-1) para el formato Reacción
+// llamada (Discord): de 2 a 5 personas, cada una en su franja
+const callOn = () => layoutMode === 'react' && $('duo').checked && $('call').checked;
+const cget = (CR, w) => !CR ? null : /^p\d$/.test(w) ? (CR.more || [])[+w.slice(1) - 2] : CR[w];
 function layout(s, vw, vh, t) {
+  const eT = Math.max(0, s.edgeT || 0), eB = Math.max(0, s.edgeB || 0), T0 = eT, AH = Math.max(200, H - eT - eB);
   if (layoutMode === 'react') {
-    const cH = Math.round(H * s.ratio);
-    const ir = { x: 0, y: 0, w: W, h: cH }, vr = { x: 0, y: cH, w: W, h: H - cH };
-    const cr = cropsAt(t || 0), k = cr.content, sw = vw * k.w, sh = vh * k.h;
+    const cr0 = cropsAt(t || 0), nC = callOn() ? Math.max(2, Math.min(5, cr0.n || 2)) : 0;
+    const cH = nC ? Math.round(AH / nC) : Math.round(AH * s.ratio);
+    const ir = { x: 0, y: T0, w: W, h: cH }, vr = { x: 0, y: T0 + cH, w: W, h: nC ? cH : AH - cH };
+    const more = [];
+    if (nC > 2) for (let i = 2; i < nC; i++) { const y = T0 + Math.round(AH * i / nC), y2 = T0 + Math.round(AH * (i + 1) / nC); more.push({ R: { x: 0, y, w: W, h: y2 - y }, k: (cr0.more || [])[i - 2] || cr0.cam }); }
+    const cr = cr0, k = cr.content, sw = vw * k.w, sh = vh * k.h;
     const contain = cr.fit === 'contain';
     const sc = (contain ? Math.min(vr.w / sw, vr.h / sh) : Math.max(vr.w / sw, vr.h / sh)) * (cr.zk || 1) * s.zoom;
     const dw = sw * sc, dh = sh * sc;
     const cx = vr.x + vr.w / 2 + s.offX, cy = vr.y + vr.h / 2 + s.offY;
-    return { split: true, react: true, vr, ir, seam: cH, cr, contain, src: { x: vw * k.x, y: vh * k.y, w: sw, h: sh },
+    return { split: true, react: true, vr, ir, seam: T0 + cH, top: T0, bot: T0 + AH, more: more.length ? more : null, call: nC, cr, contain, src: { x: vw * k.x, y: vh * k.y, w: sw, h: sh },
              video: { x: cx - dw / 2, y: cy - dh / 2, w: dw, h: dh }, subArea: vr };
   }
   if (layoutMode === 'split') {
-    const vH = Math.round(H * s.ratio), iH = H - vH;
-    const vr = imgPos === 'bottom' ? { x: 0, y: 0, w: W, h: vH } : { x: 0, y: iH, w: W, h: vH };
-    const ir = imgPos === 'bottom' ? { x: 0, y: vH, w: W, h: iH } : { x: 0, y: 0, w: W, h: iH };
+    const vH = Math.round(AH * s.ratio), iH = AH - vH;
+    const vr = imgPos === 'bottom' ? { x: 0, y: T0, w: W, h: vH } : { x: 0, y: T0 + iH, w: W, h: vH };
+    const ir = imgPos === 'bottom' ? { x: 0, y: T0 + vH, w: W, h: iH } : { x: 0, y: T0, w: W, h: iH };
     const sc = Math.max(vr.w / vw, vr.h / vh) * s.zoom;     // el vídeo llena su parte
     const dw = vw * sc, dh = vh * sc;
     const cx = vr.x + vr.w / 2 + s.offX, cy = vr.y + vr.h / 2 + s.offY;
-    return { split: true, vr, ir, seam: imgPos === 'bottom' ? vH : iH,
+    return { split: true, vr, ir, seam: T0 + (imgPos === 'bottom' ? vH : iH), top: T0, bot: T0 + AH,
              video: { x: cx - dw / 2, y: cy - dh / 2, w: dw, h: dh }, subArea: vr };
   }
   if (clipMeta.cam) {   // solo la cámara del streamer (p. ej. casino: el juego no se enseña)
@@ -4942,8 +4958,11 @@ function draw0(t, forExport, src, T) {
   boxes.video = L.vr;
   const ready = isFrame || (loaded && vid.readyState >= 2);
 
+  // bandas de arriba y abajo (si se han movido los bordes): negras o con el vídeo difuminado
+  if (L.split && (L.top > 0 || L.bot < H) && ready && String(s.bg).startsWith('blur')) blurInto(src, 0, 0, vw, vh, { x: 0, y: 0, w: W, h: H }, +s.bg.slice(4) || 2);
   if (L.react) drawCam(L.ir, src, vw, vh, ready, L.cr);
   else if (L.split) drawImageIn(L.ir, s);
+  if (L.more) for (const m of L.more) drawCam(m.R, src, vw, vh, ready, { cam: m.k, camFx: 0.5 });
   if (L.split) {
     ctx.save(); ctx.beginPath(); ctx.rect(L.vr.x, L.vr.y, L.vr.w, L.vr.h); ctx.clip();
   }
@@ -5135,6 +5154,11 @@ function draw0(t, forExport, src, T) {
   const stS = selTextId();
   if (stS != null && txtBoxes[stS]) drawTextSel(txtBoxes[stS], !!drag);
   if (hover && hover.startsWith('txt:') && +hover.slice(4) !== stS && txtBoxes[hover.slice(4)]) { const b = txtBoxes[hover.slice(4)]; ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.rot * Math.PI / 180); ctx.strokeStyle = '#20d5c8'; ctx.lineWidth = 3; ctx.setLineDash([16, 10]); ctx.strokeRect(-b.w / 2 - 18, -b.h / 2 - 16, b.w + 36, b.h + 32); ctx.restore(); }
+  if (L.split && L.top != null && ['edgeT', 'edgeB'].some(x => sel === x || hover === x || (drag && drag.k === x))) {
+    const ey = (sel === 'edgeT' || hover === 'edgeT' || (drag && drag.k === 'edgeT')) ? L.top : L.bot;
+    ctx.save(); ctx.fillStyle = '#ffd23f'; ctx.fillRect(0, Math.max(0, Math.min(H - 6, ey - 3)), W, 6);
+    ctx.beginPath(); ctx.arc(W / 2, Math.max(22, Math.min(H - 22, ey)), 22, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  }
   if (L.split && (sel === 'seam')) {
     ctx.save(); ctx.fillStyle = '#ffd23f';
     ctx.fillRect(0, L.seam - 3, W, 6);
@@ -6318,13 +6342,16 @@ function hit(p) {
 function hitAny(p) {
   const k = hit(p); if (k) return k;
   const L = lastLayout;
-  if (L && L.split && Math.abs(p.y - L.seam) < 28) return 'seam';
+  if (L && L.split && L.top != null && Math.abs(p.y - L.top) < 24 && p.y < L.top + 24) return 'edgeT';
+  if (L && L.split && L.bot != null && Math.abs(p.y - L.bot) < 24 && p.y > L.bot - 24) return 'edgeB';
+  if (L && L.split && !L.call && Math.abs(p.y - L.seam) < 28) return 'seam';
+  if (L && L.more) for (let i = 0; i < L.more.length; i++) if (inR(p, L.more[i].R)) return 'p' + (i + 2);
   if (L && L.react && inR(p, L.ir)) return 'cam';
   if (L && L.split && inR(p, L.ir)) return 'image';
   if (loaded && inR(p, boxes.video)) return 'video';
   return null;
 }
-const CURSOR = new Proxy({ cam: 'grab', logo: 'grab', title: 'grab', sub: 'grab', video: 'grab', image: 'grab', seam: 'ns-resize' }, { get: (o, k) => typeof k === 'string' && k.startsWith('txt:') ? 'grab' : o[k] });
+const CURSOR = new Proxy({ cam: 'grab', logo: 'grab', title: 'grab', sub: 'grab', video: 'grab', image: 'grab', seam: 'ns-resize', edgeT: 'ns-resize', edgeB: 'ns-resize' }, { get: (o, k) => typeof k === 'string' && /^p\d$/.test(k) ? 'grab' : typeof k === 'string' && k.startsWith('txt:') ? 'grab' : o[k] });
 
 /* recorte */
 let cropMode = false, cropTmp = null, cropDrag = null;
@@ -6435,21 +6462,21 @@ cv.addEventListener('pointerdown', e => {
   // dos personas: cada mitad se arrastra para encuadrar a su persona (y la rueda acerca o aleja)
   // (si la línea está en una parte del clip con su propia plantilla, lo que se ajusta es el encuadre de esa parte)
   const scA = sceneAdj(), scCr = scA && scA.ov.mode === 'react' && scA.ov.crops ? scA.ov.crops : null, scS = scA && scA.ov.mode !== 'react' ? (scA.ov.s || (scA.ov.s = {})) : null;
-  if (L && L.react && (scCr || $('duo').checked) && (k === 'cam' || k === 'video')) {
-    const CR = scCr || crops, which = k === 'cam' ? 'cam' : 'content', r = k === 'cam' ? L.ir : boxes.video;
-    if (r && r.w && CR[which]) { drag = { k: 'duo', which, cr: CR, p0: p, c: { ...CR[which] }, rw: r.w, rh: r.h }; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; e.preventDefault(); return; }
+  if (L && L.react && (scCr || $('duo').checked) && (k === 'cam' || k === 'video' || /^p\d$/.test(k))) {
+    const CR = scCr || crops, which = k === 'cam' ? 'cam' : k === 'video' ? 'content' : k, r = k === 'cam' ? L.ir : k === 'video' ? boxes.video : L.more && L.more[+k.slice(1) - 2] && L.more[+k.slice(1) - 2].R, c0 = cget(CR, which);
+    if (r && r.w && c0) { drag = { k: 'duo', which, cr: CR, p0: p, c: { ...c0 }, rw: r.w, rh: r.h }; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; e.preventDefault(); return; }
   }
   const A = L.subArea;
   drag = { k, p0: p, tx: pos.tx, ty: pos.ty, sx: pos.sx, subY: +$('subY').value, dh: A.h,
            offX: +$('offX').value, offY: +$('offY').value, ratio: +$('ratio').value, ix: imgOff.x, iy: imgOff.y,
-           lx: logoPos.x, ly: logoPos.y };
+           lx: logoPos.x, ly: logoPos.y, et: +$('edgeT').value, eb: +$('edgeB').value };
   if (k === 'video' && scS) { drag.scS = scS; drag.offX = scS.offX || 0; drag.offY = scS.offY || 0; }
   if (k.startsWith('txt:')) { const tx = txtById(+k.slice(4)); drag.tx0 = tx.x; drag.ty0 = tx.y; }
   // dónde dibujar las guías del imán
   if (k === 'video') drag.g = { x: L.vr.x + L.vr.w / 2, y: L.vr.y + L.vr.h / 2, y0: L.vr.y, y1: L.vr.y + L.vr.h };
   else if (k === 'image') drag.g = { x: L.ir.x + L.ir.w / 2, y: L.ir.y + L.ir.h / 2, y0: L.ir.y, y1: L.ir.y + L.ir.h };
   else drag.g = { x: W / 2, y: H / 2, y0: 0, y1: H };
-  cv.setPointerCapture(e.pointerId); cv.style.cursor = k === 'seam' ? 'ns-resize' : 'grabbing'; e.preventDefault();
+  cv.setPointerCapture(e.pointerId); cv.style.cursor = k === 'seam' || k === 'edgeT' || k === 'edgeB' ? 'ns-resize' : 'grabbing'; e.preventDefault();
 });
 cv.addEventListener('pointermove', e => {
   const p = canvasPt(e);
@@ -6501,7 +6528,7 @@ cv.addEventListener('pointermove', e => {
     fillTextPanel(); return;
   }
   if (drag.k === 'duo') {
-    const d = drag, c = (d.cr || crops)[d.which]; if (!c) return;
+    const d = drag, c = cget(d.cr || crops, d.which); if (!c) return;
     c.x = Math.min(Math.max(0, d.c.x - ddx / d.rw * d.c.w), 1 - c.w);
     c.y = Math.min(Math.max(0, d.c.y - ddy / d.rh * d.c.h), 1 - c.h);
     tlSig = ''; return;
@@ -6518,6 +6545,10 @@ cv.addEventListener('pointermove', e => {
     imgOff.x = snap(drag.ix + ddx, 'x'); imgOff.y = snap(drag.iy + ddy, 'y');
   } else if (drag.k === 'cam') {
     return;
+  } else if (drag.k === 'edgeT' || drag.k === 'edgeB') {   // borde de arriba o de abajo de la composición
+    const top = drag.k === 'edgeT', other = top ? +$('edgeB').value : +$('edgeT').value;
+    let v = Math.round(top ? drag.et + ddy : drag.eb - ddy); if (v < 24) v = 0;
+    setRange(top ? 'edgeT' : 'edgeB', Math.max(0, Math.min(H - other - 700, v))); tlSig = '';
   } else if (drag.k === 'seam') {
     const sign = layoutMode === 'react' || imgPos === 'bottom' ? 1 : -1;
     setRange('ratio', Math.round(Math.min(85, Math.max(25, drag.ratio + sign * ddy / H * 100))));
@@ -6551,8 +6582,8 @@ cv.addEventListener('wheel', e => {
     e.preventDefault(); const s = scA.ov.s || (scA.ov.s = {}); s.zoom = Math.max(1, Math.min(Math.max(330, +$('zoom').max || 330) / 100, Math.round(((s.zoom || 1) * 100 + (e.deltaY < 0 ? 5 : -5))) / 100));
     clearTimeout(duoWheelT); duoWheelT = setTimeout(pushHistory, 400); return;
   }
-  if ((scCr || (layoutMode === 'react' && $('duo').checked)) && (k === 'cam' || k === 'video')) {
-    e.preventDefault(); const c = (scCr || crops)[k === 'cam' ? 'cam' : 'content']; if (!c) return;
+  if ((scCr || (layoutMode === 'react' && $('duo').checked)) && (k === 'cam' || k === 'video' || /^p\d$/.test(k))) {
+    e.preventDefault(); const c = cget(scCr || crops, k === 'cam' ? 'cam' : k === 'video' ? 'content' : k); if (!c) return;
     let f = e.deltaY < 0 ? 0.94 : 1 / 0.94; f = Math.min(f, 1 / c.w, 1 / c.h); if (c.w * f < 0.08) return;
     const cx = c.x + c.w / 2, cy = c.y + c.h / 2; c.w *= f; c.h *= f;
     c.x = Math.min(Math.max(0, cx - c.w / 2), 1 - c.w); c.y = Math.min(Math.max(0, cy - c.h / 2), 1 - c.h);
@@ -6990,7 +7021,7 @@ function getStyle() {
            crops: JSON.parse(JSON.stringify(crops)), music: music.cur ? music.cur.id : null };
 }
 let restoring = false;
-const SUB_EXTRA_DEF = { duo: false, titleEmoji: true, subsGen: true, titleAutoHL: false, titleW: '0', subBold: true, subItalic: false, subUnder: false, subCase: 'none', subLS: '0', subAlign: 'center', subBg: false, subBgMode: 'line', subBgC: '#000000', subBgOp: '70',
+const SUB_EXTRA_DEF = { duo: false, call: false, edgeT: '0', edgeB: '0', titleEmoji: true, subsGen: true, titleAutoHL: false, titleW: '0', subBold: true, subItalic: false, subUnder: false, subCase: 'none', subLS: '0', subAlign: 'center', subBg: false, subBgMode: 'line', subBgC: '#000000', subBgOp: '70',
   subBgR: '30', subBgH: '18', subBgW: '30', subBgX: '0', subBgY: '0', subShOn: true, subShC: '#000000', subShD: '0', subShA: '-45',
   boxOp: '100', tLS: '0', tStrokeW: '0', tStrokeC: '#000000', tShadow: '60' };
 async function applyStyle(st) {
@@ -7009,7 +7040,8 @@ async function applyStyle(st) {
     setTitleStyle(st.titleStyle || 'plain'); setBoxMode(st.boxMode || 'single');
     setLayout(st.layoutMode || 'single', false); setImgPos(st.imgPos || 'bottom');
     Object.assign(pos, st.pos || {}); Object.assign(imgOff, st.imgOff || {});   // el logo no lo mueven las plantillas
-    if (st.crops) { crops.cam = { ...st.crops.cam }; crops.content = { ...st.crops.content }; crops.camFx = st.crops.camFx == null ? 0.5 : st.crops.camFx; if (st.crops.fit) crops.fit = st.crops.fit; else delete crops.fit; if (st.crops.zk) crops.zk = st.crops.zk; else delete crops.zk; }
+    if (st.crops) { crops.cam = { ...st.crops.cam }; crops.content = { ...st.crops.content }; crops.camFx = st.crops.camFx == null ? 0.5 : st.crops.camFx; if (st.crops.fit) crops.fit = st.crops.fit; else delete crops.fit; if (st.crops.zk) crops.zk = st.crops.zk; else delete crops.zk;
+      if (st.crops.n) { crops.n = st.crops.n; crops.more = JSON.parse(JSON.stringify(st.crops.more || [])); if (st.crops.callT) crops.callT = JSON.parse(JSON.stringify(st.crops.callT)); else delete crops.callT; } else { delete crops.n; delete crops.more; delete crops.callT; } }
     checkFonts(); syncTiles();
   } finally { setTimeout(() => { restoring = false; }, 0); if (typeof stInlineRender === 'function') setTimeout(stInlineRender, 0); }
 }
@@ -7256,8 +7288,14 @@ function updSummaries() {
   $('s1').classList.toggle('done', !!file);
   $('sL').classList.toggle('done', !!logo);
 }
-setInterval(() => { updSummaries(); syncTiles(); }, 500);
+setInterval(() => { updSummaries(); syncTiles(); callOptsSync(); }, 500);
 
+function callOptsSync() {
+  const o = $('callOpts'); if (!o) return; const on = callOn(); o.hidden = !on; if (!on) return;
+  o.querySelectorAll('#callNSeg button').forEach(b => b.classList.toggle('on', +b.dataset.n === (crops.n || 2)));
+}
+setTimeout(() => { const g = $('callNSeg'); if (!g) return; g.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { setCallN(+b.dataset.n); callOptsSync(); } });
+  $('callFind').onclick = () => { camDetectedFor = null; callDetect().then(() => { pushHistory(); callOptsSync(); }); }; }, 0);
 // configuración del logo: se recuerda siempre, aparte de plantillas y proyectos
 const logoCfgNow = () => ({ size: $('logoSize').value, op: $('logoOp').value, x: logoPos.x, y: logoPos.y, lock: trk.logo.lock });
 function saveLogoCfg() { persistClient(); }   // posición, tamaño, opacidad y candado: de cada cliente
@@ -7299,7 +7337,7 @@ function openSec(id) {
   for (const [t, ids] of Object.entries(RIGHT)) if (ids.includes(id)) return showInsp(t);
 }
 let selected = null;   // elemento elegido en la vista previa
-const INSP_FOR = { title: 'title', sub: 'style', logo: 'logo', video: 'video', image: 'video', seam: 'video', cam: 'video' };
+const INSP_FOR = { title: 'title', sub: 'style', logo: 'logo', video: 'video', image: 'video', seam: 'video', cam: 'video', edgeT: 'video', edgeB: 'video', p2: 'video', p3: 'video', p4: 'video' };
 
 /* ====== línea de tiempo (tipo CapCut): trozos, cortes, textos, subtítulos, pistas y atajos ====== */
 let tlSig = '', thumbs = [], thumbStep = 1, thumbT0 = 0, thumbsFor = null, magnet = true;
@@ -7845,6 +7883,11 @@ const PRESETS = [
       boxR: '18', boxPX: '28', boxPY: '14', boxColor: '#ffffff', boxText: '#111111', titleHl: '#ff1f1f',
       subFont: 'Inter|800', subSize: '56', subColor: '#ffffff', upper: false, subY: '75', wpc: '2' },
       crops: { cam: { x: 0.05, y: 0.1, w: 0.42, h: 0.8 }, content: { x: 0.53, y: 0.1, w: 0.42, h: 0.8 }, fit: 'cover' } } },
+  { name: 'Llamada', desc: 'Llamada de Discord: de 2 a 5 personas, una debajo de otra, título entre la primera y la segunda',
+    s: { titleStyle: 'box', boxMode: 'single', layoutMode: 'react', c: { duo: true, call: true, titleY: '-1', titleUpper: false, ratio: '50', zoom: '100', titleFont: 'Inter|700', titleSize: '50', titleLH: '112',
+      boxR: '18', boxPX: '28', boxPY: '14', boxColor: '#ffffff', boxText: '#111111', titleHl: '#ff1f1f',
+      subFont: 'Inter|800', subSize: '56', subColor: '#ffffff', upper: false, subY: '75', wpc: '2' },
+      crops: { cam: { x: 0.02, y: 0.05, w: 0.47, h: 0.45 }, content: { x: 0.51, y: 0.05, w: 0.47, h: 0.45 }, fit: 'cover' } } },
 ];
 let BASE_STYLE = null;
 let presetOverrides = {}, presetDefault = null, activePreset = null, presetHidden = [];
@@ -7852,7 +7895,7 @@ let presetOverrides = {}, presetDefault = null, activePreset = null, presetHidde
 function fixFmt(fmt) {
   const ok = f => AG_FORMATS[f] && !presetHidden.includes(AG_FORMATS[f].preset);
   if (ok(fmt)) return fmt;
-  return ['podcast', 'horizontal', 'reaccion', 'dividida', 'duo', 'horizontal_cam'].find(ok) || fmt;
+  return ['podcast', 'horizontal', 'reaccion', 'dividida', 'duo', 'llamada', 'horizontal_cam'].find(ok) || fmt;
 }
 function effectivePreset(p) {
   const m0 = effectivePreset0(p), ov = presetOverrides[p.name];
@@ -7908,9 +7951,11 @@ function mockFrom(st, isDefault, kind) {
     ty = imgTop ? 100 - r : r; sy = imgTop ? 100 - r - 8 : r + 8;
   } else if (lay === 'react') {
     const r = Math.max(25, Math.min(75, +c.ratio || 42));
-    if (c.duo || k === 'duo' || k === 'Dos personas') { zone(0, r, 'pmx-teal', PMX_IC.per, 'pb'); zone(r, 100 - r, 'pmx-amber', PMX_IC.per, 'pb'); }
+    if (c.call === true || c.call === 'true' || k === 'llamada' || k === 'Llamada') { const g3 = ['pmx-blue', 'pmx-amber', 'pmx-teal']; for (let i = 0; i < 3; i++) zone(i * 100 / 3, 100 / 3, g3[i], PMX_IC.per, 'pb'); }
+    else if (c.duo || k === 'duo' || k === 'Dos personas') { zone(0, r, 'pmx-teal', PMX_IC.per, 'pb'); zone(r, 100 - r, 'pmx-amber', PMX_IC.per, 'pb'); }
     else { zone(0, r, 'pmx-amber', PMX_IC.per, 'pb'); zone(r, 100 - r, 'pmx-violet', PMX_IC.play); }
-    ty = r; sy = (c.duo || k === 'duo' || k === 'Dos personas') ? r + 8 : 91;
+    const isCall = c.call === true || c.call === 'true' || k === 'llamada' || k === 'Llamada';
+    ty = isCall ? 100 / 3 : r; sy = isCall ? 100 / 3 + 7 : (c.duo || k === 'duo' || k === 'Dos personas') ? r + 8 : 91;
   } else {
     const close = k === 'podcast' || k === 'Podcast' || +c.zoom >= 250;
     if (close) { zone(0, 100, 'pmx-teal', PMX_IC.per, 'close'); ty = 26; sy = 35; }
@@ -8961,8 +9006,89 @@ async function geminiZones(st) {
   aiovDone(true, zs.length > 1 ? `${zs.length} tramos detectados` : 'Detectado: ' + (KIND_TXT[first] || first).split(' · ')[0], zs.length > 1 ? 'Cada tramo tiene su propio encuadre' : (KIND_TXT[first] || '').split(' · ')[1] || 'Cámara arriba, contenido abajo');
   return true;
 }
+
+/* ---------- «Llamada»: busca las cámaras de la llamada (Discord) y pone a cada persona en su franja ---------- */
+const CALL_ROWS = { 2: [2], 3: [2, 1], 4: [2, 2], 5: [3, 2] };
+function callGrid(n) {   // cómo suele colocar Discord las cámaras (si no se encuentran)
+  const rows = CALL_ROWS[n] || [n], out = [];
+  rows.forEach((c, r) => { const h = 1 / rows.length, w = 1 / Math.max(...rows), x0 = (1 - c * w) / 2; for (let i = 0; i < c; i++) out.push({ t: { x: x0 + i * w, y: r * h, w, h }, fx: x0 + (i + 0.5) * w, fy: r * h + h * 0.42 }); });
+  return out;
+}
+function callAsp(n) { const eT = +$('edgeT').value || 0, eB = +$('edgeB').value || 0; return W / ((H - eT - eB) / n); }
+// recorte con la forma justa de su franja, dentro de la cámara de esa persona y con la cara a la vista
+function callCrop(o, asp, vw, vh) {
+  const t = o.t, tw = t.w * vw, th = t.h * vh; let cw, ch, cx, cy;
+  if (tw / th > asp) { ch = th; cw = th * asp; cx = Math.min(t.x * vw + tw - cw, Math.max(t.x * vw, o.fx * vw - cw / 2)); cy = t.y * vh; }
+  else { cw = tw; ch = tw / asp; cx = t.x * vw; cy = Math.min(t.y * vh + th - ch, Math.max(t.y * vh, o.fy * vh - ch * 0.4)); }
+  return { x: cx / vw, y: cy / vh, w: cw / vw, h: ch / vh };
+}
+// los bordes de la cámara de una persona: Discord separa cada cámara con una franja oscura
+function callTile(c, g) {
+  const w = 640, h = Math.round(w * c.height / c.width), cv2 = document.createElement('canvas'); cv2.width = w; cv2.height = h;
+  const x2 = cv2.getContext('2d', { willReadFrequently: true }); x2.drawImage(c, 0, 0, w, h); const d = x2.getImageData(0, 0, w, h).data;
+  const bg = (X, Y) => { const i = (Y * w + X) * 4, mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]); return mx < 60 && mx - mn < 22; };
+  const cl = (v, a, b) => Math.max(a, Math.min(b, Math.round(v)));
+  const fx = g.cx * w, fy = g.cy * h, fw = Math.max(3, g.w * w), fh = Math.max(3, g.h * h);
+  const y0 = cl(fy - fh * 1.3, 0, h - 1), y1 = cl(fy + fh * 1.3, 0, h - 1), x0 = cl(fx - fw * 1.3, 0, w - 1), x1 = cl(fx + fw * 1.3, 0, w - 1);
+  const colBg = X => { let n = 0; for (let Y = y0; Y <= y1; Y++) if (bg(X, Y)) n++; return n / (y1 - y0 + 1) > 0.9; };
+  const rowBg = Y => { let n = 0; for (let X = x0; X <= x1; X++) if (bg(X, Y)) n++; return n / (x1 - x0 + 1) > 0.9; };
+  let L = 0, Rr = w, T = 0, B = h;
+  for (let X = cl(fx - fw * 0.8, 1, w - 1); X >= 1; X--) if (colBg(X) && colBg(X - 1)) { L = X + 1; break; }
+  for (let X = cl(fx + fw * 0.8, 0, w - 2); X < w - 1; X++) if (colBg(X) && colBg(X + 1)) { Rr = X; break; }
+  for (let Y = cl(fy - fh * 0.8, 1, h - 1); Y >= 1; Y--) if (rowBg(Y) && rowBg(Y - 1)) { T = Y + 1; break; }
+  for (let Y = cl(fy + fh * 0.9, 0, h - 2); Y < h - 1; Y++) if (rowBg(Y) && rowBg(Y + 1)) { B = Y; break; }
+  const r = { x: L / w, y: T / h, w: (Rr - L) / w, h: (B - T) / h };
+  if (r.w < g.w * 2.4 || r.h < g.h * 1.8) return null;          // demasiado pequeño: no es una cámara
+  if (r.w > 0.9 && r.h > 0.9) return null;                      // es la pantalla entera: no hay cuadrícula
+  return r;
+}
+function setCallN(n, quiet) {
+  n = Math.max(2, Math.min(5, n)); const vw = vid.videoWidth || 1920, vh = vid.videoHeight || 1080, asp = callAsp(n);
+  const grid = callGrid(n), src = crops.callT && crops.callT.length ? crops.callT : [];
+  const list = []; for (let i = 0; i < n; i++) list.push(callCrop(src[i] || grid[i], asp, vw, vh));
+  zones = []; crops.n = n; crops.cam = list[0]; crops.content = list[1]; crops.more = list.slice(2); crops.camFx = 0.5; crops.fit = 'cover'; delete crops.zk;
+  setRange('zoom', 100); setRange('offX', 0); setRange('offY', 0);
+  tlSig = ''; if (!quiet) { pushHistory(); toast(n + ' personas en la llamada · arrastra cada una para encuadrarla'); }
+}
+async function callDetect() {
+  if (!loaded) return false;
+  const vw = vid.videoWidth || 1920, vh = vid.videoHeight || 1080;
+  let people = [], frames = [];
+  try {
+    aiov('work', 'Buscando a las personas de la llamada', 'Cargando la IA de caras (la primera vez tarda un poco más)…');
+    await loadFaceApi();
+    frames = await sampleFrames(6); const all = [];
+    for (let i = 0; i < frames.length; i++) { aiov('work', 'Buscando a las personas de la llamada', `Fotograma ${i + 1} de ${frames.length}…`); for (const f of await facesIn(frames[i])) all.push({ ...f, i }); }
+    const groups = [];
+    for (const f of all) {
+      const cx = f.x + f.w / 2, cy = f.y + f.h / 2;
+      let g = groups.find(g => Math.hypot(g.cx - cx, (g.cy - cy) * vh / vw) < Math.max(g.w, f.w) * 1.2);
+      if (!g) { g = { items: [], cx, cy, w: f.w, h: f.h }; groups.push(g); }
+      g.items.push(f); const n = g.items.length;
+      g.cx = g.items.reduce((a, x) => a + x.x + x.w / 2, 0) / n; g.cy = g.items.reduce((a, x) => a + x.y + x.h / 2, 0) / n;
+      g.w = g.items.reduce((a, x) => a + x.w, 0) / n; g.h = g.items.reduce((a, x) => a + x.h, 0) / n;
+    }
+    people = groups.map(g => ({ ...g, seen: new Set(g.items.map(x => x.i)).size })).filter(g => g.seen >= 2 && g.w > 0.012)
+      .sort((a, b) => b.seen * b.w - a.seen * a.w).slice(0, 5);
+  } catch (e) { console.warn('llamada', e); }
+  aiov('hide'); aiovT0 = 0;
+  // en orden de lectura: fila a fila y de izquierda a derecha
+  people.sort((a, b) => Math.abs(a.cy - b.cy) > 0.12 ? a.cy - b.cy : a.cx - b.cx);
+  const fr = frames[Math.floor(frames.length / 2)];
+  crops.callT = people.map(g => {
+    let t = null; try { if (fr) t = callTile(fr, g); } catch (e) { console.warn('cámara', e); }
+    if (!t) { const hp = Math.min(1, g.h * 5.5), wp = Math.min(1, hp * vh / vw * 1.6); t = { x: Math.max(0, Math.min(1 - wp, g.cx - wp / 2)), y: Math.max(0, Math.min(1 - hp, g.cy - hp * 0.4)), w: wp, h: hp }; }
+    return { t, fx: g.cx, fy: g.cy };
+  });
+  const n = Math.max(2, Math.min(5, people.length || (crops.n || 2)));
+  if (people.length < 2) crops.callT = [];
+  setCallN(n, true);
+  toast(people.length >= 2 ? `${n} personas encontradas · arrastra cada una para encuadrarla, la rueda acerca o aleja` : 'No he encontrado bien las caras: he puesto las cámaras como suele colocarlas Discord. Ajusta cada una con el ratón');
+  return people.length >= 2;
+}
 /* ---------- «Dos personas»: busca a las dos personas del set y pone una arriba y otra abajo ---------- */
 async function duoDetect() {
+  if (callOn()) return callDetect();
   if (!loaded) return false;
   const vw = vid.videoWidth || 1920, vh = vid.videoHeight || 1080;
   const half = (side) => ({ x: side ? 0.5 : 0, y: 0, w: 0.5, h: 1 });
@@ -9105,6 +9231,7 @@ const AG_FORMATS = {
   dividida: { preset: 'Pantalla dividida', name: 'Pantalla dividida' },
   horizontal_cam: { preset: 'Título y subtítulos', name: 'Horizontal · solo cámara' },
   duo: { preset: 'Dos personas', name: 'Dos personas' },
+  llamada: { preset: 'Llamada', name: 'Llamada' },
   horizontal: { preset: 'Título y subtítulos', name: 'Horizontal' },
 };
 const WESTCOL_RULES = `No generar subtítulos, solo título.
@@ -9169,8 +9296,8 @@ const WESTCOL_TITLE_GUIDE = `- [Invitado] [acción] a WestCOL porque/cuando [lo 
 - Nombra siempre a las personas por su nombre; nada de preguntas, «todos», «nadie» ni «muestra»; más de 5 palabras.`;
 const AG_DEFAULT = () => ({ rules: '', subs: true, silence: true, censor: true, censorLvl: 'tiktok', bad: '', feedback: [] });
 // reglas del agente: unas generales + «cuándo usarla» de cada formato (se escribe debajo de cada plantilla)
-const AG_WHEN_KEYS = ['podcast', 'reaccion', 'dividida', 'duo', 'horizontal', 'horizontal_cam'];
-const AG_WHEN_LBL = { podcast: 'PODCAST', reaccion: 'REACCIÓN', dividida: 'PANTALLA DIVIDIDA', duo: 'DOS PERSONAS', horizontal: 'HORIZONTAL (el vídeo tal cual)', horizontal_cam: 'HORIZONTAL SOLO CÁMARA' };
+const AG_WHEN_KEYS = ['podcast', 'reaccion', 'dividida', 'duo', 'llamada', 'horizontal', 'horizontal_cam'];
+const AG_WHEN_LBL = { podcast: 'PODCAST', reaccion: 'REACCIÓN', dividida: 'PANTALLA DIVIDIDA', duo: 'DOS PERSONAS', llamada: 'LLAMADA', horizontal: 'HORIZONTAL (el vídeo tal cual)', horizontal_cam: 'HORIZONTAL SOLO CÁMARA' };
 function agSplitRules(txt) {
   const when = {}, gen = [];
   for (const raw of String(txt || '').split('\n')) {
@@ -9178,7 +9305,7 @@ function agSplitRules(txt) {
     if (/^formatos y cu[aá]ndo usarlos:?$/i.test(l)) continue;
     const m = l.replace(/^\s*(\d+[).]|[-•*])\s*/, '').match(/^([^:]{2,60}):\s*(.+)$/);
     let k = null;
-    if (m) { const lab = m[1]; k = /solo\s*c[aá]mara|horizontal_cam/i.test(lab) ? 'horizontal_cam' : /podcast/i.test(lab) ? 'podcast' : /reacci/i.test(lab) ? 'reaccion' : /dividida/i.test(lab) ? 'dividida' : /dos personas/i.test(lab) ? 'duo' : /horizontal/i.test(lab) ? 'horizontal' : null; }
+    if (m) { const lab = m[1]; k = /solo\s*c[aá]mara|horizontal_cam/i.test(lab) ? 'horizontal_cam' : /podcast/i.test(lab) ? 'podcast' : /reacci/i.test(lab) ? 'reaccion' : /dividida/i.test(lab) ? 'dividida' : /dos personas/i.test(lab) ? 'duo' : /llamada|discord/i.test(lab) ? 'llamada' : /horizontal/i.test(lab) ? 'horizontal' : null; }
     if (k) { const par = (m[1].match(/\(([^)]*)\)/) || [])[1]; const t = (par ? '(' + par + ') ' : '') + m[2].trim(); when[k] = when[k] ? when[k] + '\n' + t : t; }
     else gen.push(l);
   }
@@ -9338,6 +9465,7 @@ FORMATOS DISPONIBLES (usa exactamente estos nombres):
 - "dividida": está hablando y una imagen de apoyo representa mejor la idea (indica la imagen en "image").
 - "horizontal_cam": solo su cámara en horizontal (por ejemplo cuando juega al casino: el casino NO puede aparecer).
 - "duo": hay DOS o más personas en el set hablando entre ellas (sin una pantalla a la que reaccionen): una sale arriba y otra abajo.
+- "llamada": es una llamada (Discord u otra) con varias cámaras en cuadrícula, cada persona en su recuadro: se ponen de 2 a 5 personas una debajo de otra.
 - "horizontal": el vídeo horizontal tal cual.
 REGLAS DE CLIPPER PROFESIONAL:
 - SACA TODOS LOS CLIPS POSIBLES, también los regulares o dudosos (con nota baja): el editor los revisará uno a uno y decidirá cuáles valen. Es mucho mejor que sobren a que falte uno bueno. Solo deja fuera lo que no tiene nada: silencios, saludos, publicidad o leer el chat sin más.
@@ -9497,7 +9625,7 @@ Responde solo JSON: {"found": true, "topic_start": número, "start": número, "e
         ps.push({ text: `Son 3 fotogramas (al 20 %, 50 % y 80 %) de un clip de un directo.${said ? ' Lo que se dice: «' + said + '».' : ''}
 PAUTAS DEL CLIENTE:
 ${A.rules || ''}
-Elige el formato correcto para ESTE clip según lo que se ve en pantalla y las pautas: "podcast" (habla a cámara/en su PC sin reaccionar a nada), "reaccion" (reacciona a algo que se ve en pantalla o está jugando), "dividida" (habla y una imagen de apoyo ayudaría), "horizontal_cam" (hay casino, tragaperras o apuestas en pantalla: solo se enseña su cámara), "duo" (dos o más personas en el set hablando entre ellas: una arriba y otra abajo), "horizontal" (el vídeo tal cual).
+Elige el formato correcto para ESTE clip según lo que se ve en pantalla y las pautas: "podcast" (habla a cámara/en su PC sin reaccionar a nada), "reaccion" (reacciona a algo que se ve en pantalla o está jugando), "dividida" (habla y una imagen de apoyo ayudaría), "horizontal_cam" (hay casino, tragaperras o apuestas en pantalla: solo se enseña su cámara), "duo" (dos o más personas en el set hablando entre ellas: una arriba y otra abajo), "llamada" (llamada de Discord con varias cámaras en cuadrícula: de 2 a 5 personas una debajo de otra), "horizontal" (el vídeo tal cual).
 Responde solo JSON: {"format":"...","why":"..."}` });
         const v = await gemRetry(() => geminiJSON(ps, 0), msg => agProg(null, null, msg));
         if (v && AG_FORMATS[v.format]) { if (v.format !== c.format) console.info('Formato corregido', c.format, '→', v.format, v.why); c.format = v.format; }
@@ -9517,7 +9645,7 @@ Responde solo JSON: {"format":"...","why":"..."}` });
       const id = 'p' + Date.now().toString(36) + ci;
       const p = { v: 2, style, title, titleHL: hl, captions: caps, allWords: subsOn ? inW : [], crop: null, clipName: f.name,
         segs: segsC.map((g, k) => ({ id: k + 1, s: g.s, e: g.e })), texts: [], zones: [], trk: TRK0(), pseg: 0, streamer: '',
-        mutes: [], clipMeta: { flagsDone: A.censor ? [segsC[0].s, segsC[segsC.length - 1].e] : null, flags: mutesC.map((m, k) => ({ id: 9000 + k, s: m.s, e: m.e, w: m.w || '…', cat: m.cat || 'otro', lvl: m.lvl || 'media', on: m.lvl !== 'baja' })), batch: bid, fmt, reason: c.reason || '', score: +c.score || 0, imgPrompt: fmt === 'dividida' ? (c.image || 'algo que represente lo que dice') : '', noSubs: !subsOn, needDetect: fmt === 'reaccion', needDuo: fmt === 'duo', needCam: fmt === 'horizontal_cam', needTrack: fmt === 'podcast', words: inW },
+        mutes: [], clipMeta: { flagsDone: A.censor ? [segsC[0].s, segsC[segsC.length - 1].e] : null, flags: mutesC.map((m, k) => ({ id: 9000 + k, s: m.s, e: m.e, w: m.w || '…', cat: m.cat || 'otro', lvl: m.lvl || 'media', on: m.lvl !== 'baja' })), batch: bid, fmt, reason: c.reason || '', score: +c.score || 0, imgPrompt: fmt === 'dividida' ? (c.image || 'algo que represente lo que dice') : '', noSubs: !subsOn, needDetect: fmt === 'reaccion', needDuo: fmt === 'duo' || fmt === 'llamada', needCam: fmt === 'horizontal_cam', needTrack: fmt === 'podcast', words: inW },
         logo: { x: W / 2, y: H - 230, size: logoCfg.size, op: logoCfg.op } };
       p.mutes = p.clipMeta.flags.filter(f => f.on).map(f => ({ s: f.s, e: f.e, w: f.w, fid: f.id }));
       if (fmt === 'horizontal_cam') p.style.c.bg = p.style.c.bg && p.style.c.bg.startsWith('blur') ? p.style.c.bg : 'blur2';
@@ -9613,7 +9741,7 @@ async function enterReview(bid) {
   await openAgentClip(first);
 }
 async function exitReview() { await saveNow(); $('app').classList.remove('review'); reviewBatch = null; $('revBack').hidden = true; goHome(); }
-function curFmtOf() { return layoutMode === 'react' ? ($('duo').checked ? 'duo' : 'reaccion') : layoutMode === 'split' ? 'dividida' : clipMeta.cam ? 'horizontal_cam' : (+$('titleY').value >= 0 ? 'podcast' : 'horizontal'); }
+function curFmtOf() { return layoutMode === 'react' ? ($('duo').checked ? ($('call').checked ? 'llamada' : 'duo') : 'reaccion') : layoutMode === 'split' ? 'dividida' : clipMeta.cam ? 'horizontal_cam' : (+$('titleY').value >= 0 ? 'podcast' : 'horizontal'); }
 async function addFeedback(e, kind) {
   const cl = clientOf(e.client); if (!cl) return;
   const a = await getAgent(cl), to = curFmtOf();
@@ -9666,7 +9794,7 @@ function renderReview() {
       $('title').value = keepT; titleHL.clear(); keepHL.forEach(x => titleHL.add(x)); renderChips();
       logoPos.x = W / 2; logoPos.y = H - 230;
       if (k === 'reaccion') { camDetectedFor = null; autoDetectCam(true).then(renderReview); }
-      if (k === 'duo') duoDetect().then(() => { pushHistory(); renderReview(); });
+      if (k === 'duo' || k === 'llamada') duoDetect().then(() => { pushHistory(); renderReview(); });
       if (k === 'horizontal_cam' && !clipMeta.cam) detectCamOnly();
       if (k === 'dividida' && !clipMeta.imgPrompt) clipMeta.imgPrompt = 'algo que represente lo que dice';
       pushHistory(); renderReview();
@@ -10129,8 +10257,8 @@ function ezOptsUI() {
 }
 /* ---------- 3) la IA lo edita sola ---------- */
 // cómo queda cada formato con la plantilla de este streamer (para las vistas previas)
-function fmtStyle(id) { const f = AG_FORMATS[id], p = f && PRESETS.find(x => x.name === f.preset); const st = p ? effectivePreset(p) : JSON.parse(JSON.stringify(BASE_STYLE)); if (id === 'duo') st.layoutMode = 'react'; return st; }
-const EZ_FMTS = [['podcast', '🎙️', 'Primer plano'], ['reaccion', '📺', 'Reacción'], ['dividida', '🖼️', 'Pantalla dividida'], ['horizontal', '▭', 'Horizontal'], ['horizontal_cam', '🎥', 'Horizontal · solo cámara'], ['duo', '👥', 'Dos personas']];
+function fmtStyle(id) { const f = AG_FORMATS[id], p = f && PRESETS.find(x => x.name === f.preset); const st = p ? effectivePreset(p) : JSON.parse(JSON.stringify(BASE_STYLE)); if (id === 'duo' || id === 'llamada') st.layoutMode = 'react'; return st; }
+const EZ_FMTS = [['podcast', '🎙️', 'Primer plano'], ['reaccion', '📺', 'Reacción'], ['dividida', '🖼️', 'Pantalla dividida'], ['horizontal', '▭', 'Horizontal'], ['horizontal_cam', '🎥', 'Horizontal · solo cámara'], ['duo', '👥', 'Dos personas'], ['llamada', '📞', 'Llamada']];
 let ezSteps = [];
 function busy(title, steps) {
   if (title === false) { $('ezBusy').hidden = true; return; }
@@ -10195,6 +10323,7 @@ ${A.rules ? 'PAUTAS DEL CLIENTE:\n' + A.rules + '\n' : ''}Elige el formato corre
 "dividida" = está hablando y una imagen de apoyo ayudaría a entender lo que cuenta;
 "horizontal_cam" = hay casino, tragaperras o apuestas en pantalla: solo se enseña su cámara;
 "duo" = hay DOS o más personas en el set (sentadas juntas, en el mismo plano) hablando o discutiendo entre ellas, sin reaccionar a una pantalla: se pone una persona arriba y otra abajo;
+"llamada" = es una llamada de Discord (o parecida) con varias cámaras en cuadrícula, cada persona en su recuadro: se ponen de 2 a 5 personas una debajo de otra;
 "horizontal" = el vídeo tal cual, centrado (por ejemplo, si es una grabación normal sin cámara aparte).
 Si eliges "dividida", di en "image" qué imagen pondrías (en español, corto).
 Responde solo JSON: {"format":"...","why":"...","image":"..."}` });
@@ -10220,7 +10349,7 @@ async function ezApplyFormat0(fmt, extra = {}) {
   activePreset = pr.name; renderPresets();
   if (allWords.length) buildCaptions();
   if (fmt === 'reaccion') { camDetectedFor = null; await autoDetectCam(true); }
-  if (fmt === 'duo') await duoDetect();
+  if (fmt === 'duo' || fmt === 'llamada') await duoDetect();
   if (fmt === 'horizontal_cam') await detectCamOnly();
   if (fmt === 'podcast') await faceTrack(true); else if (clipMeta.track) clipMeta.track.on = false;
   pushHistory();
@@ -11499,6 +11628,17 @@ function ctxItems(k) {
       { icon: '🗑', label: 'Borrar el texto', danger: true, act: () => { texts = texts.filter(x => x !== tx); selected = null; tsel.clear(); fillTextPanel(); tlSig = ''; pushHistory(); } },
     ]];
   }
+  if (/^p\d$/.test(k)) k = 'video';
+  const callItems = () => callOn() ? [{ sep: true },
+    { icon: '👥', label: 'Personas en la llamada', sub: () => [2, 3, 4, 5].map(n => ({ icon: n === (crops.n || 2) ? '●' : '○', label: n + ' personas', on: n === (crops.n || 2), act: () => setCallN(n) })) },
+    { icon: '🔍', label: 'Buscar las cámaras otra vez', act: () => { camDetectedFor = null; callDetect().then(() => pushHistory()); } }] : [];
+  const edgeItems = () => (+$('edgeT').value || +$('edgeB').value) ? [{ icon: '↕', label: 'Quitar las bandas de arriba y abajo', act: () => { setRange('edgeT', 0); setRange('edgeB', 0); pushHistory(); } }] : [];
+  if (k === 'edgeT' || k === 'edgeB') return ['Borde', [
+    { icon: '↕', label: 'Arrastra el borde para dejar una banda', dis: true },
+    { icon: '⬛', label: 'Banda negra', on: !String($('bg').value).startsWith('blur'), act: () => { setRange('bg', 'black'); pushHistory(); } },
+    { icon: '🌫️', label: 'Banda con el vídeo difuminado', on: String($('bg').value).startsWith('blur'), act: () => { setRange('bg', 'blur2'); pushHistory(); } },
+    ...edgeItems(), ...callItems(),
+  ]];
   if (k === 'cam') return ['Cámara', [
     { icon: '✂️', label: 'Marcar dónde está la cámara', act: () => enterCrop('cam') },
     { icon: '✨', label: 'Que la IA la vuelva a buscar', act: () => { camDetectedFor = null; autoDetectCam(true); } },
@@ -11527,6 +11667,7 @@ function ctxItems(k) {
     clipMeta.cam ? { icon: '✨', label: 'Volver a recortar la cámara con IA', act: needKey(detectCamOnly) } : null,
     layoutMode === 'single' && !clipMeta.cam ? { icon: '🎯', label: 'Seguir la cara', on: !!(clipMeta.track && clipMeta.track.on), act: toggleTrack } : null,
     clipMeta.track && clipMeta.track.on ? { icon: '↻', label: 'Volver a analizar la cara', act: () => faceTrack() } : null,
+    ...callItems(), ...edgeItems(),
     { sep: true }, ...isoItems(), { icon: '🎞️', label: 'Cambiar el formato', sub: fmtItems },
     ...commonTail(),
   ]];
@@ -11940,10 +12081,11 @@ Formatos posibles:
 "dividida" = arriba el vídeo y abajo una imagen o foto fija (o al revés);
 "horizontal" = el vídeo horizontal en el centro, con bandas o fondo difuminado arriba y abajo;
 "horizontal_cam" = solo la cámara del streamer en horizontal en el centro (sin el juego), con fondo arriba y abajo;
-"duo" = pantalla partida con una persona arriba y otra abajo, recortadas del mismo plano donde salen juntas.
+"duo" = pantalla partida con una persona arriba y otra abajo, recortadas del mismo plano donde salen juntas;
+"llamada" = de 2 a 5 personas una debajo de otra, cada una sacada de su cámara de una llamada (Discord).
 El TÍTULO es el texto fijo que está igual en todos los fotogramas. Los SUBTÍTULOS son el texto que cambia de un fotograma a otro (lo que se dice).
 Responde solo JSON:
-{"formato":"podcast|reaccion|dividida|duo|horizontal|horizontal_cam",
+{"formato":"podcast|reaccion|dividida|duo|llamada|horizontal|horizontal_cam",
 "titulo":{"hay":true/false,"texto":"el texto exacto tal cual","posicion":"arriba|centro|abajo","caja":true/false (si va dentro de un recuadro de color),"mayusculas":true/false,"color_texto":"#rrggbb","color_caja":"#rrggbb","destacadas":["palabras del título en otro color"],"color_destacado":"#rrggbb","letra":"condensada|gruesa|redondeada|normal"},
 "subtitulos":{"hay":true/false,"posicion":número de 0 a 100 (altura del centro de los subtítulos, % desde arriba),"mayusculas":true/false,"color":"#rrggbb","resalta_palabra":true/false (si la palabra que se dice va en otro color),"color_resaltado":"#rrggbb","palabras":número de palabras por subtítulo (1 a 6),"letra":"condensada|gruesa|redondeada|normal","borde":true/false},
 "imagen":"si es dividida: qué imagen se ve, en pocas palabras",
@@ -12884,7 +13026,7 @@ async function tplRender() {
       const w = document.createElement('label'); w.className = 'tpl-when';
       const s = document.createElement('span'); s.textContent = keys.length > 1 ? 'Cuándo usar «' + AG_FORMATS[k].name + '»' : 'Cuándo usarla';
       const ta = document.createElement('textarea'); ta.value = (AW.when || {})[k] || ''; ta.dataset.when = k;
-      ta.placeholder = { podcast: 'Ej.: cuando habla a cámara sin reaccionar a nada', reaccion: 'Ej.: cuando reacciona a un vídeo, un tweet o está jugando', dividida: 'Ej.: cuando una imagen ayuda a entender lo que cuenta', horizontal: 'Ej.: grabaciones normales sin cámara aparte', horizontal_cam: 'Ej.: cuando juega al casino (el casino no se enseña)', duo: 'Ej.: cuando hay dos o más personas en el set hablando entre ellas' }[k] || '';
+      ta.placeholder = { llamada: 'Ej.: cuando están en una llamada de Discord con varias cámaras', podcast: 'Ej.: cuando habla a cámara sin reaccionar a nada', reaccion: 'Ej.: cuando reacciona a un vídeo, un tweet o está jugando', dividida: 'Ej.: cuando una imagen ayuda a entender lo que cuenta', horizontal: 'Ej.: grabaciones normales sin cámara aparte', horizontal_cam: 'Ej.: cuando juega al casino (el casino no se enseña)', duo: 'Ej.: cuando hay dos o más personas en el set hablando entre ellas' }[k] || '';
       let t = null; ta.oninput = () => { clearTimeout(t); t = setTimeout(async () => { const a = await getAgent(c); a.when = a.when || {}; a.when[k] = ta.value; await saveAgent(c, a); }, 400); };
       ta.onclick = e => e.stopPropagation();
       w.append(s, ta); card.append(w);
@@ -13659,7 +13801,7 @@ let mtWave = null, mtFr = null, mtWantFn = null, mtSeekBusy = false;
 const MT = { blade: false, pps: 0, ppsT: 0, fit: true, sx: 0, sxT: null, anchor: null, max: 0, span: 0, vw: 0, dpr: 1, disp: new Map(), spawn: new Map(), ghosts: [], fx: [], sel: null, hover: null, drag: null, ptr: null,
   snap: true, snapL: null, snapAt: 0, bub: null, say: null, last: 0, now: 0, sig: '', ver: 0, drawn: 0, file: null, first: true, lastT: -1, fc: 0, fcAt: 0, blocks: [], bounds: [], caps: [], titleR: null, titleHint: null, subHint: null, tip: '', rm: false, inspAt: 0 };
 const ML = { ruler: [0, 24], fmt: [29, 24], title: [58, 16], sub: [77, 22], vid: [105, 64], bar: [174, 6], H: 184, padL: 12, padR: 30, th: 44 };
-const MT_FC = { podcast: '#FBBF24', reaccion: '#60A5FA', duo: '#F472B6', horizontal: '#34D399', horizontal_cam: '#FB923C', dividida: '#A78BFA' };
+const MT_FC = { podcast: '#FBBF24', reaccion: '#60A5FA', duo: '#F472B6', llamada: '#5865F2', horizontal: '#34D399', horizontal_cam: '#FB923C', dividida: '#A78BFA' };
 const mtClamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const mtDirty = () => { MT.sig = ''; };
 const mtSay = t => { MT.say = { text: t, at: performance.now() }; mtDirty(); };
@@ -14376,6 +14518,8 @@ function ccLayers(g, vw, vh) {
     const cr = L.cr || crops, R = L.ir, k = cr.cam;
     if (k && R) { const sw = vw * k.w, sh = vh * k.h, sc = Math.max(R.w / sw, R.h / sh), dw = sw * sc, dh = sh * sc, fx = cr.camFx == null ? 0.5 : cr.camFx, dx = Math.min(R.x, Math.max(R.x + R.w - dw, R.x + R.w / 2 - fx * dw));
       const c2 = ccClipTo({ x: vw * k.x, y: vh * k.y, w: sw, h: sh }, { x: dx, y: R.y + R.h - dh, w: dw, h: dh }, R); if (c2) out.push({ kind: 'video', ...c2 }); }
+    for (const m of L.more || []) { const k2 = m.k, R2 = m.R, sw = vw * k2.w, sh = vh * k2.h, sc = Math.max(R2.w / sw, R2.h / sh), dw = sw * sc, dh = sh * sc, dx = Math.min(R2.x, Math.max(R2.x + R2.w - dw, R2.x + R2.w / 2 - 0.5 * dw));
+      const c3 = ccClipTo({ x: vw * k2.x, y: vh * k2.y, w: sw, h: sh }, { x: dx, y: R2.y + R2.h - dh, w: dw, h: dh }, R2); if (c3) out.push({ kind: 'video', ...c3 }); }
   } else if (L.split) {
     const c = ccClipTo(full, L.video, L.vr); if (c) out.push({ kind: 'video', ...c });
     if (img) { const R = L.ir, iw = img.naturalWidth, ih = img.naturalHeight, cc = crop || { x: 0, y: 0, w: iw, h: ih }, sc = Math.max(R.w / cc.w, R.h / cc.h) * s.imgZoom, dw = cc.w * sc, dh = cc.h * sc;
