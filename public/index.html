@@ -1478,6 +1478,43 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .lg-card .tt-del{opacity:0;transition:opacity .15s}
 .lg-card:hover .lg-ren,.lg-card:hover .tt-del{opacity:.75}
 .lg-grid>*{animation:cxPop .4s var(--ease) both}
+/* crear plantilla de título */
+.tt-ed{position:absolute;top:4px;left:6px;font-size:12px;opacity:0;background:none;border:0;color:inherit;cursor:pointer;padding:2px;transition:opacity .15s}
+.tt-card:hover .tt-ed{opacity:.8}.tt-ed:hover{opacity:1!important}
+.ttc-ov{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);animation:cxFade .18s ease-out}
+.ttc-ov.out{opacity:0;transition:opacity .18s}
+.ttc{width:min(1080px,100%);max-height:calc(100vh - 32px);display:grid;grid-template-rows:auto minmax(0,1fr) auto;border-radius:18px;background:#141418;border:1px solid #2E2E35;box-shadow:0 30px 90px rgba(0,0,0,.7);animation:cxPop .22s var(--ease-pop) both;overflow:hidden}
+.ttc-h{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #26262C}.ttc-h b{font-size:16px}
+.ttc-x{width:32px!important;height:32px;padding:0!important;border-radius:9px!important}
+.ttc-b{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);min-height:0}
+.ttc-pv{display:grid;align-content:start;gap:10px;padding:18px;border-right:1px solid #26262C}
+.ttc-stage{position:relative;aspect-ratio:9/12;max-height:calc(100vh - 290px);border-radius:14px;overflow:hidden;display:grid;place-items:center;transition:background .25s}
+.ttc-stage[data-bg=vid]{background:linear-gradient(160deg,#3b4658 0%,#6b5a4a 45%,#2c3b2f 100%)}
+.ttc-stage[data-bg=dark]{background:#0b0b0d}.ttc-stage[data-bg=light]{background:#f2f2f2}
+.ttc-t{width:100%;text-align:center;padding:0 4%}
+.ttc-t span{transition:font-size .12s,padding .12s,border-radius .12s}
+.ttc-bgs{display:flex;align-items:center;gap:6px;font-size:12px;color:#A1A1AA}.ttc-bgs span{margin-right:auto}
+.ttc-bgs button{width:auto;padding:4px 10px;font-size:12px;border-radius:99px!important}.ttc-bgs button.on{background:#fff!important;color:#111!important}
+.ttc-c{overflow:auto;padding:16px 18px;display:grid;gap:14px;align-content:start}
+.ttc-f{display:grid;gap:6px;font-size:12px;font-weight:700;color:#A1A1AA}
+.ttc-s{display:grid;gap:8px;padding-top:12px;border-top:1px solid #26262C}.ttc-s>span{font-size:12px;font-weight:800;color:#A1A1AA;text-transform:uppercase;letter-spacing:.6px}
+.ttc-fonts{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+.ttc-fonts button{display:grid;gap:2px;justify-items:center;padding:8px 4px!important;border-radius:10px!important;transition:transform .15s var(--ease),border-color .15s}
+.ttc-fonts button i{font-style:normal;font-size:24px;line-height:1.1;color:#fff}.ttc-fonts button span{font-size:10px;color:#A1A1AA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.ttc-fonts button:hover{transform:translateY(-2px)}.ttc-fonts button.on{border-color:#fff!important;box-shadow:0 0 0 1px #fff}
+.ttc-r{display:grid;grid-template-columns:120px minmax(0,1fr) 52px;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#D4D4D8}
+.ttc-r output{font:600 11px var(--f-mono);color:#A1A1AA;text-align:right}
+.ttc-r[hidden],#ttcBoxO[hidden]{display:none}
+.ttc-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ttc-ck{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#D4D4D8;cursor:pointer}
+.ttc-col{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#D4D4D8;padding:4px 6px 4px 10px;border:1px solid #2E2E35;border-radius:10px;cursor:pointer}
+.ttc-col input[type=color]{width:28px;height:24px;padding:0;border:0;background:none;cursor:pointer}
+.ttc-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.ttc-seg button{padding:8px!important;font-size:12.5px;border-radius:10px!important}.ttc-seg button.on{background:#fff!important;color:#111!important;border-color:#fff!important}
+#ttcBoxO{display:grid;gap:8px}
+.ttc-a{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid #26262C;background:#111114}
+.ttc-a .ttc-ck{margin-right:auto}.ttc-a button{width:auto;padding:10px 16px}
+.ttc-msg{font-size:12.5px;color:#FCA5A5}
+@media (max-width:820px){.ttc-b{grid-template-columns:1fr;overflow:auto}.ttc-pv{border-right:0}.ttc-stage{aspect-ratio:9/8}.ttc-c{overflow:visible}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important}}
 
 /* ===== versión pública ===== */
@@ -1902,7 +1939,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
           <section class="tplbox" id="ttBox">
             <div class="tpl-h"><strong>🔤 Plantillas de título de <span id="ttWho"></span></strong><span class="hint">Solo el diseño del título (letra, tamaño, caja y colores). Pulsa una para dejarla fija: se pondrá sola en todos los clips nuevos de este creador, sea cual sea el formato.</span></div>
             <div class="tt-grid" id="ttGrid"></div>
-            <p class="hint">Para crear una tuya: abre un clip, deja el título como te guste y pulsa arriba «🔤 Plantilla de título» → «Guardar el título actual como plantilla».</p>
+            <div class="tpl-act"><button class="primary" id="ttNewBtn">➕ Crear plantilla de título</button></div>
+            <p class="hint">Elige la letra, el tamaño, los colores, el contorno, la sombra y el fondo, y lo ves al momento. Para editar una tuya, pasa el ratón por encima y pulsa ✏️. También puedes guardar el título de un clip abierto: arriba, «Plantilla de título» → «Guardar el título actual como plantilla».</p>
           </section>
           <section class="tplbox" id="lgBox">
             <div class="tpl-h"><strong>🖼️ Logos</strong><span class="hint">Todos tus logos en un sitio. Pulsa uno para ponérselo a <b id="lgWho"></b>: saldrá en todos sus clips. Puedes subir varios a la vez.</span></div>
@@ -2111,8 +2149,13 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <option value="SF Pro Display|600">SF Pro</option>
             <option value="Coolvetica|400">Coolvetica</option>
             <option value="Anton|400">Anton (estilo TALLHAUS de TikTok)</option>
+            <option value="Bebas Neue|400">Bebas Neue</option>
             <option value="Montserrat|800">Montserrat</option>
+            <option value="Montserrat|900">Montserrat Black</option>
             <option value="Poppins|700">Poppins</option>
+            <option value="Poppins|800">Poppins ExtraBold</option>
+            <option value="Inter|800">Inter ExtraBold</option>
+            <option value="TikTok Sans|900">TikTok Sans Black</option>
           </select>
           <label class="f">Tamaño <span class="val" id="titleSizeV">54</span><input type="range" id="titleSize" min="30" max="110" value="54"></label>
           <label class="toggle"><input type="checkbox" id="titleUpper"><span></span>Título en MAYÚSCULAS</label>
@@ -2131,6 +2174,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
               <label class="sw">Color caja<input type="color" id="boxColor" value="#ffffff"></label>
               <label class="sw">Color texto<input type="color" id="boxText" value="#111111"></label>
             </div>
+            <label class="f">Opacidad de la caja <span class="val" id="boxOpV">100%</span><input type="range" id="boxOp" min="0" max="100" value="100"></label>
           </div>
           <label class="toggle"><input type="checkbox" id="titleAutoHL"><span></span>La IA destaca palabras del título en color</label>
           <label class="toggle"><input type="checkbox" id="titleEmoji" checked><span></span>La IA añade un emoji al final del título</label>
@@ -2142,6 +2186,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
                 <label class="sw">Color destacado<input type="color" id="titleHl" value="#ff1f1f"></label>
                 <label class="sw" id="plainOpts">Color del texto<input type="color" id="titleColor" value="#ffffff"></label>
               </div>
+              <label class="f">Espacio entre letras <span class="val" id="tLSV">0</span><input type="range" id="tLS" min="-6" max="30" value="0"></label>
+              <div class="row">
+                <label class="f">Contorno <span class="val" id="tStrokeWV">0</span><input type="range" id="tStrokeW" min="0" max="24" value="0"></label>
+                <label class="sw">Color contorno<input type="color" id="tStrokeC" value="#000000"></label>
+              </div>
+              <label class="f">Sombra <span class="val" id="tShadowV">60%</span><input type="range" id="tShadow" min="0" max="100" value="60"></label>
             </div>
           </details>
         </div>
@@ -4016,6 +4066,7 @@ const S0 = () => ({
   titleHl: $('titleHl').value,
   boxR: +$('boxR').value, boxPX: +$('boxPX').value, boxPY: +$('boxPY').value,
   boxColor: $('boxColor').value, boxText: $('boxText').value,
+  boxOp: +$('boxOp').value / 100, tLS: +$('tLS').value, tStrokeW: +$('tStrokeW').value, tStrokeC: $('tStrokeC').value, tShadow: +$('tShadow').value / 100,
   subFont: $('subFont').value.split('|')[0],
   subWeight: $('subFont').value.split('|')[1],
   subSize: +$('subSize').value,
@@ -4623,7 +4674,7 @@ function draw0(t, forExport, src, T) {
     const size = s.titleSize, lh = size * s.titleLH;
     const padX = isBox ? s.boxPX : 0, padY = isBox ? s.boxPY : 0;
     ctx.font = `${s.titleWeight} ${size}px "${s.titleFont}", Inter, "Helvetica Neue", Arial, sans-serif`;
-    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.letterSpacing = (s.tLS || 0) + 'px';
     const maxW = s.titleW > 0 ? Math.max(120, s.titleW) : Math.max(320, W - 140 - padX * 2);   // ancho elegido con las asas de los lados
     const lines = []; let gi = 0;
     for (const para of s.title.split('\n')) {
@@ -4649,19 +4700,23 @@ function draw0(t, forExport, src, T) {
 
     if (isBox) {
       ctx.save();
-      ctx.fillStyle = s.boxColor;
+      ctx.fillStyle = s.boxColor; ctx.globalAlpha = s.boxOp == null ? 1 : s.boxOp;
       const drawBoxes = () => {
         if (boxMode === 'single') { const b = boxes.title; roundBox(b.x, b.y, b.w, b.h, s.boxR); }
         else drawRowBoxes(lines.map((l, i) => { const c = top + size / 2 + i * lh; return { x0: cx - l.w / 2 - padX, x1: cx + l.w / 2 + padX, y0: c - size / 2 - padY, y1: c + size / 2 + padY }; }), s.boxR);
       };
       // 1) la sombra solo por fuera; 2) las cajas encima, para que no quede sombra dentro entre líneas
-      ctx.shadowColor = 'rgba(0,0,0,.28)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 4;
-      drawBoxes();
+      if (ctx.globalAlpha > 0.98) { ctx.shadowColor = 'rgba(0,0,0,.28)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 4; drawBoxes(); }
       ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
       drawBoxes();
       ctx.restore();
     } else {
-      ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 10;
+      const k = s.tShadow == null ? 0.6 : s.tShadow; ctx.shadowColor = `rgba(0,0,0,${Math.min(1, k * 1.1).toFixed(2)})`; ctx.shadowBlur = k ? 4 + 12 * k : 0;
+    }
+    if (s.tStrokeW > 0) {   // contorno: va debajo de las letras, con su misma sombra
+      ctx.save(); ctx.strokeStyle = s.tStrokeC || '#000'; ctx.lineWidth = s.tStrokeW * 2; ctx.lineJoin = 'round'; ctx.miterLimit = 2;
+      lines.forEach((l, i) => { const c = top + size / 2 + i * lh; let x = cx - l.w / 2; for (const w of l.words) { drawR(w.t, x, c + mid, true); x += w.w + space; } });
+      ctx.restore(); ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
     }
     lines.forEach((l, i) => {
       const c = top + size / 2 + i * lh;
@@ -4671,7 +4726,7 @@ function draw0(t, forExport, src, T) {
         drawR(w.t, x, c + mid); x += w.w + space;
       }
     });
-    ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+    ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; ctx.letterSpacing = '0px';
   }
 
   /* subtítulos */
@@ -5942,6 +5997,7 @@ $('subsGen').addEventListener('change', () => {
   if (on && loaded && !captions.length && typeof ezResubs === 'function') ezResubs();
 });
 labels.titleW = v => +v > 0 ? v + ' px' : 'auto';
+labels.boxOp = v => v + '%'; labels.tLS = v => v; labels.tStrokeW = v => v; labels.tShadow = v => v + '%';
 for (const k in labels) $(k).addEventListener('input', e => $(k + 'V').textContent = labels[k](e.target.value));
 $('mStart').addEventListener('input', () => syncMusic(!vid.paused));
 
@@ -6609,7 +6665,8 @@ function getStyle() {
 }
 let restoring = false;
 const SUB_EXTRA_DEF = { duo: false, titleEmoji: true, subsGen: true, titleAutoHL: false, titleW: '0', subBold: true, subItalic: false, subUnder: false, subCase: 'none', subLS: '0', subAlign: 'center', subBg: false, subBgMode: 'line', subBgC: '#000000', subBgOp: '70',
-  subBgR: '30', subBgH: '18', subBgW: '30', subBgX: '0', subBgY: '0', subShOn: true, subShC: '#000000', subShD: '0', subShA: '-45' };
+  subBgR: '30', subBgH: '18', subBgW: '30', subBgX: '0', subBgY: '0', subShOn: true, subShC: '#000000', subShD: '0', subShA: '-45',
+  boxOp: '100', tLS: '0', tStrokeW: '0', tStrokeC: '#000000', tShadow: '60' };
 async function applyStyle(st) {
   restoring = true;
   try {
@@ -10565,17 +10622,18 @@ async function ttRender() {
     const b = document.createElement('div'); b.className = 'tt-card' + ((n === null ? !titleDef : titleDef === n) ? ' on' : ''); b.tabIndex = 0;
     const pv = document.createElement('div'); pv.className = 'tt-pv'; const t = document.createElement('span');
     if (tp) {
-      const k = tp.c || {}, [fam, wt] = (k.titleFont || 'Inter|800').split('|');
-      t.textContent = k.titleUpper ? 'TÍTULO DEL CLIP' : 'Título del clip';
-      t.style.fontFamily = `"${fam}", system-ui, sans-serif`; t.style.fontWeight = wt || 800;
-      t.style.fontSize = Math.max(13, Math.min(22, (+k.titleSize || 54) / 3)) + 'px';
-      if (tp.titleStyle === 'box') { t.style.background = k.boxColor || '#fff'; t.style.color = k.boxText || '#111'; t.style.padding = '4px 10px'; t.style.borderRadius = Math.min(10, (+k.boxR || 20) / 3) + 'px'; }
-      else { t.style.color = k.titleColor || '#fff'; t.style.textShadow = '0 1px 4px rgba(0,0,0,.7)'; }
+      const k = tp.c || {}; t.textContent = 'Título del clip';
+      ttcStyle(t, tp, Math.max(13, Math.min(22, (+k.titleSize || 54) / 3)) / (+k.titleSize || 54)); t.style.whiteSpace = 'nowrap'; t.style.maxWidth = '92%'; t.style.display = 'inline-block';
+      if (tp.titleStyle === 'box') { t.style.padding = '4px 10px'; t.style.borderRadius = Math.min(10, (+k.boxR || 20) / 3) + 'px'; }
     } else { t.textContent = 'El de cada formato'; t.style.fontSize = '13px'; t.style.opacity = '.8'; }
     pv.append(t);
     const nm = document.createElement('div'); nm.className = 'tt-n'; nm.textContent = n === null ? 'Sin título fijo' : n;
     b.append(pv, nm);
     if (b.classList.contains('on')) { const f = document.createElement('div'); f.className = 'tt-fix'; f.textContent = n === null ? '✓ En uso' : '✓ Fija para este creador'; b.append(f); }
+    if (n !== null && typeof n === 'string' && !n.startsWith('\u0000') && tp) {
+      const ed = document.createElement('button'); ed.className = 'tt-ed'; ed.textContent = '✏️'; ed.title = titleTpls[n] ? 'Editar esta plantilla' : 'Hacer una copia tuya y editarla';
+      ed.onclick = e => { e.stopPropagation(); ttcOpen(titleTpls[n] ? n : null, tp, titleTpls[n] ? n : n + ' (mía)'); }; b.append(ed);
+    }
     if (n !== null && titleTpls[n]) {
       const d = document.createElement('button'); d.className = 'tt-del'; d.textContent = '🗑'; d.title = 'Borrar esta plantilla de título';
       d.onclick = async e => { e.stopPropagation(); if (!confirm(`¿Borrar la plantilla de título «${n}»?`)) return; delete titleTpls[n]; if (titleDef === n) titleDef = null; await saveTypeStore(); ttRender(); };
@@ -10615,6 +10673,102 @@ async function ttRender() {
   box.after(w);
 }
 let ttRenderN = 0;
+/* ---------- crear / editar una plantilla de título: todo a mano y viéndolo al momento ---------- */
+const TTC_DEF = { titleStyle: 'box', boxMode: 'single', c: { titleFont: 'Anton|400', titleSize: '58', titleUpper: true, titleColor: '#ffffff', titleHl: '#ff1f1f', titleLH: '118', boxR: '14', boxPX: '28', boxPY: '16', boxColor: '#ffffff', boxText: '#111111', boxOp: '100', tLS: '0', tStrokeW: '0', tStrokeC: '#000000', tShadow: '60', titleW: '0' } };
+let ttc = null;
+function ttcStyle(t, tp, k) {   // pinta el título de muestra con CSS, a escala k del vídeo (1080 px de ancho)
+  const c = { ...TTC_DEF.c, ...(tp.c || {}) }, [fam, wt] = String(c.titleFont).split('|'), size = +c.titleSize, box = tp.titleStyle === 'box';
+  t.style.fontFamily = `"${fam}", Inter, system-ui, sans-serif`; t.style.fontWeight = wt || 800; t.style.fontSize = size * k + 'px'; t.style.lineHeight = (+c.titleLH / 100).toFixed(2);
+  t.style.letterSpacing = (+c.tLS || 0) * k + 'px'; t.style.textTransform = c.titleUpper ? 'uppercase' : 'none';
+  t.style.color = box ? c.boxText : c.titleColor;
+  const sw = +c.tStrokeW || 0; t.style.webkitTextStroke = sw ? `${sw * 2 * k}px ${c.tStrokeC}` : '0'; t.style.paintOrder = 'stroke fill';
+  const sh = c.tShadow == null ? 0.6 : +c.tShadow / 100; t.style.textShadow = !box && sh > 0 ? `0 0 ${(4 + 12 * sh) * k}px rgba(0,0,0,${Math.min(1, sh * 1.1).toFixed(2)})` : 'none';
+  const hex = c.boxColor || '#ffffff', op = c.boxOp == null ? 1 : +c.boxOp / 100, rgb = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) || 0).join(',');
+  t.style.background = box ? `rgba(${rgb},${op})` : 'none'; t.style.padding = box ? `${+c.boxPY * k}px ${+c.boxPX * k}px` : '0'; t.style.borderRadius = box ? Math.min(+c.boxR * k, 60) + 'px' : '0';
+  t.style.display = box && tp.boxMode === 'lines' ? 'inline' : 'inline-block'; t.style.boxDecorationBreak = t.style.webkitBoxDecorationBreak = 'clone';
+  t.style.boxShadow = box && op > 0.98 ? `0 ${4 * k}px ${18 * k}px rgba(0,0,0,.28)` : 'none';
+  t.style.maxWidth = (+c.titleW > 0 ? +c.titleW : 940) * k + 'px'; t.style.whiteSpace = 'normal'; t.style.textAlign = 'center';
+}
+function ttcOpen(editName, base, suggest) {
+  const tp = JSON.parse(JSON.stringify(base || TTC_DEF)); tp.c = { ...TTC_DEF.c, ...(tp.c || {}) }; if (!tp.titleStyle) tp.titleStyle = 'plain'; if (!tp.boxMode) tp.boxMode = 'single';
+  ttc = { edit: editName, tp };
+  let ov = $('ttcOv'); if (ov) ov.remove(); ov = document.createElement('div'); ov.id = 'ttcOv'; ov.className = 'ttc-ov';
+  const fonts = [...$('titleFont').options].map(o => [o.value, o.textContent]);
+  ov.innerHTML = `<div class="ttc" role="dialog" aria-label="Plantilla de título">
+    <div class="ttc-h"><b>${editName ? 'Editar plantilla de título' : 'Nueva plantilla de título'}</b><button class="ttc-x" title="Cerrar (Esc)">✕</button></div>
+    <div class="ttc-b">
+      <div class="ttc-pv"><div class="ttc-stage" data-bg="vid"><div class="ttc-t"><span></span></div></div>
+        <div class="ttc-bgs"><span>Fondo de prueba</span><button data-bg="vid" class="on">Vídeo</button><button data-bg="dark">Oscuro</button><button data-bg="light">Claro</button></div>
+        <label class="ttc-f">Texto de prueba<input type="text" id="ttcTxt" value="Westcol no se lo puede creer 🔥" maxlength="120"></label></div>
+      <div class="ttc-c">
+        <label class="ttc-f">Nombre<input type="text" id="ttcName" maxlength="40" placeholder="Por ejemplo: Caja roja WestCOL"></label>
+        <div class="ttc-s"><span>Letra</span><div class="ttc-fonts" id="ttcFonts"></div></div>
+        <div class="ttc-s"><span>Texto</span>
+          <label class="ttc-r">Tamaño<input type="range" data-k="titleSize" min="30" max="110"><output></output></label>
+          <label class="ttc-r">Entre letras<input type="range" data-k="tLS" min="-6" max="30"><output></output></label>
+          <label class="ttc-r">Entre líneas<input type="range" data-k="titleLH" min="80" max="200"><output></output></label>
+          <label class="ttc-r">Ancho<input type="range" data-k="titleW" min="0" max="1000" step="10"><output></output></label>
+          <div class="ttc-row"><label class="ttc-ck"><input type="checkbox" data-k="titleUpper"> MAYÚSCULAS</label>
+            <label class="ttc-col">Color<input type="color" data-k="__txt"></label><label class="ttc-col" title="Color de las palabras destacadas">Destacado<input type="color" data-k="titleHl"></label></div>
+        </div>
+        <div class="ttc-s"><span>Contorno y sombra</span>
+          <label class="ttc-r">Contorno<input type="range" data-k="tStrokeW" min="0" max="24"><output></output></label>
+          <div class="ttc-row"><label class="ttc-col">Color del contorno<input type="color" data-k="tStrokeC"></label></div>
+          <label class="ttc-r" id="ttcShR">Sombra<input type="range" data-k="tShadow" min="0" max="100"><output></output></label>
+        </div>
+        <div class="ttc-s"><span>Fondo</span>
+          <div class="ttc-seg" id="ttcBox"><button data-v="none">Sin fondo</button><button data-v="single">Una caja</button><button data-v="lines">Una por línea</button></div>
+          <div id="ttcBoxO">
+            <div class="ttc-row"><label class="ttc-col">Color de la caja<input type="color" data-k="boxColor"></label></div>
+            <label class="ttc-r">Opacidad<input type="range" data-k="boxOp" min="0" max="100"><output></output></label>
+            <label class="ttc-r">Esquinas<input type="range" data-k="boxR" min="0" max="80"><output></output></label>
+            <label class="ttc-r">Margen lados<input type="range" data-k="boxPX" min="0" max="160"><output></output></label>
+            <label class="ttc-r">Margen arriba/abajo<input type="range" data-k="boxPY" min="0" max="120"><output></output></label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ttc-a"><label class="ttc-ck"><input type="checkbox" id="ttcFix" checked> Dejarla fija para <b id="ttcWho"></b></label><span class="ttc-msg" id="ttcMsg"></span><button id="ttcCancel">Cancelar</button><button class="primary" id="ttcSave">Guardar plantilla</button></div>
+  </div>`;
+  document.body.append(ov);
+  const q = sel => ov.querySelector(sel), c = tp.c, cl = clientOf(curClient);
+  q('#ttcName').value = editName || suggest || ''; q('#ttcWho').textContent = cl ? cl.name : 'este creador';
+  const fb = q('#ttcFonts');
+  for (const [v, n] of fonts) { const b = document.createElement('button'); b.type = 'button'; b.dataset.v = v; const [fam, wt] = v.split('|'); b.innerHTML = '<i>Aa</i><span></span>'; b.querySelector('i').style.cssText = `font-family:"${fam}",system-ui;font-weight:${wt}`; b.querySelector('span').textContent = n.replace(/ \(.*\)$/, ''); b.title = n; b.onclick = () => { c.titleFont = v; draw(); }; fb.append(b); }
+  const fmtV = { titleSize: v => v, tLS: v => v, titleLH: v => (v / 100).toFixed(2), titleW: v => +v ? v + ' px' : 'auto', tStrokeW: v => v, tShadow: v => v + '%', boxOp: v => v + '%', boxR: v => v, boxPX: v => v, boxPY: v => v };
+  const draw = () => {
+    const box = tp.titleStyle === 'box';
+    for (const el of ov.querySelectorAll('[data-k]')) { const k = el.dataset.k; if (document.activeElement === el && el.type === 'range') { el.nextElementSibling.textContent = fmtV[k](el.value); continue; }
+      if (k === '__txt') el.value = box ? c.boxText : c.titleColor; else if (el.type === 'checkbox') el.checked = !!c[k]; else el.value = c[k]; if (el.type === 'range') el.nextElementSibling.textContent = fmtV[k](el.value); }
+    for (const b of fb.children) b.classList.toggle('on', b.dataset.v === c.titleFont);
+    const mode = box ? tp.boxMode : 'none'; for (const b of q('#ttcBox').children) b.classList.toggle('on', b.dataset.v === mode);
+    q('#ttcBoxO').hidden = !box; q('#ttcShR').hidden = box;
+    const t = q('.ttc-t span'), words = (q('#ttcTxt').value || 'Título').split(/\s+/).filter(Boolean); t.innerHTML = '';
+    words.forEach((w, i) => { if (i) t.append(' '); if (i === 1 && words.length > 2) { const h = document.createElement('b'); h.textContent = w; h.style.color = c.titleHl; h.style.font = 'inherit'; t.append(h); } else t.append(w); });
+    const st = q('.ttc-stage'); ttcStyle(t, tp, st.clientWidth / 1080 || 0.4);
+  };
+  ov.addEventListener('input', e => { const el = e.target, k = el.dataset && el.dataset.k; if (k) { const v = el.type === 'checkbox' ? el.checked : el.value; if (k === '__txt') { c.titleColor = v; c.boxText = v; } else c[k] = v; } draw(); });
+  q('#ttcBox').onclick = e => { const v = e.target.dataset && e.target.dataset.v; if (!v) return; if (v === 'none') tp.titleStyle = 'plain'; else { if (tp.titleStyle !== 'box') { const tc = c.titleColor; c.boxText = c.boxText && c.boxText.toLowerCase() !== (c.boxColor || '').toLowerCase() ? c.boxText : (tc && tc.toLowerCase() !== '#ffffff' ? tc : '#111111'); } tp.titleStyle = 'box'; tp.boxMode = v; } draw(); };
+  ov.querySelector('.ttc-bgs').onclick = e => { const v = e.target.dataset && e.target.dataset.bg; if (!v) return; q('.ttc-stage').dataset.bg = v; for (const b of ov.querySelectorAll('.ttc-bgs button')) b.classList.toggle('on', b === e.target); };
+  const close = () => { ov.classList.add('out'); setTimeout(() => ov.remove(), 180); ttc = null; document.removeEventListener('keydown', esc, true); };
+  const esc = e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+  document.addEventListener('keydown', esc, true);
+  q('.ttc-x').onclick = close; q('#ttcCancel').onclick = close; ov.addEventListener('pointerdown', e => { if (e.target === ov) close(); });
+  q('#ttcSave').onclick = async () => {
+    const msg = q('#ttcMsg'), name = q('#ttcName').value.trim().slice(0, 40);
+    if (!curClient) { msg.textContent = 'Elige primero un creador'; return; }
+    if (!name) { msg.textContent = 'Ponle un nombre'; q('#ttcName').focus(); return; }
+    if (name !== editName && (titleTpls[name] || TT_BUILTIN[name])) { msg.textContent = 'Ya hay una plantilla con ese nombre'; q('#ttcName').focus(); return; }
+    const out = { titleStyle: tp.titleStyle, boxMode: tp.boxMode, c: {} }; for (const k of TITLE_KEYS) if (c[k] !== undefined) out.c[k] = c[k];
+    if (editName && editName !== name) { delete titleTpls[editName]; if (titleDef === editName) titleDef = name; }
+    titleTpls[name] = out; if (q('#ttcFix').checked) titleDef = name; await saveTypeStore();
+    if (loaded && q('#ttcFix').checked) { try { await ttApply(name); } catch {} }
+    close(); ttRender(); toast(`Plantilla de título «${name}» guardada` + (q('#ttcFix').checked && cl ? ` y fija para ${cl.name}` : ''));
+  };
+  requestAnimationFrame(draw); setTimeout(draw, 300); try { document.fonts.ready.then(draw); } catch {}
+  setTimeout(() => q('#ttcName').focus(), 50);
+}
+setTimeout(() => { const b = $('ttNewBtn'); if (b) b.onclick = () => ttcOpen(null, null, ''); }, 0);
 /* ---------- biblioteca de logos (en Plantillas): todos tus logos, y cada creador elige el suyo ---------- */
 async function lgLib() { let l = null; try { l = await kv.get('logoLib'); } catch {} return Array.isArray(l) ? l : []; }
 async function lgAdd(src, name) {
@@ -12227,7 +12381,7 @@ async function tplRender() {
   $('tplNew').hidden = true; $('tplImp').hidden = true;
 }
 // copiar el estilo del título de una plantilla a las demás (de este creador o de todos)
-const TITLE_KEYS = ['titleFont', 'titleSize', 'titleUpper', 'titleColor', 'titleHl', 'titleLH', 'boxR', 'boxPX', 'boxPY', 'boxColor', 'boxText', 'titleW', 'titleAutoHL', 'titleEmoji'];
+const TITLE_KEYS = ['titleFont', 'titleSize', 'titleUpper', 'titleColor', 'titleHl', 'titleLH', 'boxR', 'boxPX', 'boxPY', 'boxColor', 'boxText', 'titleW', 'titleAutoHL', 'titleEmoji', 'boxOp', 'tLS', 'tStrokeW', 'tStrokeC', 'tShadow'];
 function titlePart(st) { const c = {}; for (const k of TITLE_KEYS) if (st.c && st.c[k] !== undefined) c[k] = st.c[k]; return { titleStyle: st.titleStyle, boxMode: st.boxMode, c }; }
 function mergeTitle(st, tp) { const m = JSON.parse(JSON.stringify(st)); m.c = { ...(m.c || {}), ...tp.c }; if (tp.titleStyle) m.titleStyle = tp.titleStyle; if (tp.boxMode) m.boxMode = tp.boxMode; return m; }
 function tplCopyTitle(src, name) {
