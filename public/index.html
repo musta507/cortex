@@ -2090,6 +2090,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <option value="TikTok Sans|800">TikTok Sans Bold</option>
             <option value="SF Pro Display|600">SF Pro</option>
             <option value="Coolvetica|400">Coolvetica</option>
+            <option value="Anton|400">Anton (estilo TALLHAUS de TikTok)</option>
             <option value="Montserrat|800">Montserrat</option>
             <option value="Poppins|700">Poppins</option>
           </select>
@@ -10507,6 +10508,8 @@ const TT_BUILTIN = {
   'Blanco clásico': { titleStyle: 'plain', boxMode: 'single', c: { titleFont: 'Inter|700', titleSize: '56', titleUpper: false, titleColor: '#ffffff' } },
   'MAYÚSCULAS amarillo': { titleStyle: 'plain', boxMode: 'single', c: { titleFont: 'Montserrat|800', titleSize: '58', titleUpper: true, titleColor: '#ffe600' } },
   'Coolvetica grande': { titleStyle: 'plain', boxMode: 'single', c: { titleFont: 'Coolvetica|400', titleSize: '66', titleUpper: false, titleColor: '#ffffff' } },
+  'TikTok TALLHAUS': { titleStyle: 'box', boxMode: 'single', c: { titleFont: 'Anton|400', titleSize: '58', titleUpper: true, boxColor: '#e4e4e4', boxText: '#111111', boxR: '10', boxPX: '26', boxPY: '14' } },
+  'TALLHAUS blanco': { titleStyle: 'plain', boxMode: 'single', c: { titleFont: 'Anton|400', titleSize: '64', titleUpper: true, titleColor: '#ffffff' } },
 };
 const ttGet = n => titleTpls[n] || TT_BUILTIN[n] || null;
 // también los títulos de cada formato que trae Cortex, para poder usarlos en cualquier clip
