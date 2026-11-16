@@ -1525,6 +1525,15 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .se-cc{display:flex!important;align-items:center;justify-content:center;gap:8px;width:100%;padding:10px!important;border-radius:12px!important;font-size:13.5px!important;background:rgba(255,255,255,.03)!important;border:1px dashed rgba(255,255,255,.18)!important;color:#D4D4D8!important}
 .se-cc:hover{border-style:solid!important;color:#fff!important;background:rgba(255,255,255,.07)!important}
 .se-cc svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sug{width:min(620px,100%)}
+.sug-b{display:grid;gap:14px;padding:18px;overflow:auto}
+.sug-b textarea{width:100%;resize:vertical;font-size:14px;line-height:1.45;padding:10px 12px}
+.sug-b select{width:100%}
+.sug-img{display:flex;gap:12px;align-items:center}
+.sug-pv{flex:none;width:120px;height:120px;border-radius:12px;border:1px dashed rgba(255,255,255,.2);display:grid;place-items:center;overflow:hidden;background:rgba(255,255,255,.03);color:#71717A;font-size:12px}
+.sug-pv img{width:100%;height:100%;object-fit:cover;animation:cxPop .25s var(--ease) backwards}
+.sug-ib{display:flex;flex-wrap:wrap;gap:6px}.sug-ib button{width:auto;padding:7px 11px;font-size:12.5px}
+#tplSugW{align-items:center;gap:12px;flex-wrap:wrap}#tplSugW[hidden],#tplAct[hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important}}
 
 /* ===== versión pública ===== */
@@ -1945,7 +1954,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <div class="tpl-h"><strong>🎨 Tus plantillas<span id="tplWho" hidden></span></strong><span class="hint">Cada tipo de clip tiene su plantilla. La IA elige sola cuál usar en cada clip; tú puedes cambiar el estilo de cualquiera.</span></div>
             <div class="tpl-grid" id="tplGrid"></div>
             <div class="tpl-hid" id="tplHidden"></div>
-            <div class="tpl-act"><button class="primary" id="tplNewBtn">➕ Nueva plantilla</button><button id="tplImportBtn">📥 Añadir de otro proyecto</button></div>
+            <div class="tpl-act" id="tplAct"><button class="primary" id="tplNewBtn">➕ Nueva plantilla</button><button id="tplImportBtn">📥 Añadir de otro proyecto</button></div>
+            <div class="tpl-act" id="tplSugW" hidden><button class="primary" id="tplSugBtn">💡 Sugerir una plantilla</button><span class="hint">¿Echas en falta un formato o quieres uno cambiado? Cuéntanoslo y lo añadimos.</span></div>
             <div class="tpl-new" id="tplNew" hidden><input type="text" id="tplNewName" placeholder="Nombre (por ejemplo: Podcast amarillo)"><label class="f">Basada en <select id="tplNewBase"></select></label><button class="primary" id="tplNewGo">Crear y editar</button></div>
             <div class="tpl-imp" id="tplImp" hidden></div>
           </section>
@@ -10895,6 +10905,37 @@ async function ttRender() {
   box.after(w);
 }
 let ttRenderN = 0;
+/* ---------- sugerir una plantilla (web): le llega al panel del administrador ---------- */
+function sugOpen() {
+  let ov = $('sugOv'); if (ov) ov.remove(); ov = document.createElement('div'); ov.id = 'sugOv'; ov.className = 'ttc-ov';
+  const fmts = PRESETS.filter(p => !presetHidden.includes(p.name)).map(p => p.name);
+  ov.innerHTML = `<div class="ttc sug" role="dialog" aria-label="Sugerir una plantilla"><div class="ttc-h"><b>💡 Sugerir una plantilla</b><button class="ttc-x" title="Cerrar (Esc)">✕</button></div>
+    <div class="sug-b"><label class="ttc-f">¿Qué plantilla te gustaría?<textarea id="sugT" rows="5" maxlength="2000" placeholder="Ej.: como Podcast pero con la cara más grande y el título en caja amarilla, para los clips de WestCOL hablando"></textarea></label>
+      <label class="ttc-f">Basada en<select id="sugF"><option value="">Una nueva</option>${fmts.map(n => `<option>${n.replace(/[<>&]/g, '')}</option>`).join('')}</select></label>
+      <div class="ttc-f">Imagen de ejemplo <em>(opcional: pega una captura con Ctrl+V, súbela, o usa cómo se ve tu clip)</em>
+        <div class="sug-img"><div class="sug-pv" id="sugPv"><span>Sin imagen</span></div><div class="sug-ib"><button type="button" id="sugUp">📁 Subir imagen</button><button type="button" id="sugClip"${loaded ? '' : ' disabled title="Abre un clip para usarlo"'}>🎬 Cómo se ve mi clip</button><button type="button" id="sugNo" hidden>Quitar</button></div></div>
+        <input type="file" id="sugFile" accept="image/*" hidden></div></div>
+    <div class="ttc-a"><span class="ttc-msg" id="sugMsg"></span><button id="sugCancel">Cancelar</button><button class="primary" id="sugSend">Enviar sugerencia</button></div></div>`;
+  document.body.append(ov); const q = x => ov.querySelector(x); let imgData = null;
+  const setImg = d => { imgData = d; const pv = q('#sugPv'); pv.innerHTML = d ? `<img src="${d}" alt="">` : '<span>Sin imagen</span>'; q('#sugNo').hidden = !d; };
+  const fromBlob = b => new Promise((res, rej) => { const u = URL.createObjectURL(b), im = new Image(); im.onload = () => { const k = Math.min(1, 1280 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg', 0.85)); }; im.onerror = rej; im.src = u; });
+  q('#sugUp').onclick = () => q('#sugFile').click(); q('#sugFile').onchange = async () => { const f = q('#sugFile').files[0]; if (f) setImg(await fromBlob(f)); };
+  q('#sugNo').onclick = () => setImg(null);
+  q('#sugClip').onclick = () => { try { const c = document.createElement('canvas'); c.width = 540; c.height = 960; c.getContext('2d').drawImage($('cv'), 0, 0, 540, 960); setImg(c.toDataURL('image/jpeg', 0.85)); } catch { q('#sugMsg').textContent = 'No se pudo copiar el clip'; } };
+  ov.addEventListener('paste', async e => { const it = [...(e.clipboardData || {}).items || []].find(x => x.type.startsWith('image/')); if (it) { e.preventDefault(); setImg(await fromBlob(it.getAsFile())); } });
+  const close = () => { ov.classList.add('out'); setTimeout(() => ov.remove(), 180); document.removeEventListener('keydown', esc, true); };
+  const esc = e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } }; document.addEventListener('keydown', esc, true);
+  q('.ttc-x').onclick = close; q('#sugCancel').onclick = close; ov.addEventListener('pointerdown', e => { if (e.target === ov) close(); });
+  ov.addEventListener('keydown', e => e.stopPropagation());
+  q('#sugSend').onclick = async () => {
+    const t = q('#sugT').value.trim(), m = q('#sugMsg'); if (!t && !imgData) { m.textContent = 'Escribe qué plantilla quieres'; q('#sugT').focus(); return; }
+    const b = q('#sugSend'); b.disabled = true; m.textContent = '';
+    try { const r = await fetch('/api/sugerencia', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texto: t, formato: q('#sugF').value, imagen: imgData }) }); if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'no se pudo enviar');
+      close(); toast('💡 ¡Gracias! Tu sugerencia ha llegado'); } catch (e) { m.textContent = '⚠ ' + e.message; b.disabled = false; }
+  };
+  setTimeout(() => q('#sugT').focus(), 50);
+}
+setTimeout(() => { const b = $('tplSugBtn'); if (b) b.onclick = sugOpen; }, 0);
 // nombre corto a partir de cómo se ve: «Caja roja», «Texto amarillo», «Caja negra Anton»…
 function ttShortName(tp, used) {
   const c = (tp && tp.c) || {}, box = tp && tp.titleStyle === 'box', P = [['blanc', 255, 255, 255], ['negr', 15, 15, 15], ['amarill', 255, 225, 0], ['roj', 230, 30, 40], ['azul', 40, 110, 245], ['verde', 40, 200, 90], ['ros', 245, 90, 170], ['morad', 140, 70, 230], ['naranja', 255, 140, 0], ['gris', 140, 140, 140]];
@@ -12586,7 +12627,7 @@ function tplCard(st, name, sub, isDef, btns) {
   card.append(mockFrom(st, isDef));
   const n = document.createElement('strong'); n.textContent = name; card.append(n);
   const h = document.createElement('span'); h.className = 'hint'; h.textContent = sub; card.append(h);
-  const row = document.createElement('div'); row.className = 'tpl-b';
+  const row = document.createElement('div'); row.className = 'tpl-b'; if (!btns.length) row.hidden = true;
   for (const [lab, fn, cls, tip] of btns) { const b = document.createElement('button'); b.textContent = lab; if (cls) b.className = cls; if (tip) b.title = tip; b.onclick = ev => { ev.stopPropagation(); fn(b); }; row.append(b); }
   card.append(row);
   return card;
@@ -12610,9 +12651,13 @@ async function tplRender() {
     }
   };
   const confirm2 = (b, fn) => { if (!b.dataset.ok) { b.dataset.ok = 1; b.textContent = '¿Seguro?'; b.classList.add('danger'); setTimeout(() => { delete b.dataset.ok; b.textContent = '🗑 Eliminar'; b.classList.remove('danger'); }, 3000); return; } fn(); };
+  const lock = typeof CORTEX_PROXY !== 'undefined' && CORTEX_PROXY;   // web: los clippers no las cambian, las sugieren
+  $('tplAct').hidden = lock; $('tplSugW').hidden = !lock;
+  if (lock) { const h = box.querySelector('.tpl-h .hint'); if (h) h.textContent = 'Cada tipo de clip tiene su plantilla y la IA elige sola cuál usar en cada clip. ¿Quieres otra o un cambio? Sugiérela abajo.'; }
   for (const p of PRESETS) {
     if (presetHidden.includes(p.name)) continue;
     const fmt = Object.keys(AG_FORMATS).find(k => AG_FORMATS[k].preset === p.name);
+    if (lock) { g.append(tplCard(effectivePreset(p), p.name, 'Formato', presetDefault === p.name, [])); continue; }
     const btns = [
       ['✏️ Editar', () => tplEdit({ kind: 'format', name: p.name, fmt }), 'primary'],
       [presetDefault === p.name ? '★' : '☆', async () => { presetDefault = presetDefault === p.name ? null : p.name; await saveTypeStore(); tplRender(); }, '', 'Usarla al abrir un clip nuevo'],
@@ -12629,6 +12674,7 @@ async function tplRender() {
     g.append(card);
   }
   for (const n of Object.keys(templates).sort((a, b) => a.localeCompare(b, 'es'))) {
+    if (lock) { g.append(tplCard(templates[n], n, 'Plantilla', false, [])); continue; }
     g.append(tplCard(templates[n], n, 'Plantilla propia', false, [
       ['✏️ Editar', () => tplEdit({ kind: 'custom', name: n }), 'primary'],
       ['📋 Título a las demás', () => tplCopyTitle(JSON.parse(JSON.stringify(templates[n])), n), '', 'Copiar el estilo de este título a las demás plantillas'],

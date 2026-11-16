@@ -15,8 +15,8 @@ if (!SECRET) { SECRET = crypto.randomBytes(32).toString('hex'); fs.writeFileSync
 
 // ---------- base de datos: un JSON pequeño, guardado con retardo ----------
 const dbFile = path.join(DATA, 'cortex.json');
-let db = { users: [], clips: [] };
-try { db = { users: [], clips: [], ...JSON.parse(fs.readFileSync(dbFile, 'utf8')) }; } catch {}
+let db = { users: [], clips: [], sugerencias: [] };
+try { db = { users: [], clips: [], sugerencias: [], ...JSON.parse(fs.readFileSync(dbFile, 'utf8')) }; } catch {}
 let saveT = null;
 function save() {
   clearTimeout(saveT);
@@ -127,6 +127,18 @@ function projects(user) {
   return [...map.values()].sort((a, b) => b.ultimo - a.ultimo);
 }
 
+// ---------- sugerencias de plantillas que mandan los clippers (las ves en el panel) ----------
+function addSuggestion(user, b) {
+  const id = crypto.randomBytes(8).toString('base64url');
+  const o = { id, user: user.name, at: Date.now(), texto: String(b.texto || '').slice(0, 2000), formato: String(b.formato || '').slice(0, 60), visto: false, img: 0 };
+  if (!o.texto.trim() && !b.imagen) return null;
+  if (typeof b.imagen === 'string' && b.imagen.startsWith('data:image/jpeg;base64,') && b.imagen.length < 1500000) { fs.writeFileSync(path.join(FILES, 'sug_' + id + '.jpg'), Buffer.from(b.imagen.split(',')[1], 'base64')); o.img = 1; }
+  db.sugerencias.unshift(o); if (db.sugerencias.length > 500) db.sugerencias.length = 500; save(); return o;
+}
+const suggestions = () => db.sugerencias;
+function suggestionSet(id, ch) { const o = db.sugerencias.find(x => x.id === id); if (!o) return false; if (ch.borrar) { db.sugerencias = db.sugerencias.filter(x => x !== o); try { fs.rmSync(path.join(FILES, 'sug_' + id + '.jpg')); } catch {} } else o.visto = !!ch.visto; save(); return true; }
+const suggestionImg = id => path.join(FILES, 'sug_' + String(id).replace(/[^\w-]/g, '') + '.jpg');
+
 // ---------- contraseña del panel: la variable ADMIN_PASSWORD o, si no llega, la que se crea al entrar la primera vez ----------
 const adminFile = path.join(DATA, 'admin.json');
 // contraseña del panel fijada en el código (solo se guarda su huella cifrada, no la contraseña)
@@ -141,4 +153,4 @@ function adminOk(pass, env) {
 }
 function adminCreate(pass) { const salt = crypto.randomBytes(12).toString('hex'); adminStored = { salt, hash: hash(pass, salt), at: Date.now() }; fs.writeFileSync(adminFile, JSON.stringify(adminStored)); }
 
-module.exports = { adminSet, adminOk, adminCreate, DATA, FILES, findByPass, addUser, setPass, removeUser, userOf, makeCookie, readCookie, sessionUser, isAdmin, cookieHeader, addClip, clipOf, videoPath, videoDone, stats, projects };
+module.exports = { addSuggestion, suggestions, suggestionSet, suggestionImg, adminSet, adminOk, adminCreate, DATA, FILES, findByPass, addUser, setPass, removeUser, userOf, makeCookie, readCookie, sessionUser, isAdmin, cookieHeader, addClip, clipOf, videoPath, videoDone, stats, projects };

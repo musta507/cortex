@@ -164,6 +164,10 @@ http.createServer(async (req, res) => {
         const good = out.some(x => x.ok);
         return json(res, 200, { ok: good, pruebas: out, errores_recientes: iaErrs.slice(-8).reverse(), clave: KEY.slice(0, 4) + '…' + KEY.slice(-4) + ` (${KEY.length} caracteres)` });
       }
+      if (req.method === 'GET' && p === 'sugerencias') return json(res, 200, { sugerencias: K.suggestions() });
+      if (req.method === 'POST' && p === 'sugerencia') { let b; try { b = JSON.parse(await readBody(req, 4000)); } catch { return json(res, 400, { error: 'petición no válida' }); } return json(res, K.suggestionSet(b.id, b) ? 200 : 404, { ok: true }); }
+      let sm = p.match(/^sugerencia\/([\w-]{6,30})\.jpg$/);
+      if (req.method === 'GET' && sm) { const f = K.suggestionImg(sm[1]); if (!fs.existsSync(f)) return json(res, 404, { error: 'no está' }); res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=86400' }); return fs.createReadStream(f).pipe(res); }
       if (req.method === 'GET' && p === 'proyectos') return json(res, 200, { proyectos: K.projects(url.searchParams.get('user') || '') });
       if (req.method === 'POST' && p === 'clippers') { let b; try { b = JSON.parse(await readBody(req, 4000)); } catch { return json(res, 400, { error: 'petición no válida' }); } const e = K.addUser(b.name, b.pass); return json(res, e ? 400 : 200, e ? { error: e } : { ok: true }); }
       if (req.method === 'POST' && p === 'contrasena') { let b; try { b = JSON.parse(await readBody(req, 4000)); } catch { return json(res, 400, { error: 'petición no válida' }); } const e = K.setPass(b.name, b.pass); return json(res, e ? 400 : 200, e ? { error: e } : { ok: true }); }
@@ -231,6 +235,11 @@ http.createServer(async (req, res) => {
       if (!sameSite(req)) return json(res, 403, { error: 'origen no permitido' });
       let b; try { b = JSON.parse(await readBody(req, 600000)); } catch { return json(res, 400, { error: 'petición no válida' }); }
       const c = K.addClip(me, b); return json(res, 200, { id: c.id });
+    }
+    if (req.method === 'POST' && url.pathname === '/api/sugerencia') {
+      if (!sameSite(req)) return json(res, 403, { error: 'origen no permitido' });
+      let b; try { b = JSON.parse(await readBody(req, 1600000)); } catch { return json(res, 400, { error: 'petición no válida' }); }
+      const o = K.addSuggestion(me, b); return json(res, o ? 200 : 400, o ? { ok: true } : { error: 'Escribe tu sugerencia' });
     }
     let um = url.pathname.match(/^\/api\/subir\/([\w-]{6,30})$/);
     if (req.method === 'PUT' && um) {

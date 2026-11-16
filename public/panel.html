@@ -107,7 +107,21 @@ dialog video{display:block;max-height:86vh;max-width:100%;border-radius:18px;bac
 dialog .x{position:absolute;top:-48px;right:0}
 .danger{color:#FCA5A5;border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.06)}
 .danger:hover{background:rgba(248,113,113,.14);border-color:rgba(248,113,113,.6);color:#fff}
-body.ready .u,body.ready .p,body.ready .kpi,body.ready .uh,body.ready .box{animation:none}
+body.ready .u,body.ready .p,body.ready .kpi,body.ready .uh,body.ready .box,body.ready .sg{animation:none}
+.tabs{display:inline-flex;gap:4px;padding:4px;border-radius:14px;background:var(--card);border:1px solid var(--line);margin-bottom:18px}
+.tab{border:0;background:transparent;padding:8px 14px;border-radius:10px;color:var(--mut);display:inline-flex;align-items:center;gap:7px}
+.tab:hover{background:rgba(255,255,255,.06);color:#fff}
+.tab.on{background:#fff;color:#0A0A0C}
+.tab b{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:#F87171;color:#fff;font:700 11px var(--mono)}
+.tab b[hidden]{display:none}
+.sugs{display:grid;gap:12px;max-width:900px}
+.sg{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:start;padding:16px;border-radius:18px;background:var(--card);border:1px solid var(--line);animation:up .4s var(--ease) backwards;transition:border-color .2s,opacity .2s}
+.sg.new{border-color:rgba(110,151,255,.45);box-shadow:inset 3px 0 0 var(--blue)}
+.sg.seen{opacity:.6}
+.sg .tx{white-space:pre-wrap;font-size:14.5px;line-height:1.5;margin:6px 0}
+.sg .im{width:150px;border-radius:12px;cursor:zoom-in;display:block;margin-top:8px;border:1px solid var(--line2)}
+.sg .bt{display:grid;gap:6px}.sg .bt button{padding:7px 12px;font-size:12.5px}
+dialog.imgd img{display:block;max-width:92vw;max-height:88vh;border-radius:16px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -135,8 +149,12 @@ body.ready .u,body.ready .p,body.ready .kpi,body.ready .uh,body.ready .box{anima
     </div>
   </aside>
   <section>
+    <div class="tabs"><button class="tab on" id="tabC">🎬 Clips</button><button class="tab" id="tabS">💡 Sugerencias <b id="sugN" hidden></b></button></div>
+    <div id="vClips">
     <div class="uh"><h1 id="uT">Todos los clips</h1><span class="m" id="uS"></span><div class="sp"></div><span id="uActs"></span></div>
     <div class="grid" id="grid"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+    </div>
+    <div id="vSug" hidden><div class="uh"><h1>Sugerencias de plantillas</h1><span class="m">lo que piden los clippers desde «Plantillas»</span></div><div class="sugs" id="sugs"></div></div>
   </section>
 </main>
 <dialog id="dlg"><button class="x" id="dlgX">✕ Cerrar</button><video id="dlgV" controls playsinline></video></dialog>
@@ -202,6 +220,22 @@ async function loadProjects() {
     c.append(th, b); g.append(c);
   }
 }
+async function loadSug() {
+  const { sugerencias: L } = await api('sugerencias'), n = L.filter(x => !x.visto).length, b = $('sugN'); b.hidden = !n; b.textContent = n;
+  if ($('vSug').hidden) return;
+  const box = $('sugs'); box.innerHTML = L.length ? '' : '<div class="empty">Todavía no hay sugerencias. Los clippers las mandan desde «Plantillas» → «Sugerir una plantilla».</div>';
+  for (const o of L) {
+    const d = document.createElement('div'); d.className = 'sg ' + (o.visto ? 'seen' : 'new');
+    d.innerHTML = `<span class="av" style="--g:${avBg(o.user)}">${esc((o.user || '?')[0].toUpperCase())}</span><div><strong>${esc(o.user)}</strong> <span class="m">· ${when(o.at)}${o.formato ? ' · basada en «' + esc(o.formato) + '»' : ' · plantilla nueva'}</span><div class="tx">${esc(o.texto || '(sin texto)')}</div>${o.img ? `<img class="im" src="/api/admin/sugerencia/${o.id}.jpg" alt="ejemplo">` : ''}</div>
+      <div class="bt"><button data-a="v">${o.visto ? '↩ No vista' : '✓ Vista'}</button><button class="danger" data-a="x">🗑 Borrar</button></div>`;
+    d.querySelector('[data-a=v]').onclick = async () => { await api('sugerencia', { id: o.id, visto: !o.visto }); loadSug(); };
+    d.querySelector('[data-a=x]').onclick = async () => { if (!confirm('¿Borrar esta sugerencia?')) return; await api('sugerencia', { id: o.id, borrar: true }); loadSug(); };
+    const im = d.querySelector('.im'); if (im) im.onclick = () => { const dl = document.createElement('dialog'); dl.className = 'imgd'; dl.innerHTML = `<img src="${im.src}" alt="">`; dl.onclick = () => dl.close(); dl.onclose = () => dl.remove(); document.body.append(dl); dl.showModal(); };
+    box.append(d);
+  }
+}
+const tab = w => { $('tabC').classList.toggle('on', w === 'c'); $('tabS').classList.toggle('on', w === 's'); $('vClips').hidden = w !== 'c'; $('vSug').hidden = w !== 's'; if (w === 's') loadSug(); };
+$('tabC').onclick = () => tab('c'); $('tabS').onclick = () => tab('s');
 function play(id) { const v = $('dlgV'); v.src = `/api/admin/archivo/${id}.mp4`; $('dlg').showModal(); v.play().catch(() => {}); }
 $('dlgX').onclick = () => { $('dlgV').pause(); $('dlg').close(); };
 $('dlg').addEventListener('close', () => { const v = $('dlgV'); v.pause(); v.removeAttribute('src'); v.load(); });
@@ -222,7 +256,8 @@ $('add').onsubmit = async ev => {
 };
 let firstDone = false;
 load().then(() => setTimeout(() => document.body.classList.add('ready'), 900));   // tras la primera vez, al refrescar no se repiten las animaciones
-setInterval(() => { if (!$('dlg').open && document.visibilityState === 'visible') load().catch(() => {}); }, 20000);
+setInterval(() => { if (!$('dlg').open && document.visibilityState === 'visible') { load().catch(() => {}); loadSug().catch(() => {}); } }, 20000);
+loadSug().catch(() => {});
 </script>
 </body>
 </html>
