@@ -1650,7 +1650,8 @@ input[type=range],.check input{accent-color:var(--blue)}
             </div>
             <div class="se-tl cc" id="seTl" tabindex="-1">
               <div class="cc-bar">
-                <button class="cc-ic" id="tlCut" title="Dividir en la línea blanca (S)"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 7l-3 5 3 5M17 7l3 5-3 5"/></svg><span>Dividir</span></button>
+                <button class="cc-ic" id="tlCut" title="Dividir en la línea blanca (Ctrl+B)"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 7l-3 5 3 5M17 7l3 5-3 5"/></svg><span>Dividir</span></button>
+                <button class="cc-ic" id="tlBlade" title="Modo cuchilla: cada clic en el vídeo lo corta (B) · A para volver"><svg viewBox="0 0 24 24"><path d="M4 20L15 9M15 9l5-5c1 3 0 6-3 8l-2-3z"/><path d="M8 16l-2-2"/></svg></button>
                 <button class="cc-ic" id="tlTrimL" title="Quitar lo de antes de la línea (Q)"><svg viewBox="0 0 24 24"><path d="M5 4v16M20 12H9M13 8l-4 4 4 4"/></svg></button>
                 <button class="cc-ic" id="tlTrimR" title="Quitar lo de después de la línea (W)"><svg viewBox="0 0 24 24"><path d="M19 4v16M4 12h11M11 8l4 4-4 4"/></svg></button>
                 <button class="cc-ic" id="tlDel" title="Eliminar lo seleccionado (Supr)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg><span>Eliminar</span></button>
@@ -1664,7 +1665,7 @@ input[type=range],.check input{accent-color:var(--blue)}
                 <button class="cc-ic" id="mtHelpB" title="Atajos del teclado"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M7.5 14h9"/></svg></button>
                 <button class="cc-ic" id="tlSnap" title="Imán: al arrastrar, se pega a los cortes, a los subtítulos y a la línea (N)"><svg viewBox="0 0 24 24"><path d="M6 4v8a6 6 0 0012 0V4h-4v8a2 2 0 01-4 0V4z"/><path d="M6 8h4M14 8h4"/></svg></button>
                 <button class="cc-ic" id="mtFitB" title="Ver todo el clip (Mayús+Z)"><svg viewBox="0 0 24 24"><path d="M3 5v14M21 5v14M7 12h10M10 9l-3 3 3 3M14 9l3 3-3 3"/></svg></button>
-                <span class="cc-zoom"><button id="mtZout" title="Alejar (−)">−</button><input type="range" id="mtZr" min="0" max="100" value="0" aria-label="Zoom de la línea de tiempo" title="Zoom (Ctrl + rueda del ratón)"><button id="mtZin" title="Acercar (+)">+</button></span>
+                <span class="cc-zoom"><button id="mtZout" title="Alejar (Ctrl −)">−</button><input type="range" id="mtZr" min="0" max="100" value="0" aria-label="Zoom de la línea de tiempo" title="Zoom (Ctrl + rueda del ratón)"><button id="mtZin" title="Acercar (Ctrl +)">+</button></span>
               </div>
               <div class="mt-wrap"><div class="mt-labs" id="mtLabs"></div>
                 <div class="mt-view"><canvas id="mtCv" aria-label="Línea de tiempo del clip"></canvas><input class="mt-capin" id="mtCapIn" type="text" hidden aria-label="Texto del subtítulo"></div>
@@ -12710,7 +12711,7 @@ function stCenter() { pos.tx = 0; try { draw(vid.currentTime || 0, false); } cat
    todo lo que cambia se desliza hasta su sitio. Mientras ajustas cualquier cosa, el reproductor va enseñando ese punto. */
 let mtSig = '';   // otras partes lo vacían para pedir que se repinte
 let mtWave = null, mtFr = null, mtWantFn = null, mtSeekBusy = false;
-const MT = { pps: 0, ppsT: 0, fit: true, sx: 0, sxT: null, anchor: null, max: 0, span: 0, vw: 0, dpr: 1, disp: new Map(), spawn: new Map(), ghosts: [], fx: [], sel: null, hover: null, drag: null, ptr: null,
+const MT = { blade: false, pps: 0, ppsT: 0, fit: true, sx: 0, sxT: null, anchor: null, max: 0, span: 0, vw: 0, dpr: 1, disp: new Map(), spawn: new Map(), ghosts: [], fx: [], sel: null, hover: null, drag: null, ptr: null,
   snap: true, snapL: null, snapAt: 0, bub: null, say: null, last: 0, now: 0, sig: '', ver: 0, drawn: 0, file: null, first: true, lastT: -1, fc: 0, fcAt: 0, blocks: [], bounds: [], caps: [], titleR: null, titleHint: null, subHint: null, tip: '', rm: false, inspAt: 0 };
 const ML = { ruler: [0, 24], fmt: [29, 24], title: [58, 16], sub: [77, 22], vid: [105, 64], bar: [174, 6], H: 184, padL: 12, padR: 30, th: 44 };
 const MT_FC = { podcast: '#FBBF24', reaccion: '#60A5FA', duo: '#F472B6', horizontal: '#34D399', horizontal_cam: '#FB923C', dividida: '#A78BFA' };
@@ -12769,6 +12770,7 @@ const mtTitleOn = () => !titleIsDefault() && !trk.title.hide;
 
 /* ----- dónde va cada cosa ----- */
 function mtFitPps() { return Math.max(1, (MT.vw - ML.padL - ML.padR) / Math.max(0.5, totalDur() || 1)); }
+const mtMinPps = () => Math.max(0.5, (MT.vw - ML.padL - ML.padR) / Math.max(30, (totalDur() || 1) * 8));   // alejar del todo: el clip ocupa poco y queda hueco a la derecha, como en CapCut
 const mtMaxPps = () => { const f = mtFitPps(); return Math.max(f * 1.02, Math.min(1200, Math.max(320, f * 4))); };
 const mtX = t => ML.padL + t * MT.pps - MT.sx;            // segundos de la línea → x en pantalla
 const mtTofX = vx => (vx - ML.padL + MT.sx) / MT.pps;       // x en pantalla → segundos de la línea
@@ -12813,7 +12815,7 @@ function mtEase(dt) {
 function mtViewStep(dt) {   // zoom y desplazamiento (suaves)
   const fit = mtFitPps(), d = MT.drag, kz = MT.rm ? 1 : 1 - Math.exp(-dt / 60), hold = d && (d.type === 'trim' || d.type === 'move'); let moving = false;
   if (!MT.pps) MT.pps = MT.ppsT = fit;
-  if (!hold) { if (MT.fit) MT.ppsT = fit; MT.ppsT = mtClamp(MT.ppsT, fit, mtMaxPps()); }
+  if (!hold) { if (MT.fit) MT.ppsT = fit; MT.ppsT = mtClamp(MT.ppsT, Math.min(fit, mtMinPps()), mtMaxPps()); }
   if (Math.abs(MT.ppsT - MT.pps) > MT.pps * 0.002) { MT.pps += (MT.ppsT - MT.pps) * kz; moving = true; } else MT.pps = MT.ppsT;
   if (MT.anchor) { MT.sx = ML.padL + MT.anchor.t * MT.pps - MT.anchor.vx; if (MT.pps === MT.ppsT) MT.anchor = null; }
   let max = Math.max(0, ML.padL + MT.span * MT.pps + ML.padR - MT.vw); if (max < 1) max = 0;
@@ -12828,7 +12830,7 @@ function mtViewStep(dt) {   // zoom y desplazamiento (suaves)
   return moving;
 }
 function mtZoomTo(pps, vx) {
-  const fit = mtFitPps(); pps = mtClamp(pps, fit, mtMaxPps()); MT.fit = pps <= fit * 1.01; MT.ppsT = MT.fit ? fit : pps;
+  pps = mtClamp(pps, Math.min(mtFitPps(), mtMinPps()), mtMaxPps()); MT.fit = false; MT.ppsT = pps;
   if (vx == null) { const px = mtXofOut(curT()); vx = px > 0 && px < MT.vw ? px : MT.vw / 2; }
   MT.anchor = { t: mtTofX(vx), vx }; MT.sxT = null; mtDirty();
 }
@@ -12954,8 +12956,10 @@ function mtDraw() {
   // línea del imán
   if (MT.snapL && (d || now - MT.snapAt < 260)) { const s = MT.snapL, px = s.src != null ? mtXofSrc(s.k, s.src) : mtXofOut(s.out, s.end), q = d ? 1 : 1 - (now - MT.snapAt) / 260, pulse = 1 + Math.max(0, 1 - (now - MT.snapAt) / 180) * 1.5;
     x.save(); x.globalAlpha = q; x.strokeStyle = '#FDE047'; x.shadowColor = '#FDE047'; x.shadowBlur = 8; x.lineWidth = 1.5 * pulse; x.beginPath(); x.moveTo(px, 14); x.lineTo(px, bot); x.stroke(); x.restore(); }
+  // modo cuchilla: línea roja donde va a cortar
+  if (MT.blade && !d && MT.ptr && MT.hover && (MT.hover.t === 'seg' || MT.hover.t === 'edge')) { const px = Math.round(MT.ptr.x) + 0.5, vy0 = ML.vid[0]; x.save(); x.strokeStyle = '#F43F5E'; x.lineWidth = 2; x.setLineDash([4, 3]); x.beginPath(); x.moveTo(px, vy0 - 4); x.lineTo(px, vy0 + ML.vid[1] + 4); x.stroke(); x.restore(); mtPill(x, px, vy0 - 21, '✂ ' + fmtS(mtTofX(px)), { bg: '#F43F5E', h: 17 }); }
   // línea fantasma bajo el ratón
-  if (!d && MT.ptr && MT.ptr.y < ML.bar[0] - 4 && MT.hover && MT.hover.t !== 'bar') { const px = MT.ptr.x, T = mtTofX(px); if (T >= 0 && T <= MT.span) { x.fillStyle = 'rgba(255,255,255,.3)'; x.fillRect(Math.round(px) - 0.5, 14, 1, bot - 14); if (Math.abs(px - mtXofOut(curT())) > 30) mtPill(x, px, 0, fmtS(T), { bg: '#27272A', fg: '#D4D4D8', h: 15, font: '600 10px ui-monospace,SFMono-Regular,Menlo,monospace' }); } }
+  else if (!d && MT.ptr && MT.ptr.y < ML.bar[0] - 4 && MT.hover && MT.hover.t !== 'bar') { const px = MT.ptr.x, T = mtTofX(px); if (T >= 0 && T <= MT.span) { x.fillStyle = 'rgba(255,255,255,.3)'; x.fillRect(Math.round(px) - 0.5, 14, 1, bot - 14); if (Math.abs(px - mtXofOut(curT())) > 30) mtPill(x, px, 0, fmtS(T), { bg: '#27272A', fg: '#D4D4D8', h: 15, font: '600 10px ui-monospace,SFMono-Regular,Menlo,monospace' }); } }
   // línea blanca (por dónde va el vídeo)
   { const T = curT(), px = Math.round(T >= D - 1e-3 && D ? mtXofOut(D, true) : mtXofOut(T));
     if (px > -8 && px < VW + 8) { x.fillStyle = 'rgba(0,0,0,.5)'; x.fillRect(px - 2, 12, 4, bot - 12); x.fillStyle = '#fff'; x.fillRect(px - 1, 10, 2, bot - 10);
@@ -12983,7 +12987,8 @@ function mtRender() {
   // barra de botones
   const tt = `<b>${fmtS(T)}</b><i> / ${fmtS(D)}</i>`, ct = $('ccTime'); if (ct.dataset.v !== tt) { ct.dataset.v = tt; ct.innerHTML = tt; }
   $('tlUndo').disabled = hi <= 0; $('tlRedo').disabled = hi >= hist.length - 1; $('tlSnap').classList.toggle('on', MT.snap);
-  const zr = $('mtZr'); if (document.activeElement !== zr) { const f = mtFitPps(), v = Math.round(100 * Math.log(Math.max(1, MT.ppsT / f)) / Math.log(mtMaxPps() / f)); if (+zr.value !== v) zr.value = v; }
+  const zr = $('mtZr'); if (document.activeElement !== zr) { const f = Math.min(mtFitPps(), mtMinPps()), v = Math.round(100 * Math.log(Math.max(1, MT.ppsT / f)) / Math.log(mtMaxPps() / f)); if (+zr.value !== v) zr.value = v; }
+  $('tlBlade').classList.toggle('on', MT.blade);
 }
 
 /* ----- qué hay bajo el ratón ----- */
@@ -13010,8 +13015,10 @@ function mtHit(vx, vy) {
   return { t: 'empty' };
 }
 const MT_TIP = { bound: 'Arrastra para mover el cambio de plantilla', part: 'Clic: cambiar o ajustar la plantilla de esta parte · doble clic: partir aquí', title: 'Clic para cambiar el título', titleadd: 'Poner un título', subadd: 'Poner subtítulos (la IA los escribe)', cap: 'Arrastra para moverlo · los bordes cambian cuánto dura · doble clic para cambiar el texto' };
+function mtBladeSet(on) { MT.blade = !!on; mtSay(on ? '✂️ Modo cuchilla: cada clic en el vídeo lo corta (A para volver)' : 'Modo normal'); mtHoverSet(MT.hover); mtDirty(); }
 function mtHoverSet(h) {
   MT.hover = h; const cv = $('mtCv'); let cur = 'default', tip = '';
+  if (MT.blade && h && (h.t === 'seg' || h.t === 'edge')) { if (cv.style.cursor !== 'crosshair') cv.style.cursor = 'crosshair'; if (MT.tip !== 'c') { MT.tip = 'c'; cv.title = 'Clic para cortar aquí'; } return; }
   if (h) { tip = MT_TIP[h.t] || '';
     cur = h.t === 'edge' || h.t === 'bound' || (h.t === 'cap' && h.mode !== 'move') ? 'ew-resize' : h.t === 'seg' ? (segs.length > 1 ? 'grab' : 'pointer') : ['part', 'title', 'titleadd', 'subadd', 'cap', 'ruler'].includes(h.t) ? 'pointer' : 'default'; }
   if (cv.style.cursor !== cur) cv.style.cursor = cur; if (MT.tip !== tip) { MT.tip = tip; cv.title = tip; }
@@ -13063,6 +13070,21 @@ function mtDup() {
   const g = segs[k], n = { id: newId(), s: g.s, e: g.e }, p = MT.disp.get(g.id); if (p) MT.spawn.set(n.id, { t0: p.t0 + p.d, d: 0, a: 0, anc: 's' });
   segs.splice(k + 1, 0, n); if (pseg > k) pseg++; MT.sel = { t: 'seg', id: n.id }; pushHistory(); try { renderFlags(); } catch {} mtSay('Trozo duplicado'); mtDirty();
 }
+let mtClip = null;
+function mtCopy(cut) {
+  if (!loaded || !segs.length || exporting) return; let k = mtSelSeg(); if (k < 0) k = locate(curT()).i; const g = segs[k];
+  mtClip = { s: g.s, e: g.e }; MT.sel = { t: 'seg', id: g.id };
+  if (cut) { if (segs.length < 2) { mtSay('Copiado (es el único trozo, no se quita)'); return; } segs.splice(k, 1); MT.sel = null; pseg = Math.min(k, segs.length - 1); seekOut(Math.min(totalDur() - 0.01, segStart(pseg))); pushHistory(); try { renderFlags(); } catch {} mtSay('✂️ Trozo cortado: pégalo con Ctrl+V'); }
+  else mtSay('📋 Trozo copiado: pégalo con Ctrl+V donde esté la línea'); mtDirty();
+}
+function mtPaste() {   // se mete en la línea blanca (si cae en medio de un trozo, lo parte)
+  if (!loaded || exporting) return; if (!mtClip) { mtSay('Primero copia un trozo (Ctrl+C)'); return; }
+  const T = curT(), L = locate(T), g = segs[L.i]; let at;
+  if (!g || L.t - g.s < 0.05) at = L.i; else if (g.e - L.t < 0.05) at = L.i + 1;
+  else { const a = { id: newId(), s: g.s, e: L.t }, b = { id: newId(), s: L.t, e: g.e }, p = MT.disp.get(g.id); if (p) { MT.disp.delete(g.id); MT.spawn.set(a.id, { t0: p.t0, d: a.e - a.s, a: 1, anc: 's' }); MT.spawn.set(b.id, { t0: p.t0 + a.e - a.s, d: b.e - b.s, a: 1, anc: 's' }); } segs.splice(L.i, 1, a, b); at = L.i + 1; }
+  const n = { id: newId(), s: mtClip.s, e: mtClip.e }, T0 = segStart(at); MT.spawn.set(n.id, { t0: T0, d: 0, a: 0, anc: 's' });
+  segs.splice(at, 0, n); pseg = at; vid.currentTime = n.s; MT.sel = { t: 'seg', id: n.id }; pushHistory(); try { renderFlags(); } catch {} mtSay('Trozo pegado'); mtDirty();
+}
 function mtScene() {   // desde la línea blanca, otra parte (empieza con la misma plantilla y se abre para elegir otra)
   if (!loaded || exporting) return; const t = vid.currentTime || 0, base = curFmtOf();
   if (layoutMode === 'split') { mtSay('La pantalla dividida va en todo el clip: elige otro formato para partirlo'); return; }
@@ -13110,12 +13132,15 @@ function mtScrub(vx) { const D = totalDur() || 0; let T = mtClamp(mtTofX(vx), 0,
 function mtDown(ev) {
   if (!loaded || exporting || stPend) return;
   try { $('seTl').focus({ preventScroll: true }); } catch {}   // para que funcionen S, Q, W, Supr, espacio…
-  ctxClose(); mtCapCommit(); const [vx, vy] = mtPt(ev), h = mtHit(vx, vy), cv = $('mtCv'); MT.ptr = { x: vx, y: vy };
+  ctxClose(); mtCapCommit(); MT.fit = false; const [vx, vy] = mtPt(ev), h = mtHit(vx, vy), cv = $('mtCv'); MT.ptr = { x: vx, y: vy };
   if (ev.button === 1) { ev.preventDefault(); MT.drag = { type: 'pan', x0: vx, sx0: MT.sx }; try { cv.setPointerCapture(ev.pointerId); } catch {} return; }
   if (ev.button !== 0) return; ev.preventDefault(); try { cv.setPointerCapture(ev.pointerId); } catch {}
   if (h.t === 'bar') { const [tx, tw] = MT.thumb || [0, 40]; if (vx < tx || vx > tx + tw) MT.sx = mtClamp((vx - tw / 2) / (MT.vw - tw) * MT.max, 0, MT.max); MT.sxT = null; MT.drag = { type: 'scroll', x0: vx, sx0: MT.sx, tw }; return; }
   vid.pause(); clearTimeout(histTimer); window.mtHoldHist = true; MT.bub = null; mtSnapSet(null);
   const base = { x0: vx, sx0: MT.sx, phSrc: vid.currentTime || 0 };
+  if (MT.blade && (h.t === 'seg' || h.t === 'edge')) {   // modo cuchilla: el clic corta justo ahí
+    window.mtHoldHist = false; const T = mtSnapOut(mtClamp(mtTofX(vx), 0, totalDur()), ['ph', 'caps', 'parts']); seekOut(Math.min(T, totalDur() - 0.001)); mtCut(); mtSnapSet(null); MT.drag = { type: 'blade' }; mtDirty(); return;
+  }
   if (h.t === 'edge') { const g = segs[h.k]; MT.sel = { t: 'seg', id: g.id }; mtInspClose(); MT.drag = { ...base, type: 'trim', k: h.k, id: g.id, h: h.h, s0: g.s, e0: g.e, T0: segStart(h.k) }; cv.style.cursor = 'ew-resize'; }
   else if (h.t === 'seg') { const g = segs[h.k], p = MT.disp.get(g.id); MT.sel = { t: 'seg', id: g.id }; mtInspClose(); MT.drag = { ...base, type: 'pseg', k: h.k, id: g.id, grab: mtTofX(vx) - (p ? p.t0 : segStart(h.k)) }; mtScrub(vx); }
   else if (h.t === 'bound') { MT.drag = { ...base, type: 'bound', i: h.i }; }
@@ -13169,6 +13194,7 @@ function mtMove(ev) {
 function mtUp(ev) {
   const d = MT.drag; MT.drag = null; window.mtHoldHist = false; MT.bub = null; mtDirty(); if (!d) return;
   if (ev && ev.type !== 'pointercancel') { const [vx, vy] = mtPt(ev); MT.ptr = { x: vx, y: vy }; mtHoverSet(mtHit(vx, vy)); }
+  if (d.type === 'blade') return;
   if (d.type === 'seek' || d.type === 'pan' || d.type === 'scroll' || d.type === 'pseg') { MT.snapAt = performance.now(); return; }
   if (d.type === 'ppart') { mtInsp(d.i); return; }
   if (d.type === 'pclick') { if (d.what === 'subadd') mtSubsAdd(); else { const t = $('seTitle'); t.focus(); t.select(); } return; }
@@ -13187,7 +13213,7 @@ function mtCtx(ev) {   // botón derecho
   ev.preventDefault(); if (!loaded || exporting || stPend) return; const [vx, vy] = mtPt(ev), h = mtHit(vx, vy), items = []; let title = 'Línea de tiempo';
   const T = mtClamp(mtTofX(vx), 0, Math.max(0, totalDur() - 0.001));
   if (h.t === 'seg' || h.t === 'edge') { vid.pause(); seekOut(T); MT.sel = { t: 'seg', id: segs[h.k].id }; title = 'Trozo de vídeo';
-    items.push({ icon: '✂️', label: 'Dividir aquí', key: 'S', act: mtCut }, { icon: '⇤', label: 'Quitar lo de antes de aquí', key: 'Q', act: () => mtTrimSide('s') }, { icon: '⇥', label: 'Quitar lo de después de aquí', key: 'W', act: () => mtTrimSide('e') }, { icon: '⧉', label: 'Duplicar', key: 'Ctrl+D', act: mtDup }, { sep: 1 }, { icon: '🗑️', label: 'Eliminar', key: 'Supr', danger: true, dis: segs.length < 2, act: mtDel }); }
+    items.push({ icon: '✂️', label: 'Dividir aquí', key: 'Ctrl+B', act: mtCut }, { icon: '⇤', label: 'Quitar lo de antes de aquí', key: 'Q', act: () => mtTrimSide('s') }, { icon: '⇥', label: 'Quitar lo de después de aquí', key: 'W', act: () => mtTrimSide('e') }, { icon: '⧉', label: 'Duplicar', key: 'Ctrl+D', act: mtDup }, { icon: '📋', label: 'Copiar', key: 'Ctrl+C', act: () => mtCopy(false) }, { icon: '✂', label: 'Cortar', key: 'Ctrl+X', dis: segs.length < 2, act: () => mtCopy(true) }, mtClip ? { icon: '📥', label: 'Pegar en la línea', key: 'Ctrl+V', act: mtPaste } : null, { sep: 1 }, { icon: '🗑️', label: 'Eliminar', key: 'Supr', danger: true, dis: segs.length < 2, act: mtDel }); }
   else if (h.t === 'part' || h.t === 'bound') { const i = h.i, sc = clipMeta.scenes; vid.pause(); if (h.t === 'part') seekOut(T); title = 'Plantilla';
     items.push({ icon: '🎛️', label: 'Cambiar o ajustar esta plantilla', act: () => mtInsp(i) }, { icon: '▦', label: 'Otra plantilla desde aquí', act: mtScene });
     if (sc && i > 0) items.push({ icon: '⟵', label: 'Unir con la parte anterior', act: () => mtPartMerge(i, -1) }); if (sc && i >= 0 && i < sc.length - 1) items.push({ icon: '⟶', label: 'Unir con la parte siguiente', act: () => mtPartMerge(i, 1) }); }
@@ -13200,20 +13226,26 @@ function mtCtx(ev) {   // botón derecho
 function mtBlank() { const cv = $('mtCv'); if (!cv) return; const x = cv.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cv.width, cv.height); const ct = $('ccTime'); ct.innerHTML = ''; ct.dataset.v = ''; mtDirty(); mtInspClose(); mtCapCommit(true); }
 function mtHelp(ev) {   // los atajos, a la vista (y cada uno hace lo suyo si lo pulsas)
   const r = ev.currentTarget.getBoundingClientRect(), D = () => totalDur() || 0;
-  ctxOpen(r.left, r.top - 8, 'Atajos de la línea de tiempo', [{ icon: '▶', label: 'Reproducir / parar', key: 'Espacio', act: togglePlay }, { icon: '✂️', label: 'Dividir en la línea', key: 'S', act: mtCut }, { icon: '⇤', label: 'Quitar lo de antes de la línea', key: 'Q', act: () => mtTrimSide('s') }, { icon: '⇥', label: 'Quitar lo de después', key: 'W', act: () => mtTrimSide('e') }, { icon: '🗑️', label: 'Eliminar lo seleccionado', key: 'Supr', act: mtDel }, { icon: '⧉', label: 'Duplicar el trozo', key: 'Ctrl+D', act: mtDup }, { sep: 1 },
+  ctxOpen(r.left, r.top - 8, 'Atajos de la línea de tiempo', [{ icon: '▶', label: 'Reproducir / parar', key: 'Espacio', act: togglePlay }, { icon: '✂️', label: 'Dividir en la línea', key: 'Ctrl+B', act: mtCut }, { icon: '🔪', label: MT.blade ? 'Volver al modo normal' : 'Modo cuchilla (cada clic corta)', key: MT.blade ? 'A' : 'B', act: () => mtBladeSet(!MT.blade) }, { icon: '⇤', label: 'Quitar lo de antes de la línea', key: 'Q', act: () => mtTrimSide('s') }, { icon: '⇥', label: 'Quitar lo de después', key: 'W', act: () => mtTrimSide('e') }, { icon: '🗑️', label: 'Eliminar lo seleccionado', key: 'Supr', act: mtDel }, { icon: '⧉', label: 'Duplicar el trozo', key: 'Ctrl+D', act: mtDup }, { icon: '📋', label: 'Copiar / cortar / pegar', key: 'Ctrl+C · X · V', act: () => mtCopy(false) }, { sep: 1 },
     { icon: '◀', label: 'Fotograma a fotograma', key: '← →', act: () => {} }, { icon: '⏩', label: 'De segundo en segundo', key: 'Mayús + ← →', act: () => {} }, { icon: '⤒', label: 'Al corte anterior / siguiente', key: '↑ ↓', act: () => mtJump(1) }, { icon: '⇱', label: 'Al principio / al final', key: 'Inicio · Fin', act: () => mtSeekOut(0) }, { sep: 1 },
-    { icon: '🔍', label: 'Acercar / alejar', key: 'Ctrl+rueda', act: () => mtZoomTo(MT.ppsT * 1.5) }, { icon: '↔', label: 'Ver todo el clip', key: 'Mayús+Z', act: mtFit }, { icon: '🧲', label: MT.snap ? 'Quitar el imán' : 'Poner el imán', key: 'N', act: mtSnapToggle }, { icon: '↩', label: 'Deshacer / rehacer', key: 'Ctrl+Z · Ctrl+Y', act: () => goHistory(-1).then(mtDirty) }]);
+    { icon: '🔍', label: 'Acercar / alejar', key: 'Ctrl + / Ctrl −', act: () => mtZoomTo(MT.ppsT * 1.5) }, { icon: '↔', label: 'Ver todo el clip', key: 'Mayús+Z', act: mtFit }, { icon: '🧲', label: MT.snap ? 'Quitar el imán' : 'Poner el imán', key: 'N', act: mtSnapToggle }, { icon: '↩', label: 'Deshacer / rehacer', key: 'Ctrl+Z · Ctrl+Y', act: () => goHistory(-1).then(mtDirty) }]);
 }
 function mtSnapToggle() { MT.snap = !MT.snap; ezPref('mtSnap', MT.snap ? '1' : '0'); mtSay(MT.snap ? '🧲 Imán puesto' : 'Imán quitado'); }
 function mtKey(e) {   // atajos, como en CapCut
   if (!loaded || exporting || stPend) return false; const t = e.target;
   if (t && t.closest && t.closest('input,textarea,select,[contenteditable]')) return false;
   const k = e.key, c = e.ctrlKey || e.metaKey, lk = k.length === 1 ? k.toLowerCase() : k, D = totalDur() || 0;
+  if (!['Shift', 'Control', 'Meta', 'Alt'].includes(k)) MT.fit = false;   // desde que editas, la escala se queda quieta (como en CapCut)
   if (c && lk === 'z') goHistory(e.shiftKey ? 1 : -1).then(mtDirty);
   else if (c && lk === 'y') goHistory(1).then(mtDirty);
+  else if (c && lk === 'b') mtCut();   // Ctrl+B y Ctrl+Mayús+B: dividir (aquí solo hay una pista de vídeo)
   else if (c && lk === 'd') mtDup();
+  else if (c && lk === 'c') mtCopy(false); else if (c && lk === 'x') mtCopy(true); else if (c && lk === 'v') mtPaste();
+  else if (c && (k === '+' || k === '=' || e.code === 'NumpadAdd')) mtZoomTo(MT.ppsT * 1.5); else if (c && (k === '-' || e.code === 'NumpadSubtract')) mtZoomTo(MT.ppsT / 1.5);
+  else if (c && k === '0') mtFit();
   else if (c || e.altKey) return false;
   else if (lk === 'z' && e.shiftKey) mtFit();
+  else if (lk === 'b') mtBladeSet(true); else if (lk === 'a') { if (MT.blade) mtBladeSet(false); }
   else if (lk === 's') mtCut(); else if (lk === 'q') mtTrimSide('s'); else if (lk === 'w') mtTrimSide('e'); else if (lk === 'n') mtSnapToggle();
   else if (k === 'Delete' || (k === 'Backspace' && MT.sel)) mtDel();
   else if (k === ' ') { if (t && t.tagName === 'BUTTON') t.blur(); togglePlay(); }
@@ -13221,7 +13253,7 @@ function mtKey(e) {   // atajos, como en CapCut
   else if (k === 'ArrowUp' || k === 'ArrowDown') mtJump(k === 'ArrowUp' ? -1 : 1);
   else if (k === 'Home') { vid.pause(); mtSeekOut(0); } else if (k === 'End') { vid.pause(); mtSeekOut(D - 0.001); }
   else if (k === '+' || k === '=') mtZoomTo(MT.ppsT * 1.5); else if (k === '-') mtZoomTo(MT.ppsT / 1.5);
-  else if (k === 'Escape') { if (mtInspI != null) mtInspClose(); else if (MT.sel) { MT.sel = null; mtDirty(); } else return false; }
+  else if (k === 'Escape') { if (MT.blade) mtBladeSet(false); else if (mtInspI != null) mtInspClose(); else if (MT.sel) { MT.sel = null; mtDirty(); } else return false; }
   else return false;
   e.preventDefault(); return true;
 }
@@ -13327,7 +13359,9 @@ setTimeout(() => {
   const inp = $('mtCapIn'); inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); mtCapCommit(); try { $('seTl').focus({ preventScroll: true }); } catch {} } else if (e.key === 'Escape') { e.preventDefault(); mtCapCommit(true); try { $('seTl').focus({ preventScroll: true }); } catch {} } });
   inp.addEventListener('blur', () => mtCapCommit()); inp.addEventListener('pointerdown', e => e.stopPropagation());
   $('mtZin').onclick = () => mtZoomTo(MT.ppsT * 1.5); $('mtZout').onclick = () => mtZoomTo(MT.ppsT / 1.5); $('mtFitB').onclick = mtFit;
-  $('mtZr').oninput = () => { const f = mtFitPps(); mtZoomTo(f * Math.pow(mtMaxPps() / f, +$('mtZr').value / 100)); };
+  $('mtZr').oninput = () => { const f = Math.min(mtFitPps(), mtMinPps()); mtZoomTo(f * Math.pow(mtMaxPps() / f, +$('mtZr').value / 100)); };
+  $('tlBlade').onclick = () => mtBladeSet(!MT.blade);
+  $('seTl').addEventListener('pointerdown', () => { MT.fit = false; }, true);
   $('tlCut').onclick = mtCut; $('tlTrimL').onclick = () => mtTrimSide('s'); $('tlTrimR').onclick = () => mtTrimSide('e'); $('tlDel').onclick = mtDel; $('tlDup').onclick = mtDup; $('tlScene').onclick = mtScene; $('tlSnap').onclick = mtSnapToggle; $('mtHelpB').onclick = e => { e.stopPropagation(); mtHelp(e); };
   $('tlUndo').onclick = () => goHistory(-1).then(mtDirty); $('tlRedo').onclick = () => goHistory(1).then(mtDirty);
   $('stEd').addEventListener('keydown', mtKey);
