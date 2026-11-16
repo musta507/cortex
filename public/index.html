@@ -1522,6 +1522,9 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .se-hl .chip,#ttcChips .chip{padding:4px 9px!important;font-size:12.5px!important;border-radius:8px!important;background:rgba(255,255,255,.05)!important;border:1px solid var(--gline)!important;color:#D4D4D8!important;transition:background-color .12s,color .12s,transform .1s!important}
 .se-hl .chip:hover,#ttcChips .chip:hover{background:rgba(255,255,255,.1)!important;color:#fff!important}
 .se-hl .chip.on,#ttcChips .chip.on{background:#ef4444!important;border-color:#ef4444!important;color:#fff!important}
+.se-cc{display:flex!important;align-items:center;justify-content:center;gap:8px;width:100%;padding:10px!important;border-radius:12px!important;font-size:13.5px!important;background:rgba(255,255,255,.03)!important;border:1px dashed rgba(255,255,255,.18)!important;color:#D4D4D8!important}
+.se-cc:hover{border-style:solid!important;color:#fff!important;background:rgba(255,255,255,.07)!important}
+.se-cc svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important}}
 
 /* ===== versión pública ===== */
@@ -1615,6 +1618,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
         <option value="30">30 fps</option>
       </select>
       <button class="primary" id="export" disabled><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar vídeo <span id="fmt" hidden></span></button>
+      <button id="ccBtn" title="Crea un proyecto de CapCut con este clip ya montado: cortes, encuadre, título, subtítulos, logo y música"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 9l3 3-3 3M13 15h3"/></svg>CapCut</button>
       <button id="modeBtn" class="modebtn" hidden title="Abre el editor completo con todas las herramientas"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Editor avanzado</button>
     </div>
   </header>
@@ -1864,6 +1868,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
               <div class="se-bar" id="seBarW" hidden><i id="seBar"></i></div>
               <div id="seRes"></div>
               <div class="se-btns"><button class="primary" id="seExp"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar</button><button id="seFull" title="Abrir este clip en el editor completo"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Editor completo</button></div>
+              <button class="se-cc" id="seCC" title="Crea un proyecto de CapCut con este clip ya montado: cortes, encuadre, título, subtítulos, logo y música"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 9l3 3-3 3M13 15h3"/></svg>Abrir en CapCut</button>
             </div>
             <div class="se-tl cc" id="seTl" tabindex="-1">
               <div class="cc-bar">
@@ -2470,6 +2475,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 </div>
 <video id="vid" playsinline preload="auto"></video>
 
+<script type="text/plain" id="ccTpl">{"vseg":{"id":"","source_timerange":{"start":206200000,"duration":28400000},"target_timerange":{"start":0,"duration":28400000},"render_timerange":{"start":0,"duration":0},"desc":"","state":0,"speed":1.0,"is_loop":false,"is_tone_modify":false,"reverse":false,"intensifies_audio":false,"cartoon":false,"volume":1.0,"last_nonzero_volume":1.0,"clip":{"scale":{"x":1.7883009169630664,"y":1.7883009169630664},"rotation":0.0,"rotation3d":[],"transform":{"x":0.0,"y":0.4770020409058989},"flip":{"vertical":false,"horizontal":false},"alpha":1.0},"uniform_scale":{"on":true,"value":1.0},"material_id":"","extra_material_refs":[],"render_index":0,"keyframe_refs":[],"enable_lut":true,"enable_adjust":true,"enable_hsl":false,"visible":true,"group_id":"","enable_color_curves":true,"enable_hsl_curves":true,"track_render_index":0,"hdr_settings":{"mode":1,"intensity":1.0,"nits":1000},"hdr_vivid_settings":null,"enable_color_wheels":true,"track_attribute":0,"is_placeholder":false,"template_id":"","enable_smart_color_adjust":false,"template_scene":"default","common_keyframes":[],"caption_info":null,"responsive_layout":{"enable":false,"target_follow":"","size_layout":0,"horizontal_pos_layout":0,"vertical_pos_layout":0},"enable_color_match_adjust":false,"enable_color_correct_adjust":false,"enable_adjust_mask":false,"raw_segment_id":"","lyric_keyframes":null,"enable_video_mask":true,"digital_human_template_group_id":"","color_correct_alg_result":"","source":"segmentsourcenormal","enable_mask_stroke":false,"enable_mask_shadow":false,"enable_color_adjust_pro":false,"segment_color_tag":""},"vmat":{"id":"","unique_id":"","type":"video","duration":0,"path":"","media_path":"","local_id":"","has_audio":true,"reverse_path":"","intensifies_path":"","reverse_intensifies_path":"","intensifies_audio_path":"","cartoon_path":"","width":0,"height":0,"category_id":"","category_name":"local","material_id":"","material_name":"","material_url":"","crop":{"upper_left_x":0.0,"upper_left_y":0.0,"upper_right_x":1.0,"upper_right_y":0.0,"lower_left_x":0.0,"lower_left_y":1.0,"lower_right_x":1.0,"lower_right_y":1.0},"crop_ratio":"free","audio_fade":null,"crop_scale":1.0,"extra_type_option":0,"stable":{"stable_level":0,"matrix_path":"","time_range":{"start":0,"duration":0}},"matting":{"flag":0,"path":"","interactiveTime":[],"has_use_quick_brush":false,"strokes":[],"has_use_quick_eraser":false,"expansion":0,"feather":0,"reverse":false,"custom_matting_id":"","enable_matting_stroke":false,"is_clould":false,"mask_video_path":"","cloud_product_fps":0.0},"source":0,"source_platform":0,"formula_id":"","check_flag":62978047,"video_algorithm":{"algorithms":[],"time_range":null,"path":"","gameplay_configs":[],"ai_in_painting_config":[],"complement_frame_config":null,"motion_blur_config":null,"deflicker":null,"noise_reduction":null,"quality_enhance":null,"super_resolution":null,"ai_background_configs":[],"smart_complement_frame":null,"aigc_generate":null,"aigc_generate_list":[],"mouth_shape_driver":null,"ai_expression_driven":null,"ai_motion_driven":null,"image_interpretation":null,"story_video_modify_video_config":{"task_id":"","is_overwrite_last_video":false,"tracker_task_id":"","generate_id":"","generate_card_id":""},"skip_algorithm_index":[]},"is_unified_beauty_mode":false,"is_set_beauty_mode":false,"object_locked":null,"smart_motion":null,"multi_camera_info":null,"freeze":null,"picture_from":"none","picture_set_category_id":"","picture_set_category_name":"","team_id":"","local_material_id":"","origin_material_id":"","request_id":"","has_sound_separated":false,"is_text_edit_overdub":false,"is_ai_generate_content":false,"is_video_copilot_aigc_content":false,"aigc_type":"none","is_copyright":false,"aigc_history_id":"","aigc_item_id":"","local_material_from":"","smart_match_info":null,"beauty_face_preset_infos":[],"beauty_body_preset_id":"","beauty_face_auto_preset":{"preset_id":"","name":"","rate_map":"","scene":""},"beauty_face_auto_preset_infos":[],"beauty_body_auto_preset":null,"live_photo_timestamp":-1,"live_photo_cover_path":"","content_feature_info":null,"corner_pin":null,"surface_trackings":[],"video_mask_stroke":{"resource_id":"","path":"","type":"","color":"","size":0.0,"alpha":0.0,"distance":0.0,"texture":0.0,"horizontal_shift":0.0,"vertical_shift":0.0},"video_mask_shadow":{"resource_id":"","path":"","color":"","alpha":0.0,"blur":0.0,"distance":0.0,"angle":0.0},"pre_applied_vip_materials":[],"workflow_node_id":""},"photo":{"id":"","unique_id":"","type":"photo","duration":10800000000,"path":"","media_path":"","local_id":"","has_audio":false,"reverse_path":"","intensifies_path":"","reverse_intensifies_path":"","intensifies_audio_path":"","cartoon_path":"","width":0,"height":0,"category_id":"","category_name":"local","material_id":"","material_name":"","material_url":"","crop":{"upper_left_x":0.0,"upper_left_y":0.0,"upper_right_x":1.0,"upper_right_y":0.0,"lower_left_x":0.0,"lower_left_y":1.0,"lower_right_x":1.0,"lower_right_y":1.0},"crop_ratio":"free","audio_fade":null,"crop_scale":1.0,"extra_type_option":0,"stable":{"stable_level":0,"matrix_path":"","time_range":{"start":0,"duration":0}},"matting":{"flag":0,"path":"","interactiveTime":[],"has_use_quick_brush":false,"strokes":[],"has_use_quick_eraser":false,"expansion":0,"feather":0,"reverse":false,"custom_matting_id":"","enable_matting_stroke":false,"is_clould":false,"mask_video_path":"","cloud_product_fps":0.0},"source":0,"source_platform":0,"formula_id":"","check_flag":62978047,"video_algorithm":{"algorithms":[],"time_range":null,"path":"","gameplay_configs":[],"ai_in_painting_config":[],"complement_frame_config":null,"motion_blur_config":null,"deflicker":null,"noise_reduction":null,"quality_enhance":null,"super_resolution":null,"ai_background_configs":[],"smart_complement_frame":null,"aigc_generate":null,"aigc_generate_list":[],"mouth_shape_driver":null,"ai_expression_driven":null,"ai_motion_driven":null,"image_interpretation":null,"story_video_modify_video_config":{"task_id":"","is_overwrite_last_video":false,"tracker_task_id":"","generate_id":"","generate_card_id":""},"skip_algorithm_index":[]},"is_unified_beauty_mode":false,"is_set_beauty_mode":false,"object_locked":null,"smart_motion":null,"multi_camera_info":null,"freeze":null,"picture_from":"none","picture_set_category_id":"","picture_set_category_name":"","team_id":"","local_material_id":"","origin_material_id":"","request_id":"","has_sound_separated":false,"is_text_edit_overdub":false,"is_ai_generate_content":false,"is_video_copilot_aigc_content":false,"aigc_type":"none","is_copyright":false,"aigc_history_id":"","aigc_item_id":"","local_material_from":"","smart_match_info":null,"beauty_face_preset_infos":[],"beauty_body_preset_id":"","beauty_face_auto_preset":{"preset_id":"","name":"","rate_map":"","scene":""},"beauty_face_auto_preset_infos":[],"beauty_body_auto_preset":null,"live_photo_timestamp":-1,"live_photo_cover_path":"","content_feature_info":null,"corner_pin":null,"surface_trackings":[],"video_mask_stroke":{"resource_id":"","path":"","type":"","color":"","size":0.0,"alpha":0.0,"distance":0.0,"texture":0.0,"horizontal_shift":0.0,"vertical_shift":0.0},"video_mask_shadow":{"resource_id":"","path":"","color":"","alpha":0.0,"blur":0.0,"distance":0.0,"angle":0.0},"pre_applied_vip_materials":[],"workflow_node_id":""},"oseg":{"id":"","source_timerange":{"start":0,"duration":27266666},"target_timerange":{"start":1566666,"duration":27266667},"render_timerange":{"start":0,"duration":0},"desc":"","state":0,"speed":1.0,"is_loop":false,"is_tone_modify":false,"reverse":false,"intensifies_audio":false,"cartoon":false,"volume":1.0,"last_nonzero_volume":1.0,"clip":{"scale":{"x":0.2642138839267137,"y":0.2642138839267137},"rotation":0.0,"rotation3d":[],"transform":{"x":0.1260162601626016,"y":-0.6689016118077162},"flip":{"vertical":false,"horizontal":false},"alpha":1.0},"uniform_scale":{"on":true,"value":1.0},"material_id":"","extra_material_refs":[],"render_index":1,"keyframe_refs":[],"enable_lut":true,"enable_adjust":true,"enable_hsl":false,"visible":true,"group_id":"","enable_color_curves":true,"enable_hsl_curves":true,"track_render_index":2,"hdr_settings":{"mode":1,"intensity":1.0,"nits":1000},"hdr_vivid_settings":null,"enable_color_wheels":true,"track_attribute":0,"is_placeholder":false,"template_id":"","enable_smart_color_adjust":false,"template_scene":"default","common_keyframes":[],"caption_info":null,"responsive_layout":{"enable":false,"target_follow":"","size_layout":0,"horizontal_pos_layout":0,"vertical_pos_layout":0},"enable_color_match_adjust":false,"enable_color_correct_adjust":false,"enable_adjust_mask":false,"raw_segment_id":"","lyric_keyframes":null,"enable_video_mask":true,"digital_human_template_group_id":"","color_correct_alg_result":"","source":"segmentsourcenormal","enable_mask_stroke":false,"enable_mask_shadow":false,"enable_color_adjust_pro":false,"segment_color_tag":""},"vrefs":{"speeds":{"id":"","type":"speed","mode":0,"speed":1.0,"curve_speed":null},"placeholder_infos":{"id":"","type":"placeholder_info","meta_type":"none","res_path":"","res_text":"","error_path":"","error_text":""},"canvases":{"id":"","type":"canvas_color","color":"","blur":0.0,"image":"","album_image":"","image_id":"","image_name":"","source_platform":0,"team_id":""},"material_animations":{"id":"","type":"sticker_animation","animations":[],"multi_language_current":"none"},"sound_channel_mappings":{"id":"","type":"none","audio_channel_mapping":0,"is_config_open":false},"material_colors":{"id":"","is_color_clip":false,"is_gradient":false,"solid_color":"","gradient_colors":[],"gradient_percents":[],"gradient_angle":90.0,"width":0.0,"height":0.0},"vocal_separations":{"id":"","type":"vocal_separation","choice":0,"removed_sounds":[],"time_range":null,"production_path":"","final_algorithm":"","enter_from":""}},"tseg":{"id":"","source_timerange":null,"target_timerange":{"start":0,"duration":28833333},"render_timerange":{"start":0,"duration":0},"desc":"","state":0,"speed":1.0,"is_loop":false,"is_tone_modify":false,"reverse":false,"intensifies_audio":false,"cartoon":false,"volume":1.0,"last_nonzero_volume":1.0,"clip":{"scale":{"x":0.6037933694596862,"y":0.6037933694596862},"rotation":0.0,"rotation3d":[],"transform":{"x":0.0,"y":-0.05034324942791768},"flip":{"vertical":false,"horizontal":false},"alpha":1.0},"uniform_scale":{"on":true,"value":1.0},"material_id":"","extra_material_refs":[],"render_index":14000,"keyframe_refs":[],"enable_lut":false,"enable_adjust":false,"enable_hsl":false,"visible":true,"group_id":"","enable_color_curves":true,"enable_hsl_curves":true,"track_render_index":3,"hdr_settings":null,"hdr_vivid_settings":null,"enable_color_wheels":true,"track_attribute":0,"is_placeholder":false,"template_id":"","enable_smart_color_adjust":false,"template_scene":"default","common_keyframes":[],"caption_info":null,"responsive_layout":{"enable":false,"target_follow":"","size_layout":0,"horizontal_pos_layout":0,"vertical_pos_layout":0},"enable_color_match_adjust":false,"enable_color_correct_adjust":false,"enable_adjust_mask":false,"raw_segment_id":"","lyric_keyframes":null,"enable_video_mask":true,"digital_human_template_group_id":"","color_correct_alg_result":"","source":"segmentsourcenormal","enable_mask_stroke":false,"enable_mask_shadow":false,"enable_color_adjust_pro":false,"segment_color_tag":""},"tmat":{"recognize_task_id":"","id":"","name":"","recognize_text":"","recognize_model":"","punc_model":"","type":"text","content":"","base_content":"","words":{"start_time":[],"end_time":[],"text":[]},"current_words":{"start_time":[],"end_time":[],"text":[]},"global_alpha":1.0,"combo_info":{"text_templates":[]},"caption_template_info":{"resource_id":"","third_resource_id":"","resource_name":"","category_id":"","category_name":"","effect_id":"","request_id":"","path":"","is_new":false,"source_platform":0},"layer_weight":1,"letter_spacing":0.0,"text_curve":null,"text_loop_on_path":false,"offset_on_path":0.0,"enable_path_typesetting":false,"text_exceeds_path_process_type":0,"text_typesetting_paths":null,"text_typesetting_paths_file":"","text_typesetting_path_index":0,"line_spacing":-0.03000000000000001,"has_shadow":false,"shadow_color":"","shadow_alpha":0.9,"shadow_smoothing":0.45,"shadow_distance":5.0,"shadow_point":{"x":0.6363961030678928,"y":-0.6363961030678928},"shadow_angle":-45.0,"shadow_thickness_projection_enable":false,"shadow_thickness_projection_angle":0.0,"shadow_thickness_projection_distance":0.0,"border_alpha":1.0,"border_color":"","border_width":0.08,"border_mode":0,"style_name":"","text_color":"#ff0000","text_alpha":1.0,"font_name":"","font_title":"none","font_size":16.0,"font_path":"C:/Users/musta/AppData/Local/Microsoft/Windows/Fonts/SF-Pro-Display-Bold (1).otf","font_id":"","font_resource_id":"","initial_scale":1.0,"font_url":"","typesetting":0,"alignment":1,"line_feed":1,"use_effect_default_color":false,"is_rich_text":true,"shape_clip_x":false,"shape_clip_y":false,"ktv_color":"","text_to_audio_ids":[],"bold_width":0.0,"italic_degree":0,"underline":false,"underline_width":0.05,"underline_offset":0.22,"sub_type":0,"check_flag":23,"text_size":30,"font_category_name":"","font_source_platform":0,"font_third_resource_id":"","font_category_id":"","add_type":0,"operation_type":0,"recognize_type":0,"fonts":[],"background_color":"#ffffff","background_alpha":1.0,"background_style":1,"background_round_radius":0.42363877822045154,"background_width":0.15139442231075698,"background_height":0.0,"background_vertical_offset":0.0,"background_horizontal_offset":0.0,"background_fill":"","single_char_bg_enable":false,"single_char_bg_color":"","single_char_bg_alpha":1.0,"single_char_bg_round_radius":0.3,"single_char_bg_width":0.0,"single_char_bg_height":0.0,"single_char_bg_vertical_offset":0.0,"single_char_bg_horizontal_offset":0.0,"font_team_id":"","tts_auto_update":false,"text_preset_resource_id":"","group_id":"","preset_id":"","preset_name":"","preset_category":"","preset_category_id":"","preset_index":0,"preset_has_set_alignment":false,"force_apply_line_max_width":false,"language":"","relevance_segment":[],"original_size":[],"fixed_width":-1.0,"fixed_height":-1.0,"autoAdaptCanvasEnabled":false,"line_max_width":0.82,"oneline_cutoff":false,"cutoff_postfix":"","subtitle_template_original_fontsize":0.0,"subtitle_keywords":null,"inner_padding":-1.0,"multi_language_current":"none","source_from":"","is_lyric_effect":false,"lyric_group_id":"","lyrics_template":{"resource_id":"","resource_name":"","panel":"","effect_id":"","path":"","category_id":"","category_name":"","request_id":""},"is_batch_replace":false,"is_words_linear":false,"ssml_content":"","subtitle_keywords_config":null,"sub_template_id":-1,"translate_original_text":"","adjust_params":[]},"tani":{"id":"","type":"sticker_animation","animations":[],"multi_language_current":"none"},"aseg":{"id":"","source_timerange":{"start":0,"duration":4133333},"target_timerange":{"start":0,"duration":4133333},"render_timerange":{"start":0,"duration":0},"desc":"","state":0,"speed":1.0,"is_loop":false,"is_tone_modify":false,"reverse":false,"intensifies_audio":false,"cartoon":false,"volume":1.0,"last_nonzero_volume":1.0,"clip":null,"uniform_scale":null,"material_id":"","extra_material_refs":[],"render_index":0,"keyframe_refs":[],"enable_lut":false,"enable_adjust":false,"enable_hsl":false,"visible":true,"group_id":"","enable_color_curves":true,"enable_hsl_curves":true,"track_render_index":5,"hdr_settings":null,"hdr_vivid_settings":null,"enable_color_wheels":true,"track_attribute":0,"is_placeholder":false,"template_id":"","enable_smart_color_adjust":false,"template_scene":"default","common_keyframes":[],"caption_info":null,"responsive_layout":{"enable":false,"target_follow":"","size_layout":0,"horizontal_pos_layout":0,"vertical_pos_layout":0},"enable_color_match_adjust":false,"enable_color_correct_adjust":false,"enable_adjust_mask":false,"raw_segment_id":"","lyric_keyframes":null,"enable_video_mask":true,"digital_human_template_group_id":"","color_correct_alg_result":"","source":"segmentsourcenormal","enable_mask_stroke":false,"enable_mask_shadow":false,"enable_color_adjust_pro":false,"segment_color_tag":""},"amat":{"id":"","unique_id":"","type":"extract_music","name":"","duration":0,"path":"","category_name":"local","wave_points":[],"music_id":"","app_id":0,"text_id":"","tone_type":"","source_platform":0,"video_id":"","effect_id":"","resource_id":"","third_resource_id":"","category_id":"","intensifies_path":"","formula_id":"","check_flag":1,"team_id":"","local_material_id":"","tone_speaker":"","mock_tone_speaker":"","tone_effect_id":"","tone_effect_name":"","tone_platform":"","cloned_model_type":"","tone_category_id":"","tone_category_name":"","tone_second_category_id":"","tone_second_category_name":"","tone_emotion_name_key":"","tone_emotion_style":"","tone_emotion_role":"","tone_emotion_selection":"","tone_emotion_scale":0.0,"moyin_emotion":"","request_id":"","query":"","search_id":"","sound_separate_type":"","is_text_edit_overdub":false,"is_ugc":false,"is_ai_clone_tone":false,"is_ai_clone_tone_post":false,"source_from":"","copyright_limit_type":"none","aigc_history_id":"","aigc_item_id":"","music_source":"","pgc_id":"","pgc_name":"","similiar_music_info":{"original_song_id":"","original_song_name":""},"ai_music_type":0,"ai_music_enter_from":"","lyric_type":0,"tts_task_id":"","tts_generate_scene":"","ai_music_generate_scene":0,"tts_benefit_info":{"benefit_type":"none","benefit_log_id":"","benefit_log_extra":"","benefit_amount":-1},"tts_language_info":null,"is_ai_generate_content":false,"aigc_audio_type":"none","aigc_audio_generate_info":null},"arefs":{"speeds":{"id":"","type":"speed","mode":0,"speed":1.0,"curve_speed":null},"placeholder_infos":{"id":"","type":"placeholder_info","meta_type":"none","res_path":"","res_text":"","error_path":"","error_text":""},"audio_fades":{"id":"","type":"audio_fade","fade_type":0,"fade_in_duration":0,"fade_out_duration":766665},"beats":{"id":"","type":"beats","enable_ai_beats":false,"gear":404,"gear_count":0,"mode":404,"user_beats":[],"user_delete_ai_beats":null,"ai_beats":{"melody_url":"","melody_path":"","beats_url":"","beats_path":"","melody_percents":[0.0],"beat_speed_infos":[]}},"sound_channel_mappings":{"id":"","type":"","audio_channel_mapping":0,"is_config_open":false},"vocal_separations":{"id":"","type":"vocal_separation","choice":0,"removed_sounds":[],"time_range":null,"production_path":"","final_algorithm":"","enter_from":""}},"track":{"id":"","type":"video","flag":0,"attribute":0,"name":"","is_default_name":true},"base":{"id":"","version":360000,"new_version":"191.0.0","name":"","duration":0,"create_time":0,"update_time":0,"fps":30.0,"is_drop_frame_timecode":false,"color_space":0,"config":{"video_mute":false,"record_audio_last_index":1,"extract_audio_last_index":1,"original_sound_last_index":1,"subtitle_recognition_id":"","subtitle_taskinfo":[],"lyrics_recognition_id":"","lyrics_taskinfo":[],"subtitle_sync":true,"lyrics_sync":true,"voice_change_sync":false,"sticker_max_index":1,"adjust_max_index":1,"material_save_mode":0,"export_range":null,"maintrack_adsorb":true,"combination_max_index":1,"attachment_info":[],"zoom_info_params":{"zoom_ratio":0.5,"offset_x":0.0,"offset_y":0.0},"system_font_list":[],"multi_language_mode":"none","multi_language_main":"none","multi_language_current":"none","multi_language_list":[],"subtitle_keywords_config":null,"use_float_render":false,"hdr_vivid":false},"canvas_config":{"ratio":"9:16","width":1080,"height":1920,"background":null},"tracks":[],"group_container":null,"materials":{"flowers":[],"videos":[],"tail_leaders":[],"audios":[],"images":[],"texts":[],"effects":[],"stickers":[],"canvases":[],"transitions":[],"audio_effects":[],"audio_fades":[],"beats":[],"material_animations":[],"placeholders":[],"placeholder_infos":[],"speeds":[],"common_mask":[],"chromas":[],"text_templates":[],"realtime_denoises":[],"audio_pannings":[],"audio_pitch_shifts":[],"video_trackings":[],"hsl":[],"drafts":[],"color_curves":[],"hsl_curves":[],"primary_color_wheels":[],"log_color_wheels":[],"video_effects":[],"ai_text_effects":[],"ai_generate_holders":[],"audio_balances":[],"handwrites":[],"manual_deformations":[],"manual_beautys":[],"plugin_effects":[],"sound_channel_mappings":[],"green_screens":[],"shapes":[],"material_colors":[],"digital_humans":[],"digital_human_model_dressing":[],"smart_crops":[],"ai_translates":[],"audio_track_indexes":[],"loudnesses":[],"vocal_beautifys":[],"vocal_separations":[],"smart_relights":[],"time_marks":[],"multi_language_refs":[],"video_shadows":[],"video_strokes":[],"video_radius":[]},"keyframes":{"videos":[],"audios":[],"texts":[],"stickers":[],"filters":[],"adjusts":[],"handwrites":[],"effects":[]},"keyframe_graph_list":[],"platform":{"os":"windows","os_version":"10.0.26300","app_id":359289,"app_version":"9.7.0","app_source":"cc","device_id":"d6429e7373de4de7ae2cf3ae1b6594ae","hard_disk_id":"","mac_address":"fa6059572edae5347c3105551b828df3"},"last_modified_platform":{"os":"windows","os_version":"10.0.26300","app_id":359289,"app_version":"9.7.1","app_source":"cc","device_id":"d6429e7373de4de7ae2cf3ae1b6594ae","hard_disk_id":"","mac_address":"fa6059572edae5347c3105551b828df3"},"mutable_config":null,"cover":null,"retouch_cover":null,"extra_info":{"text_to_video":null,"track_info":null,"subtitle_fragment_info_list":[]},"relationships":[],"mixed_track_mode_on":false,"render_index_track_mode_on":true,"free_render_index_mode_on":false,"static_cover_image_path":"","source":"default","time_marks":null,"path":"","lyrics_effects":[],"uneven_animation_template_info":{"composition":"","content":"","order":"","sub_template_info_list":[]},"draft_type":"video","smart_ads_info":{"page_from":"","routine":"","draft_url":""},"function_assistant_info":{"smart_rec_applied":false,"fixed_rec_applied":false,"auto_adjust":false,"auto_adjust_segid_list":[],"color_correction":false,"color_correction_segid_list":[],"enhance_quality":false,"smooth_slow_motion":false,"deflicker_segid_list":[],"video_noise_segid_list":[],"enhance_quality_segid_list":[],"smart_segid_list":[],"retouch":false,"retouch_segid_list":[],"enhande_voice":false,"enhance_voice_segid_list":[],"audio_noise_segid_list":[],"auto_caption":false,"auto_caption_segid_list":[],"auto_caption_template_id":"","caption_opt":false,"caption_opt_segid_list":[],"eye_correction":false,"eye_correction_segid_list":[],"normalize_loudness":false,"normalize_loudness_segid_list":[],"normalize_loudness_audio_denoise_segid_list":[],"auto_adjust_fixed":false,"auto_adjust_fixed_value":50.0,"color_correction_fixed":false,"color_correction_fixed_value":50.0,"normalize_loudness_fixed":false,"enhande_voice_fixed":false,"retouch_fixed":false,"enhance_quality_fixed":false,"smooth_slow_motion_fixed":false,"fps":{"num":0,"den":1}}}}</script>
 <script type="text/plain" id="grabPy"># -*- coding: utf-8 -*-
 """
 Grabador de Clipzi
@@ -2484,7 +2490,7 @@ No hace falta tocar nada aquí: Clipzi escribe config.json y tú solo abres
 """
 import os, sys, json, time, threading, subprocess, shutil, re, glob, wave, traceback, datetime, uuid
 
-GRABADOR_VERSION = 25   # Clipzi solo lo sobrescribe con una versión más nueva
+GRABADOR_VERSION = 26   # Clipzi solo lo sobrescribe con una versión más nueva
 BASE = os.path.dirname(os.path.abspath(__file__))
 CFG = os.path.join(BASE, 'config.json')
 DIRS = os.path.join(BASE, 'directos')
@@ -3909,6 +3915,210 @@ def voz_loop():
         time.sleep(1)
 
 
+# ---------------------------------------------------------------- pasar un clip de Cortex a CapCut
+CCJ = os.path.join(BASE, 'capcut')
+FUENTES = os.path.join(BASE, 'fuentes')
+CC_WEIGHT = {'100': ['thin'], '200': ['extralight', 'ultralight'], '300': ['light'], '400': ['regular', 'book', 'normal', ''], '500': ['medium'],
+             '600': ['semibold', 'demibold'], '700': ['bold'], '800': ['extrabold', 'ultrabold', 'heavy'], '900': ['black', 'heavy']}
+
+
+def cc_root():
+    la = os.environ.get('LOCALAPPDATA') or os.path.join(os.path.expanduser('~'), 'AppData', 'Local')
+    return os.path.join(la, 'CapCut', 'User Data', 'Projects', 'com.lveditor.draft')
+
+
+def cc_font(spec):
+    """Devuelve un archivo de letra (.ttf/.otf) para «Familia|peso»: primero las del ordenador, si no, se descarga gratis."""
+    fam, _, wt = (spec or 'Inter|700').partition('|')
+    wt = wt or '400'
+    key = re.sub(r'[^a-z0-9]', '', fam.lower())
+    words = CC_WEIGHT.get(wt, [''])
+    dirs = [os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts'), os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Microsoft', 'Windows', 'Fonts'), FUENTES]
+    best = None
+    for d in dirs:
+        try:
+            names = os.listdir(d)
+        except Exception:
+            continue
+        for n in names:
+            if not n.lower().endswith(('.ttf', '.otf')):
+                continue
+            k = re.sub(r'[^a-z0-9]', '', n.lower().rsplit('.', 1)[0])
+            if not k.startswith(key):
+                continue
+            rest = k[len(key):].replace('display', '').replace('text', '').replace('regular', '' if wt != '400' else 'regular')
+            score = 3 if any(w and rest.startswith(w) for w in words) else (2 if wt == '400' and rest in ('', 'regular') else (1 if not rest else 0))
+            if 'italic' in rest:
+                score -= 2
+            if score > 0 and (not best or score > best[0]):
+                best = (score, os.path.join(d, n))
+    if best and best[0] >= 2:
+        return best[1].replace('\\', '/')
+    os.makedirs(FUENTES, exist_ok=True)
+    slug = re.sub(r'[^a-z0-9]+', '-', fam.lower()).strip('-')
+    dst = os.path.join(FUENTES, '%s-%s.ttf' % (slug, wt))
+    if os.path.exists(dst) and os.path.getsize(dst) > 1000:
+        return dst.replace('\\', '/')
+    import urllib.request
+    for w in (wt, '400'):
+        url = 'https://cdn.jsdelivr.net/fontsource/fonts/%s@latest/latin-%s-normal.ttf' % (slug, w)
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                data = r.read()
+            if len(data) > 1000:
+                with open(dst, 'wb') as f:
+                    f.write(data)
+                log('🔤 Letra descargada para CapCut: %s %s' % (fam, w))
+                return dst.replace('\\', '/')
+        except Exception:
+            pass
+    return best[1].replace('\\', '/') if best else ''
+
+
+def cc_running():
+    if not WIN:
+        return False
+    try:
+        out = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq CapCut.exe'], capture_output=True, text=True, timeout=10, creationflags=NOWIN).stdout
+        return 'capcut.exe' in out.lower()
+    except Exception:
+        return False
+
+
+def cc_one(rid, q):
+    outj = os.path.join(CCJ, 'out', rid + '.json')
+    job = os.path.join(CCJ, rid)
+    write_json(outj, {'status': 'working', 'msg': 'Creando el proyecto en CapCut…'})
+    try:
+        root = cc_root()
+        if not os.path.isdir(root):
+            raise Exception('No encuentro CapCut en este ordenador (falta la carpeta de proyectos). Ábrelo una vez y vuelve a probar.')
+        with open(os.path.join(job, 'draft.json'), encoding='utf-8') as f:
+            raw = f.read()
+        base = re.sub(r'[\\/:*?"<>|]+', ' ', q.get('name') or 'Clip de Cortex').strip()[:60] or 'Clip de Cortex'
+        name, i = base, 2
+        while os.path.exists(os.path.join(root, name)):
+            name = '%s (%d)' % (base, i)
+            i += 1
+        ddir = os.path.join(root, name)
+        dpath = ddir.replace('\\', '/')
+        os.makedirs(os.path.join(ddir, 'cortex'), exist_ok=True)
+        # el vídeo, la imagen, el logo y la música, dentro del proyecto
+        for fm in q.get('files') or []:
+            src = os.path.join(job, fm['name'])
+            if os.path.exists(src):
+                shutil.move(src, os.path.join(ddir, 'cortex', fm['name']))
+        # letras
+        for spec in q.get('fonts') or []:
+            write_json(outj, {'status': 'working', 'msg': 'Buscando la letra %s…' % spec.split('|')[0]})
+            path = cc_font(spec)
+            raw = raw.replace('__CXFONT__%s__' % spec, path)
+        raw = re.sub(r'__CXFONT__[^_]*?__', '', raw)
+        raw = raw.replace('__CXDIR__', dpath)
+        d = json.loads(raw)
+        tid = d['id']
+        now = int(time.time() * 1e6)
+        d['create_time'] = int(time.time()); d['update_time'] = int(time.time())
+        txt = json.dumps(d, ensure_ascii=False, separators=(',', ':'))
+        for pth in (os.path.join(ddir, 'draft_content.json'), os.path.join(ddir, 'Timelines', tid, 'draft_content.json')):
+            os.makedirs(os.path.dirname(pth), exist_ok=True)
+            with open(pth, 'w', encoding='utf-8') as f:
+                f.write(txt)
+        write_json(os.path.join(ddir, 'Timelines', 'project.json'), {'config': {'color_space': -1, 'hdr_vivid': False, 'mixed_track_mode_on': False, 'render_index_track_mode_on': False, 'use_float_render': False},
+                   'create_time': now, 'id': str(uuid.uuid4()).upper(), 'main_timeline_id': tid,
+                   'timelines': [{'create_time': now, 'id': tid, 'is_marked_delete': False, 'name': 'Línea de tiempo 01', 'update_time': now}], 'update_time': now, 'version': 0})
+        write_json(os.path.join(ddir, 'timeline_layout.json'), {'dockItems': [{'dockIndex': 0, 'ratio': 1, 'timelineIds': [tid], 'timelineNames': ['Línea de tiempo 01']}], 'layoutOrientation': 1})
+        write_json(os.path.join(ddir, 'draft_agency_config.json'), {'is_auto_agency_enabled': False, 'is_auto_agency_popup': False, 'is_single_agency_mode': False, 'marterials': None, 'use_converter': False, 'video_resolution': 720})
+        # portada: un fotograma del clip
+        clip = next((fm for fm in (q.get('files') or []) if fm.get('kind') == 'video'), None)
+        if clip:
+            try:
+                run([ffmpeg_exe(), '-y', '-ss', '0.5', '-i', os.path.join(ddir, 'cortex', clip['name']), '-frames:v', '1', '-vf', 'scale=360:-2', os.path.join(ddir, 'draft_cover.jpg')], timeout=30)
+            except Exception:
+                pass
+        mats = []
+        for fm in q.get('files') or []:
+            mats.append({'ai_group_type': '', 'create_time': int(time.time()), 'duration': int(fm.get('dur') or 5000000), 'enter_from': 0, 'extra_info': fm['name'],
+                         'file_Path': dpath + '/cortex/' + fm['name'], 'height': int(fm.get('h') or 0), 'id': str(uuid.uuid4()), 'import_time': int(time.time()), 'import_time_ms': now,
+                         'item_source': 1, 'material_color_tag': '', 'md5': '', 'metetype': fm.get('kind') or 'video',
+                         'roughcut_time_range': {'duration': int(fm.get('dur') or -1), 'start': 0 if fm.get('dur') else -1}, 'sub_time_range': {'duration': -1, 'start': -1}, 'type': 0, 'width': int(fm.get('w') or 0)})
+        did = str(uuid.uuid4()).upper()
+        meta = {'cloud_draft_cover': False, 'cloud_draft_sync': False, 'cloud_package_completed_time': '', 'draft_cloud_capcut_purchase_info': '', 'draft_cloud_last_action_download': False,
+                'draft_cloud_package_type': '', 'draft_cloud_purchase_info': '', 'draft_cloud_template_id': '', 'draft_cloud_tutorial_info': '', 'draft_cloud_videocut_purchase_info': '',
+                'draft_cover': 'draft_cover.jpg', 'draft_deeplink_url': '', 'draft_enterprise_info': {'draft_enterprise_extra': '', 'draft_enterprise_id': '', 'draft_enterprise_name': '', 'enterprise_material': []},
+                'draft_fold_path': dpath, 'draft_has_unfinished_aigc_video_effect': False, 'draft_id': did, 'draft_is_ae_produce': False, 'draft_is_ai_packaging_used': False, 'draft_is_ai_shorts': False,
+                'draft_is_ai_translate': False, 'draft_is_article_video_draft': False, 'draft_is_cloud_temp_draft': False, 'draft_is_from_deeplink': 'false', 'draft_is_infinite_canvas_draft': False,
+                'draft_is_invisible': False, 'draft_is_pippit_draft': False, 'draft_is_web_article_video': False,
+                'draft_materials': [{'type': 0, 'value': mats}] + [{'type': t, 'value': []} for t in (1, 2, 3, 6, 7, 8)],
+                'draft_materials_copied_info': [], 'draft_name': name, 'draft_need_rename_folder': False, 'draft_new_version': '', 'draft_removable_storage_device': '',
+                'draft_root_path': root.replace('\\', '/'), 'draft_segment_extra_info': [], 'draft_timeline_materials_size_': 0, 'draft_type': '', 'draft_web_article_video_enter_from': '',
+                'pippit_avatar_url': '', 'pippit_extra_info': '', 'pippit_id': '', 'pippit_user_name': '', 'tm_draft_cloud_completed': '', 'tm_draft_cloud_entry_id': -1, 'tm_draft_cloud_modified': 0,
+                'tm_draft_cloud_parent_entry_id': -1, 'tm_draft_cloud_space_id': -1, 'tm_draft_cloud_user_id': -1, 'tm_draft_create': now, 'tm_draft_modified': now, 'tm_draft_removed': 0,
+                'tm_duration': int(q.get('dur') or d.get('duration') or 0)}
+        write_json(os.path.join(ddir, 'draft_meta_info.json'), meta)
+        with open(os.path.join(ddir, 'draft_settings'), 'w', encoding='utf-8') as f:
+            f.write('[General]\ndraft_create_time=%d\ndraft_last_edit_time=%d\nreal_edit_seconds=0\nreal_edit_keys=0\ncloud_last_modify_platform=windows\n' % (int(time.time()), int(time.time())))
+        # que salga en la pantalla de inicio de CapCut
+        rm = os.path.join(root, 'root_meta_info.json')
+        try:
+            with open(rm, encoding='utf-8') as f:
+                R = json.load(f)
+        except Exception:
+            R = {'all_draft_store': [], 'draft_ids': 0, 'root_path': root.replace('\\', '/')}
+        try:
+            shutil.copy(rm, rm + '.cortex.bak')
+        except Exception:
+            pass
+        entry = {k: meta[k] for k in ('cloud_draft_cover', 'cloud_draft_sync', 'draft_cloud_last_action_download', 'draft_cloud_purchase_info', 'draft_cloud_template_id', 'draft_cloud_tutorial_info',
+                                      'draft_cloud_videocut_purchase_info', 'draft_fold_path', 'draft_id', 'draft_is_ai_shorts', 'draft_is_cloud_temp_draft', 'draft_is_infinite_canvas_draft',
+                                      'draft_is_invisible', 'draft_is_pippit_draft', 'draft_is_web_article_video', 'draft_name', 'draft_new_version', 'draft_root_path', 'draft_type',
+                                      'draft_web_article_video_enter_from', 'pippit_avatar_url', 'pippit_extra_info', 'pippit_id', 'pippit_user_name', 'tm_draft_cloud_completed',
+                                      'tm_draft_cloud_entry_id', 'tm_draft_cloud_modified', 'tm_draft_cloud_parent_entry_id', 'tm_draft_cloud_space_id', 'tm_draft_cloud_user_id',
+                                      'tm_draft_create', 'tm_draft_modified', 'tm_draft_removed', 'tm_duration')}
+        entry.update({'draft_cover': dpath + '\\draft_cover.jpg', 'draft_json_file': dpath + '\\draft_content.json', 'draft_timeline_materials_size': 0, 'streaming_edit_draft_ready': True})
+        R.setdefault('all_draft_store', []).insert(0, entry)
+        if isinstance(R.get('draft_ids'), int):
+            R['draft_ids'] += 1
+        write_json(rm, R)
+        write_json(outj, {'status': 'done', 'name': name, 'path': dpath, 'running': cc_running()})
+        log('🎬 Proyecto de CapCut creado: %s' % name)
+    except Exception as e:
+        write_json(outj, {'status': 'error', 'error': str(e)[:300]})
+        log('No pude crear el proyecto de CapCut: %s' % str(e)[:200])
+        traceback.print_exc()
+    for f in (os.path.join(CCJ, 'req', rid + '.json'),):
+        try:
+            os.remove(f)
+        except Exception:
+            pass
+    shutil.rmtree(job, ignore_errors=True)
+
+
+def capcut_loop():
+    for d in ('req', 'out'):
+        os.makedirs(os.path.join(CCJ, d), exist_ok=True)
+    while True:
+        for rq in sorted(glob.glob(os.path.join(CCJ, 'req', '*.json'))):
+            rid = os.path.basename(rq)[:-5]
+            if os.path.exists(os.path.join(CCJ, 'out', rid + '.json')):
+                continue
+            try:
+                with open(rq, encoding='utf-8') as f:
+                    q = json.load(f)
+            except Exception:
+                continue
+            cc_one(rid, q)
+        # resultados viejos: fuera
+        for o in glob.glob(os.path.join(CCJ, 'out', '*.json')):
+            try:
+                if time.time() - os.path.getmtime(o) > 3600:
+                    os.remove(o)
+            except Exception:
+                pass
+        time.sleep(1)
+
+
 # ---------------------------------------------------------------- vigilar los canales
 def main():
     os.makedirs(DIRS, exist_ok=True)
@@ -3916,6 +4126,7 @@ def main():
     clean_all_out()   # copias de clips de sesiones anteriores: fuera, para liberar disco
     threading.Thread(target=downloads_loop, daemon=True).start()
     threading.Thread(target=voz_loop, daemon=True).start()
+    threading.Thread(target=capcut_loop, daemon=True).start()
     print('=' * 60)
     print('  GRABADOR DE CLIPZI  (versión %d)' % GRABADOR_VERSION)
     print('  Deja esta ventana abierta mientras haya directos o descargues enlaces.')
@@ -13837,6 +14048,193 @@ setTimeout(() => {
 { const fill = el => { const a = +el.min || 0, b = el.max === '' ? 100 : +el.max, v = ((+el.value - a) / ((b - a) || 1)) * 100, t = Math.max(0, Math.min(100, v)).toFixed(1) + '%'; if (el.style.getPropertyValue('--p') !== t) el.style.setProperty('--p', t); };
   document.addEventListener('input', e => { if (e.target && e.target.type === 'range') fill(e.target); }, true);
   setInterval(() => { for (const el of document.querySelectorAll('input[type=range]')) if (el.offsetParent) fill(el); }, 150); }
+/* ---------- pasar el clip a CapCut: se traduce la edición de Cortex a una línea de tiempo de CapCut ----------
+   Cortex prepara el proyecto (pistas, trozos, escala, posición, textos…) y el grabador lo crea en la carpeta de proyectos de CapCut. */
+const CC_PX = 4.6;   // píxeles (en un vídeo de 1080 de ancho) por cada punto de «tamaño» de texto de CapCut
+const ccId = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); })).toUpperCase();
+const ccUs = s => Math.max(0, Math.round(s * 1e6));
+const ccClone = o => JSON.parse(JSON.stringify(o));
+const ccRgb = h => { h = String(h || '#ffffff').replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); return [0, 2, 4].map(i => +((parseInt(h.slice(i, i + 2), 16) || 0) / 255).toFixed(4)); };
+let ccTplCache = null;
+const ccTpl = () => ccTplCache || (ccTplCache = JSON.parse($('ccTpl').textContent));
+// encuadre en un instante (con la plantilla de esa parte del clip, si tiene)
+function ccGeomAt(t, vw, vh) {
+  const sc = layoutMode !== 'split' ? sceneAt(t) : null, ov = sc && sc.ov, k = [layoutMode, clipMeta.cam, clipMeta.track];
+  if (ov) { layoutMode = ov.mode; if (ov.cam) clipMeta.cam = ov.cam; else delete clipMeta.cam; if (ov.track) clipMeta.track = ov.track; else delete clipMeta.track; sceneOv = ov; }
+  try { const s = S(); return { s, L: layout(s, vw, vh, t), mode: layoutMode }; }
+  finally { if (ov) { layoutMode = k[0]; sceneOv = null; if (k[1]) clipMeta.cam = k[1]; else delete clipMeta.cam; if (k[2]) clipMeta.track = k[2]; else delete clipMeta.track; } }
+}
+// lo que se ve de una capa dentro de su hueco (en CapCut se recorta el vídeo para que no se salga)
+function ccClipTo(src, dst, R) {
+  if (!R) return { src, dst };
+  const x0 = Math.max(dst.x, R.x), y0 = Math.max(dst.y, R.y), x1 = Math.min(dst.x + dst.w, R.x + R.w), y1 = Math.min(dst.y + dst.h, R.y + R.h);
+  if (x1 - x0 < 1 || y1 - y0 < 1) return null; const kx = src.w / dst.w, ky = src.h / dst.h;
+  return { src: { x: src.x + (x0 - dst.x) * kx, y: src.y + (y0 - dst.y) * ky, w: (x1 - x0) * kx, h: (y1 - y0) * ky }, dst: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } };
+}
+function ccLayers(g, vw, vh) {
+  const { L, s } = g, full = { x: 0, y: 0, w: vw, h: vh }, out = [];
+  if (L.react) {
+    const c = ccClipTo(L.src || full, L.video, L.vr); if (c) out.push({ kind: 'video', ...c });
+    const cr = L.cr || crops, R = L.ir, k = cr.cam;
+    if (k && R) { const sw = vw * k.w, sh = vh * k.h, sc = Math.max(R.w / sw, R.h / sh), dw = sw * sc, dh = sh * sc, fx = cr.camFx == null ? 0.5 : cr.camFx, dx = Math.min(R.x, Math.max(R.x + R.w - dw, R.x + R.w / 2 - fx * dw));
+      const c2 = ccClipTo({ x: vw * k.x, y: vh * k.y, w: sw, h: sh }, { x: dx, y: R.y + R.h - dh, w: dw, h: dh }, R); if (c2) out.push({ kind: 'video', ...c2 }); }
+  } else if (L.split) {
+    const c = ccClipTo(full, L.video, L.vr); if (c) out.push({ kind: 'video', ...c });
+    if (img) { const R = L.ir, iw = img.naturalWidth, ih = img.naturalHeight, cc = crop || { x: 0, y: 0, w: iw, h: ih }, sc = Math.max(R.w / cc.w, R.h / cc.h) * s.imgZoom, dw = cc.w * sc, dh = cc.h * sc;
+      const c2 = ccClipTo(cc, { x: R.x + R.w / 2 + imgOff.x - dw / 2, y: R.y + R.h / 2 + imgOff.y - dh / 2, w: dw, h: dh }, R); if (c2) out.push({ kind: 'image', ...c2, mw: iw, mh: ih }); }
+  } else out.push({ kind: 'video', src: L.src || full, dst: L.video });
+  return out;
+}
+// de un rectángulo de Cortex (1080×1920) a la escala y posición de CapCut
+function ccClipOf(src, dst, alpha) {
+  const f = Math.min(W / src.w, H / src.h), sc = dst.w / (src.w * f);
+  return { scale: { x: sc, y: sc }, rotation: 0.0, rotation3d: [], transform: { x: (dst.x + dst.w / 2 - W / 2) / (W / 2), y: -(dst.y + dst.h / 2 - H / 2) / (H / 2) }, flip: { vertical: false, horizontal: false }, alpha: alpha == null ? 1.0 : alpha };
+}
+const ccCrop = (src, mw, mh) => { const a = src.x / mw, b = src.y / mh, c = (src.x + src.w) / mw, d = (src.y + src.h) / mh, q = v => Math.max(0, Math.min(1, +v.toFixed(6)));
+  return { upper_left_x: q(a), upper_left_y: q(b), upper_right_x: q(c), upper_right_y: q(b), lower_left_x: q(a), lower_left_y: q(d), lower_right_x: q(c), lower_right_y: q(d) }; };
+const ccFont = v => '__CXFONT__' + String(v || 'Inter|700') + '__';
+
+async function ccBuild() {
+  if (!loaded || !file) throw new Error('Abre primero un clip');
+  const T = ccTpl(), vw = vid.videoWidth || 1920, vh = vid.videoHeight || 1080, dur = totalDur(), D = ccUs(dur);
+  const draft = ccClone(T.base), M = draft.materials, tracks = [], files = {}, fonts = new Set(), metaFiles = [];
+  draft.id = ccId(); draft.duration = D; draft.fps = 30.0; draft.canvas_config = { ratio: '9:16', width: W, height: H, background: null };
+  const ext = ((file.name || '').match(/\.(\w{2,5})$/) || [, 'mp4'])[1].toLowerCase(), clipName = 'clip.' + ext;
+  files[clipName] = file; metaFiles.push({ name: clipName, kind: 'video', w: vw, h: vh, dur: ccUs(vid.duration || dur) });
+  const add = (list, o) => { (M[list] = M[list] || []).push(o); return o.id; };
+  const vrefs = (canvas, vol) => { const r = []; for (const [k, x] of Object.entries(T.vrefs)) { const o = ccClone(x); o.id = ccId(); if (k === 'canvases' && canvas) Object.assign(o, canvas); r.push(add(k, o)); } return r; };
+  const trackOf = (type, flag) => { const t = ccClone(T.track); t.id = ccId(); t.type = type; t.flag = flag || 0; t.attribute = 0; t.segments = []; tracks.push(t); return t; };
+  const vMat = (kind, path, mw, mh, crop, durUs) => { const o = ccClone(kind === 'image' ? T.photo : T.vmat); Object.assign(o, { id: ccId(), local_material_id: ccId().toLowerCase(), path, material_name: path.split('/').pop(), width: mw, height: mh, duration: kind === 'image' ? 10800000000 : durUs, crop, type: kind === 'image' ? 'photo' : 'video', has_audio: kind !== 'image' }); return add('videos', o); };
+  const vSeg = (track, mat, srcA, durUs, tgt, clip, canvas, vol, ri) => { const g = ccClone(track.segments.length || track !== tracks[0] ? T.oseg : T.vseg); Object.assign(g, ccClone(T.vseg), { id: ccId(), material_id: mat, source_timerange: { start: srcA, duration: durUs }, target_timerange: { start: tgt, duration: durUs }, clip, extra_material_refs: vrefs(canvas), volume: vol, last_nonzero_volume: vol || 1, render_index: ri, track_render_index: tracks.indexOf(track) }); track.segments.push(g); return g; };
+  // 1) trozos del vídeo, partidos también donde cambia la plantilla
+  const pieces = []; let acc = 0;
+  for (const g of segs) { const cuts = new Set([g.s, g.e]); for (const x of clipMeta.scenes || []) { if (x.s > g.s + 0.01 && x.s < g.e - 0.01) cuts.add(x.s); if (x.e > g.s + 0.01 && x.e < g.e - 0.01) cuts.add(x.e); }
+    const cs = [...cuts].sort((a, b) => a - b); for (let i = 0; i < cs.length - 1; i++) pieces.push({ a: cs[i], b: cs[i + 1], T0: acc + cs[i] - g.s }); acc += g.e - g.s; }
+  const vol = Math.max(0, +$('vVol').value / 100), main = trackOf('video'), over = [];
+  let blurAny = false, imgName = null;
+  for (const p of pieces) {
+    const geo = ccGeomAt((p.a + p.b) / 2, vw, vh); p.geo = geo; const ls = ccLayers(geo, vw, vh), du = ccUs(p.b - p.a), t0 = ccUs(p.T0);
+    const bg = geo.s.bg || 'black', canvas = !geo.L.split && bg.startsWith('blur') ? { type: 'canvas_blur', blur: [0.0625, 0.0625, 0.375, 0.75, 1.0][+bg.slice(4)] || 0.375, color: '' } : { type: 'canvas_color', color: '', blur: 0.0 };
+    if (canvas.type === 'canvas_blur') blurAny = true;
+    ls.forEach((l, i) => {
+      const tr = i === 0 ? main : (over[i - 1] = over[i - 1] || trackOf('video', 2));
+      if (l.kind === 'image') { if (!imgName) { imgName = 'imagen.png'; } const m = vMat('image', '__CXDIR__/cortex/' + imgName, l.mw, l.mh, ccCrop(l.src, l.mw, l.mh), 0); vSeg(tr, m, 0, du, t0, ccClipOf(l.src, l.dst), null, 1.0, i); }
+      else { const m = vMat('video', '__CXDIR__/cortex/' + clipName, vw, vh, ccCrop(l.src, vw, vh), ccUs(vid.duration || dur)); vSeg(tr, m, ccUs(p.a), du, t0, ccClipOf(l.src, l.dst), i === 0 ? canvas : null, i === 0 ? vol : 0.0, i); }
+    });
+  }
+  if (imgName && img) { try { files[imgName] = await (await fetch(img.src)).blob(); metaFiles.push({ name: imgName, kind: 'photo', w: img.naturalWidth, h: img.naturalHeight }); } catch {} }
+  // 2) textos (título y subtítulos): con la misma letra, tamaño, colores y sitio que en Cortex
+  let ri = 14000; const textTrack = () => trackOf('text');
+  const tSeg = (track, mat, start, du, x, y) => { const g = ccClone(T.tseg), an = ccClone(T.tani); an.id = ccId(); add('material_animations', an);
+    Object.assign(g, { id: ccId(), material_id: mat, target_timerange: { start, duration: du }, extra_material_refs: [an.id], render_index: ri++, track_render_index: tracks.indexOf(track),
+      clip: { scale: { x: 1.0, y: 1.0 }, rotation: 0.0, rotation3d: [], transform: { x: (x - W / 2) / (W / 2), y: -(y - H / 2) / (H / 2) }, flip: { vertical: false, horizontal: false }, alpha: 1.0 } }); track.segments.push(g); };
+  const tMat = (o) => {   // o: {text, font, px, color, hl:[[a,b,color]], stroke:{px,color}, shadow:{alpha,blur,dist,angle,color}, box:{color,alpha,padX,padY,r}, ls, lh, type}
+    const m = ccClone(T.tmat), size = +(o.px / CC_PX).toFixed(2), fp = ccFont(o.font); fonts.add(o.font);
+    const st = (a, b, col) => { const x = { fill: { content: { render_type: 'solid', solid: { color: ccRgb(col) } } }, font: { path: fp, id: '' }, size, useLetterColor: true, range: [a, b] };
+      if (o.stroke) x.strokes = [{ content: { render_type: 'solid', solid: { color: ccRgb(o.stroke.color) } }, width: +Math.min(0.2, o.stroke.px / o.px).toFixed(4) }];
+      if (o.shadow) x.shadows = [{ thickness_projection_angle: -45, thickness_projection_enable: false, diffuse: o.shadow.blur, alpha: o.shadow.alpha, distance: o.shadow.dist, content: { render_type: 'solid', solid: { color: ccRgb(o.shadow.color) } }, angle: o.shadow.angle, thickness_projection_distance: 0 }];
+      return x; };
+    const N = o.text.length, cuts = [0, N]; for (const [a, b] of o.hl || []) cuts.push(a, b); const cs = [...new Set(cuts)].filter(v => v >= 0 && v <= N).sort((a, b) => a - b), styles = [];
+    for (let i = 0; i < cs.length - 1; i++) { const a = cs[i], b = cs[i + 1]; if (b <= a) continue; const h = (o.hl || []).find(([x, y]) => a >= x && b <= y); styles.push(st(a, b, h ? h[2] : o.color)); }
+    Object.assign(m, { id: ccId(), type: 'text', content: JSON.stringify({ text: o.text, styles }), font_path: fp, font_size: size, text_color: o.color, is_rich_text: (o.hl || []).length > 0, alignment: 1,
+      letter_spacing: +((o.ls || 0) / o.px).toFixed(4), line_spacing: +Math.max(-0.5, (o.lh || 1.18) - 1.18).toFixed(3), line_max_width: 0.96,
+      has_shadow: !!o.shadow, shadow_color: o.shadow ? o.shadow.color : '', shadow_alpha: o.shadow ? o.shadow.alpha : 0.9, shadow_smoothing: o.shadow ? o.shadow.blur : 0.45, shadow_distance: o.shadow ? o.shadow.dist : 5.0, shadow_angle: o.shadow ? o.shadow.angle : -45.0,
+      border_color: o.stroke ? o.stroke.color : '', border_width: o.stroke ? +Math.min(0.2, o.stroke.px / o.px).toFixed(4) : 0.08,
+      background_style: o.box ? 1 : 0, background_color: o.box ? o.box.color : '', background_alpha: o.box ? o.box.alpha : 1.0,
+      background_round_radius: o.box ? +Math.min(1, o.box.r / Math.max(1, (o.px + 2 * o.box.padY) / 2)).toFixed(4) : 0.0,
+      background_width: o.box ? +Math.max(0, o.box.padX / o.px * 0.5).toFixed(4) : 0.14, background_height: o.box ? +Math.max(0, o.box.padY / o.px * 0.5).toFixed(4) : 0.14 });
+    m.words = { start_time: [], end_time: [], text: [] }; return add('texts', m);
+  };
+  const lineText = (lines, upper) => lines.map(l => l.words.map(w => w.t).join(' ')).join('\n');
+  // título (un trozo por cada parte en la que cambie de sitio)
+  const S0v = S0(), title = $('title').value.trim();
+  if (title && !trk.title.hide && !titleIsDefault()) {
+    const tt = textTrack(); let last = null;
+    for (const p of pieces) {
+      const s = p.geo.s, L = p.geo.L, isBox = titleStyle === 'box', size = s.titleSize, lh = size * s.titleLH, padX = isBox ? s.boxPX : 0, padY = isBox ? s.boxPY : 0;
+      const real = ctx.font, rls = ctx.letterSpacing; ctx.font = `${s.titleWeight} ${size}px "${s.titleFont}", Inter, sans-serif`; ctx.letterSpacing = (s.tLS || 0) + 'px';
+      const maxW = s.titleW > 0 ? Math.max(120, s.titleW) : Math.max(320, W - 140 - padX * 2), lines = []; let gi = 0;
+      for (const para of $('title').value.split('\n')) { const ws = para.split(/\s+/).filter(Boolean).map(t => ({ t: s.titleUpper ? t.toLocaleUpperCase('es') : t, red: titleHL.has(gi++) })); if (ws.length) lines.push(...wrapBalanced(ws, maxW).lines); }
+      ctx.font = real; ctx.letterSpacing = rls;
+      const blockH = (lines.length - 1) * lh + size; let top;
+      if (L.split) top = L.seam - blockH / 2; else if (s.titleY >= 0) top = H * s.titleY / 100 - blockH / 2; else { top = Math.max(0, L.video.y) - 34 - blockH - padY; if (top < 150 + padY) top = 150 + padY; }
+      top += pos.ty; const cx = W / 2 + pos.tx, cy = top + blockH / 2, sig = [cx, cy, s.titleFont, size, isBox].join();
+      const T0 = ccUs(p.T0), du = ccUs(p.b - p.a);
+      if (last && last.sig === sig) { last.seg.target_timerange.duration = T0 + du - last.seg.target_timerange.start; continue; }
+      const text = lineText(lines), hl = []; let pos2 = 0; for (const l of lines) { for (const w of l.words) { if (w.red) hl.push([pos2, pos2 + w.t.length, s.titleHl]); pos2 += w.t.length + 1; } }
+      const k = s.tShadow == null ? 0.6 : s.tShadow;
+      const mat = tMat({ text, font: $('titleFont').value, px: size, color: isBox ? s.boxText : s.titleColor, hl, ls: s.tLS, lh: s.titleLH,
+        stroke: s.tStrokeW > 0 ? { px: s.tStrokeW, color: s.tStrokeC } : null, shadow: !isBox && k > 0 ? { alpha: +Math.min(1, k * 1.1).toFixed(2), blur: 0.45, dist: 0, angle: -45, color: '#000000' } : null,
+        box: isBox ? { color: s.boxColor, alpha: s.boxOp == null ? 1 : s.boxOp, padX, padY, r: s.boxR } : null });
+      tSeg(tt, mat, T0, du, cx, cy); last = { sig, seg: tt.segments[tt.segments.length - 1] };
+    }
+  }
+  // subtítulos: uno por frase, en su segundo exacto
+  if (captions.length && !trk.caps.hide && !clipMeta.noSubs) {
+    const st = textTrack(); let accT = 0;
+    for (const g of segs) {
+      for (const c of captions) {
+        const a = Math.max(c.start, g.s), b = Math.min(c.end, g.e); if (b - a < 0.05) continue;
+        const geo = ccGeomAt((a + b) / 2, vw, vh), s = geo.s, L = geo.L, real = ctx.font, rls = ctx.letterSpacing;
+        ctx.font = `${s.subItalic ? 'italic ' : ''}${s.subBold ? s.subWeight : 400} ${s.subSize}px "${s.subFont}", Impact, sans-serif`; ctx.letterSpacing = (s.subLS || 0) + 'px';
+        const ws = []; for (const w of c.words || []) for (const part of String(w.text || '').split(/\s+/).filter(Boolean)) { const t2 = caseText(cleanWord(part, false), s.subCase); if (t2) ws.push({ t: t2 }); }
+        const { lines } = wrapWords(ws, W - 140); ctx.font = real; ctx.letterSpacing = rls; if (!lines.length) continue;
+        const A = L.subArea, cy = A.y + A.h * s.subY, cx = W / 2 + pos.sx;
+        const mat = tMat({ text: lineText(lines), font: $('subFont').value, px: s.subSize, color: s.subColor, ls: s.subLS, lh: s.subLH,
+          stroke: s.strokeOn ? { px: s.subSize * s.strokeW / 100 / 2, color: s.strokeC } : null,
+          shadow: s.subShOn && s.shOp > 0 ? { alpha: +Math.min(1, s.shOp).toFixed(2), blur: +Math.min(1, s.shBlur * 2).toFixed(3), dist: +(s.subShD || 0), angle: +(s.subShA || -45), color: s.subShC || '#000000' } : null,
+          box: s.subBg && s.subBgOp > 0 ? { color: s.subBgC, alpha: s.subBgOp, padX: s.subSize * s.subBgW / 100, padY: s.subSize * s.subBgH / 100, r: s.subSize * s.subBgR / 100 } : null });
+        tSeg(st, mat, ccUs(accT + a - g.s), ccUs(b - a), cx, cy);
+      }
+      accT += g.e - g.s;
+    }
+  }
+  // 3) logo encima de todo
+  if (logo && !trk.logo.hide) {
+    try { const bl = await (await fetch(logo.src)).blob(), nm = 'logo.' + ((bl.type.split('/')[1] || 'png').replace('jpeg', 'jpg').replace('svg+xml', 'svg')); files[nm] = bl;
+      const iw = logo.img.naturalWidth, ih = logo.img.naturalHeight, lw = W * S0v.logoSize, lh = lw * ih / iw, lt = trackOf('video', 2);
+      const m = vMat('image', '__CXDIR__/cortex/' + nm, iw, ih, ccCrop({ x: 0, y: 0, w: iw, h: ih }, iw, ih), 0); metaFiles.push({ name: nm, kind: 'photo', w: iw, h: ih });
+      vSeg(lt, m, 0, D, 0, ccClipOf({ x: 0, y: 0, w: iw, h: ih }, { x: logoPos.x - lw / 2, y: logoPos.y + logoAuto.dy - lh / 2, w: lw, h: lh }, S0v.logoOp), null, 1.0, 50); } catch (e) { console.warn('logo a CapCut', e); }
+  }
+  // 4) música
+  if (music.cur && music.cur.blob) {
+    try { const nm = 'musica.' + (((music.cur.name || '').match(/\.(\w{2,4})$/) || [, 'mp3'])[1]); files[nm] = music.cur.blob; metaFiles.push({ name: nm, kind: 'music', dur: ccUs(music.cur.dur || dur) });
+      const at = trackOf('audio'), m = ccClone(T.amat); Object.assign(m, { id: ccId(), path: '__CXDIR__/cortex/' + nm, name: nm, duration: ccUs(music.cur.dur || dur), local_material_id: ccId().toLowerCase(), music_id: ccId().toLowerCase() }); add('audios', m);
+      const st0 = +$('mStart').value || 0, du = Math.min(D, ccUs(Math.max(0.5, (music.cur.dur || dur) - st0))), refs = [];
+      for (const [k, x] of Object.entries(T.arefs)) { const o = ccClone(x); o.id = ccId(); if (k === 'audio_fades') Object.assign(o, { fade_in_duration: ccUs(+$('mFadeIn').value || 0), fade_out_duration: ccUs(+$('mFadeOut').value || 0) }); refs.push(add(k, o)); }
+      const g = ccClone(T.aseg); Object.assign(g, { id: ccId(), material_id: m.id, source_timerange: { start: ccUs(st0), duration: du }, target_timerange: { start: 0, duration: du }, volume: +$('mVol').value / 100, extra_material_refs: refs, track_render_index: tracks.indexOf(at) }); at.segments.push(g); } catch (e) { console.warn('música a CapCut', e); }
+  }
+  draft.tracks = tracks;
+  const name = (title || (file.name || 'Clip').replace(/\.[^.]+$/, '')).replace(/[\\/:*?"<>|\n\r]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60) || 'Clip de Cortex';
+  return { draft, files, fonts: [...fonts], name, dur: D, metaFiles, blur: blurAny };
+}
+// se lo manda al grabador, que crea el proyecto en la carpeta de CapCut
+async function ccSend(say) {
+  say = say || (t => toast(t));
+  const dir = await getLiveDir(true); if (!dir) { say('⚠ Para pasar a CapCut, elige antes la carpeta del grabador (En directo → carpeta) y ten abierto «Grabador Clipzi».'); return false; }
+  const v = JSON.parse(await rtext(dir, 'descargas/vivo.json') || 'null');
+  if (!v || Date.now() / 1000 - v.t > 20) { say('⚠ Abre «Grabador Clipzi.bat» (el grabador) y vuelve a pulsar: es el que crea el proyecto en CapCut.'); return false; }
+  if ((v.v || 0) < 26) { say('⚠ El grabador está desactualizado: cierra su ventana y vuelve a abrir «Grabador Clipzi.bat».'); try { await writeGrabadorFiles(); } catch {} return false; }
+  say('🎬 Preparando el proyecto de CapCut…');
+  const b = await ccBuild(), id = 'c' + Date.now().toString(36), cc = await dir.getDirectoryHandle('capcut', { create: true }), job = await cc.getDirectoryHandle(id, { create: true });
+  let n = 0; const names = Object.keys(b.files);
+  for (const nm of names) { say(`🎬 Copiando ${nm === names[0] ? 'el vídeo' : nm}… (${++n}/${names.length})`); await wfile(job, nm, b.files[nm]); }
+  await wfile(job, 'draft.json', JSON.stringify(b.draft));
+  const rq = await cc.getDirectoryHandle('req', { create: true });
+  await wfile(rq, id + '.json', JSON.stringify({ name: b.name, fonts: b.fonts, dur: b.dur, files: b.metaFiles }));
+  say('🎬 El grabador está creando el proyecto en CapCut…'); const t0 = Date.now(); let o;
+  for (;;) { await sleep(800); o = JSON.parse(await rtext(dir, 'capcut/out/' + id + '.json') || 'null'); if (o && o.status !== 'working') break; if (o && o.msg) say('🎬 ' + o.msg); if (Date.now() - t0 > 120000) { say('⚠ El grabador no responde: ¿está abierto?'); return false; } }
+  if (o.status === 'error') { say('⚠ ' + (o.error || 'No se pudo crear el proyecto de CapCut')); return false; }
+  say(`✅ Listo: abre CapCut y verás «${o.name}» en tus proyectos` + (o.running ? ' (si ya lo tenías abierto, ciérralo y vuelve a abrirlo).' : '.'));
+  return true;
+}
+setTimeout(() => {
+  const web = typeof CORTEX_PROXY !== 'undefined' && CORTEX_PROXY;   // en la web no hay grabador
+  for (const id of ['seCC', 'ccBtn']) { const b = $(id); if (!b) continue; if (web) { b.hidden = true; continue; }
+    b.onclick = async () => { if (b.disabled) return; if (typeof stPend !== 'undefined' && stPend) { toast('Espera a que el clip esté listo'); return; }
+      b.disabled = true; const say = t => { if (id === 'seCC' && $('seS')) $('seS').textContent = t; else toast(t); };
+      try { await ccSend(say); } catch (e) { console.warn('CapCut', e); say('⚠ No se pudo pasar a CapCut: ' + (e.message || e)); } b.disabled = false; }; }
+}, 0);
 /* ---------- botón «Editar con IA» con sus casillas (se guardan) ---------- */
 let stAiBusy = false;
 async function stAiRun() {
