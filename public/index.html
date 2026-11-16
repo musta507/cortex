@@ -1534,6 +1534,14 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .sug-pv img{width:100%;height:100%;object-fit:cover;animation:cxPop .25s var(--ease) backwards}
 .sug-ib{display:flex;flex-wrap:wrap;gap:6px}.sug-ib button{width:auto;padding:7px 11px;font-size:12.5px}
 #tplSugW{align-items:center;gap:12px;flex-wrap:wrap}#tplSugW[hidden],#tplAct[hidden]{display:none!important}
+.fn-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;width:150px;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:inherit;font:inherit;transition:transform .25s var(--ease),border-color .2s,box-shadow .25s}
+.fn-card:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.3);box-shadow:0 14px 32px rgba(0,0,0,.4)}
+.fn-pv{display:grid;place-items:center;width:100%;height:80px;border-radius:8px;background:linear-gradient(135deg,#2a2f3a,#3a3128);overflow:hidden}
+.fn-pv span{font-size:26px;color:#fff;white-space:nowrap}
+.fn-up{border-style:dashed;cursor:pointer}.fn-up .fn-pv{background:rgba(255,255,255,.04)}.fn-up .fn-pv span{color:#C7D6FF;font-size:30px}
+.fn-card .tt-del{opacity:0;transition:opacity .15s}.fn-card:hover .tt-del{opacity:.75}
+.ttc-addf{display:grid;gap:2px;justify-items:center;padding:8px 4px!important;border-radius:10px!important;border-style:dashed!important}
+.ttc-addf i{font-style:normal;font-size:22px;line-height:1.1;color:#C7D6FF}.ttc-addf span{font-size:10px;color:#A1A1AA}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important}}
 
 /* ===== versión pública ===== */
@@ -1964,6 +1972,11 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
             <div class="tt-grid" id="ttGrid"></div>
             <div class="tpl-act"><button class="primary" id="ttNewBtn">➕ Crear plantilla de título</button></div>
             <p class="hint">Elige la letra, el tamaño, los colores, el contorno, la sombra y el fondo, y lo ves al momento. Para editar una tuya, pasa el ratón por encima y pulsa ✏️. También puedes guardar el título de un clip abierto: arriba, «Plantilla de título» → «Guardar el título actual como plantilla».</p>
+          </section>
+          <section class="tplbox" id="fnBox">
+            <div class="tpl-h"><strong>🔤 Tus fuentes</strong><span class="hint">Sube las letras que uses (.ttf, .otf o .woff). Saldrán para elegir en los títulos, los subtítulos y al crear plantillas de título. Puedes subir varias a la vez.</span></div>
+            <div class="lg-grid" id="fontGrid"></div>
+            <input type="file" id="fnFile" accept=".ttf,.otf,.woff,.woff2" multiple hidden>
           </section>
           <section class="tplbox" id="lgBox">
             <div class="tpl-h"><strong>🖼️ Logos</strong><span class="hint">Todos tus logos en un sitio. Pulsa uno para ponérselo a <b id="lgWho"></b>: saldrá en todos sus clips. Puedes subir varios a la vez.</span></div>
@@ -6627,10 +6640,7 @@ $('fontFile').addEventListener('change', async e => {
   try {
     const buf = await f.arrayBuffer();
     await registerFont(name, buf);
-    try {
-      const saved = JSON.parse(localStorage.getItem('clipzi-fonts') || '{}');
-      if (buf.byteLength < 2.5e6) { saved[name] = toB64(buf); localStorage.setItem('clipzi-fonts', JSON.stringify(saved)); }
-    } catch {}
+    await fontLibAdd(name, buf, f.name);
     setStatus($('fontStatus'), `Fuente «${name}» añadida. Elígela en Fuente título o Fuente de subtítulos.`, 'ok');
     checkFonts();
   } catch (err) {
@@ -6639,13 +6649,41 @@ $('fontFile').addEventListener('change', async e => {
   e.target.value = '';
 });
 document.querySelectorAll('.fontSel').forEach(sel => sel.addEventListener('change', checkFonts));
+// ---- biblioteca de fuentes de cada usuario (se guarda en este navegador, en la base de datos de Cortex) ----
+async function fontLib() { let l = null; try { l = await kv.get('fontLib'); } catch {} return Array.isArray(l) ? l : []; }
+async function fontLibAdd(name, buf, file) {
+  const l = (await fontLib()).filter(x => x.name.toLowerCase() !== name.toLowerCase()); l.push({ name, file: file || name, buf, at: Date.now(), size: buf.byteLength });
+  try { await kv.set('fontLib', l); } catch (e) { console.warn('fuente', e); }
+}
+async function fontAddFiles(files, say) {
+  let ok = 0, bad = []; say = say || toast;
+  for (const f of files) { const name = fontNameFromFile(f.name); try { const buf = await f.arrayBuffer(); await registerFont(name, buf); await fontLibAdd(name, buf, f.name); ok++; } catch { bad.push(f.name); } }
+  say((ok ? (ok === 1 ? 'Fuente añadida: ya la puedes elegir en el título y los subtítulos' : ok + ' fuentes añadidas') : '') + (bad.length ? (ok ? ' · ' : '') + '⚠ No son fuentes válidas: ' + bad.join(', ') : ''));
+  try { fontsRender(); } catch {} return ok;
+}
+let fontsRenderN = 0;
+async function fontsRender() {
+  const box = $('fontGrid'); if (!box) return; const my = ++fontsRenderN, l = await fontLib(); if (my !== fontsRenderN) return; box.innerHTML = '';
+  for (const x of l) {
+    const c = document.createElement('div'); c.className = 'fn-card';
+    c.innerHTML = '<div class="fn-pv"><span>Aa Bb 123</span></div><div class="tt-n"></div><div class="tt-fix"></div>';
+    c.querySelector('.fn-pv span').style.fontFamily = `"${x.name}", system-ui`; c.querySelector('.tt-n').textContent = x.name; c.querySelector('.tt-fix').textContent = (x.size / 1024).toFixed(0) + ' KB';
+    const d = document.createElement('button'); d.className = 'tt-del'; d.textContent = '🗑'; d.title = 'Quitar esta fuente';
+    d.onclick = async () => { if (!confirm(`¿Quitar la fuente «${x.name}»? Los títulos que la usen pasarán a una letra parecida.`)) return; await kv.set('fontLib', (await fontLib()).filter(y => y.name !== x.name)); fontsRender(); };
+    c.append(d); box.append(c);
+  }
+  const up = document.createElement('button'); up.type = 'button'; up.className = 'fn-card fn-up'; up.innerHTML = '<div class="fn-pv"><span>＋</span></div><div class="tt-n">Subir fuentes</div><div class="tt-fix">.ttf · .otf · .woff</div>'; up.onclick = () => $('fnFile').click(); box.append(up);
+}
+setTimeout(() => { const f = $('fnFile'); if (f) f.addEventListener('change', async () => { const fs2 = [...f.files]; f.value = ''; if (fs2.length) await fontAddFiles(fs2); }); }, 0);
 async function restoreFonts() {
+  try { for (const x of await fontLib()) await registerFont(x.name, x.buf.slice ? x.buf.slice(0) : x.buf).catch(() => {}); } catch {}
   try {
     const saved = JSON.parse(localStorage.getItem('clipzi-fonts') || '{}');
     for (const [name, b64] of Object.entries(saved)) {
       const bin = atob(b64), u = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
       await registerFont(name, u.buffer).catch(() => {});
+      if (!(await fontLib()).some(x => x.name === name)) await fontLibAdd(name, u.buffer.slice(0), name);
     }
   } catch {}
 }
@@ -11034,7 +11072,13 @@ function ttcOpen(editName, base, suggest) {
   const q = sel => ov.querySelector(sel), c = tp.c, cl = clientOf(curClient);
   q('#ttcName').value = editName || suggest || ''; q('#ttcWho').textContent = cl ? cl.name : 'este creador';
   const fb = q('#ttcFonts');
-  for (const [v, n] of fonts) { const b = document.createElement('button'); b.type = 'button'; b.dataset.v = v; const [fam, wt] = v.split('|'); b.innerHTML = '<i>Aa</i><span></span>'; b.querySelector('i').style.cssText = `font-family:"${fam}",system-ui;font-weight:${wt}`; b.querySelector('span').textContent = n.replace(/ \(.*\)$/, ''); b.title = n; b.onclick = () => { c.titleFont = v; draw(); }; fb.append(b); }
+  const addFontTile = () => { const b = document.createElement('button'); b.type = 'button'; b.className = 'ttc-addf'; b.innerHTML = '<i>＋</i><span>Subir fuente</span>'; b.title = 'Sube tu propia letra (.ttf, .otf o .woff)';
+    b.onclick = () => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.ttf,.otf,.woff,.woff2'; inp.multiple = true; inp.onchange = async () => { const fl = [...inp.files]; if (!fl.length) return; const before = new Set([...$('titleFont').options].map(o => o.value));
+      await fontAddFiles(fl, t => { q('#ttcMsg').textContent = t.startsWith('⚠') ? t : ''; }); const nw = [...$('titleFont').options].map(o => [o.value, o.textContent]).filter(([v]) => !before.has(v));
+      for (const [v, n] of nw) fb.insertBefore(mkFont(v, n), b); if (nw.length) { c.titleFont = nw[nw.length - 1][0]; draw(); } }; inp.click(); }; return b; };
+  const mkFont = (v, n) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.v = v; const [fam, wt] = v.split('|'); b.innerHTML = '<i>Aa</i><span></span>'; b.querySelector('i').style.cssText = `font-family:"${fam}",system-ui;font-weight:${wt}`; b.querySelector('span').textContent = n.replace(/ \(.*\)$/, ''); b.title = n; b.onclick = () => { c.titleFont = v; draw(); }; return b; };
+  for (const [v, n] of fonts) fb.append(mkFont(v, n));
+  fb.append(addFontTile());
   const fmtV = { titleSize: v => v, tLS: v => v, titleLH: v => (v / 100).toFixed(2), titleW: v => +v ? v + ' px' : 'auto', tStrokeW: v => v, tShadow: v => v + '%', boxOp: v => v + '%', boxR: v => v, boxPX: v => v, boxPY: v => v };
   const draw = () => {
     const box = tp.titleStyle === 'box';
@@ -12633,7 +12677,7 @@ function tplCard(st, name, sub, isDef, btns) {
   return card;
 }
 async function tplRender() {
-  ttRender().catch(e => console.warn('títulos', e));
+  ttRender().catch(e => console.warn('títulos', e)); fontsRender().catch(() => {});
   const c = clientOf(curClient), box = $('tplBox'); if (!c || !box) { lgRender().catch(() => {}); return; }
   await loadClientStore(c.id); lgRender().catch(e => console.warn('logos', e));
   $('tplWho').textContent = c.name;
