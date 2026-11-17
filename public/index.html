@@ -6041,7 +6041,7 @@ function demux(ab) {
 let encNoHw = false;   // si la tarjeta gráfica falla al comprimir, no se vuelve a intentar con ella
 const expFast = () => $('quality').value === 'fast';
 setTimeout(() => { const f = () => { $('fps').hidden = expFast(); }; $('quality').addEventListener('change', f); f(); }, 0);
-const expBitrate = () => expFast() ? 14e6 : +$('quality').value;
+const expBitrate = () => expFast() ? 22e6 : +$('quality').value;   // rápida: 22 Mb/s (las tarjetas gráficas se quedan cortas con menos)
 const fps30 = () => expFast() || $('fps').value === '30';
 async function pickVideoEncoder(fps, bitrate, fast) {
   if (fast) {
@@ -6050,7 +6050,7 @@ async function pickVideoEncoder(fps, bitrate, fast) {
       tries.push({ codec, width: W, height: H, framerate: fps, bitrate, bitrateMode: 'variable', latencyMode: 'quality', hardwareAcceleration: 'prefer-hardware', avc: { format: 'avc' } });
     // sin tarjeta gráfica que comprima: el compresor del navegador en su modo rápido
     for (const codec of ['avc1.640033', 'avc1.42e033'])
-      tries.push({ codec, width: W, height: H, framerate: fps, bitrate, bitrateMode: 'variable', latencyMode: 'realtime', avc: { format: 'avc' } });
+      tries.push({ codec, width: W, height: H, framerate: fps, bitrate, bitrateMode: 'variable', latencyMode: 'quality', avc: { format: 'avc' } });   // modo calidad: el «realtime» del compresor del navegador se ve borroso
     for (const cfg of tries) { try { if ((await VideoEncoder.isConfigSupported(cfg)).supported) return { cfg, mux: 'avc', q: null, hw: cfg.hardwareAcceleration === 'prefer-hardware' }; } catch {} }
   }
   const hi = bitrate >= 30e6;
