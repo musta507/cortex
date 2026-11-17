@@ -1,0 +1,49 @@
+{
+  "name": "cortex",
+  "productName": "Cortex",
+  "version": "1.0.0",
+  "description": "Cortex: editor de clips para clippers",
+  "main": "main.js",
+  "author": "Mustapha",
+  "license": "UNLICENSED",
+  "build": {
+    "appId": "es.cortex.app",
+    "productName": "Cortex",
+    "copyright": "Mustapha",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "icon.png",
+      "app/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.png",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Cortex",
+      "artifactName": "Cortex-Setup-${version}.exe",
+      "runAfterFinish": true
+    }
+  },
+  "devDependencies": {
+    "electron": "33.4.11",
+    "electron-builder": "25.1.8"
+  }
+}
