@@ -5,6 +5,7 @@ const http = require('http'), fs = require('fs'), path = require('path'), zlib =
 
 const K = require('./cuentas');
 const KEY = (process.env.GEMINI_KEY || '').trim();
+const EL_KEY = (process.env.ELEVENLABS_KEY || '').trim();
 const ADMIN = (process.env.ADMIN_PASSWORD || '').trim();
 const PORT = process.env.PORT || 3000;
 const PER_IP = +process.env.LIMITE_POR_PERSONA || 150;   // peticiones a la IA por persona y día
@@ -50,7 +51,7 @@ const go = (res, to, extra) => { res.writeHead(303, { Location: to, ...(extra ||
 async function readBody(req, max) { const ch = []; let n = 0; for await (const c of req) { n += c.length; if (n > max) throw new Error('grande'); ch.push(c); } return Buffer.concat(ch).toString('utf8'); }
 const formPass = b => new URLSearchParams(b).get('pass') || '';
 
-const iaErrs = []; const iaErr = (m, txt) => { iaErrs.push({ at: Date.now(), modelo: m, error: String(txt).replace(/AIza[\w-]{20,}/g, '…').slice(0, 300) }); if (iaErrs.length > 20) iaErrs.shift(); };
+const iaErrs = []; const iaErr = (m, txt) => { iaErrs.push({ at: Date.now(), modelo: m, error: String(txt).replace(/AIza[\w-]{20,}|sk_[\w]{16,}/g, '…').slice(0, 300) }); if (iaErrs.length > 20) iaErrs.shift(); };
 let day = '', total = 0, perIp = new Map(), dlIp = new Map();
 function rollDay() { const d = new Date().toISOString().slice(0, 10); if (d !== day) { day = d; total = 0; perIp = new Map(); dlIp = new Map(); } }
 function quota(ip) {
@@ -217,6 +218,27 @@ http.createServer(async (req, res) => {
       if (r.status === 401 || r.status === 403 || (r.status === 400 && /api key/i.test(txt))) { console.error('GEMINI_KEY rechazada:', txt.slice(0, 200)); return json(res, 503, { error: { message: 'La IA no está disponible ahora mismo.' } }); }
       res.writeHead(r.status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       return res.end(txt);
+    }
+    // ---------- subtítulos: el audio del clip va a ElevenLabs Scribe (la clave vive solo aquí, variable ELEVENLABS_KEY) ----------
+    if (req.method === 'POST' && url.pathname === '/api/voz') {
+      if (!EL_KEY) return json(res, 503, { error: { message: 'Los subtítulos en la nube no están configurados (falta ELEVENLABS_KEY).' } });
+      if (!sameSite(req)) return json(res, 403, { error: { message: 'origen no permitido' } });
+      const why = quota(me.name); if (why) return json(res, 429, { error: { message: why } });
+      const chunks = []; let size = 0;
+      for await (const c of req) { size += c.length; if (size > 60 * 1024 * 1024) return json(res, 413, { error: { message: 'El audio es demasiado largo.' } }); chunks.push(c); }
+      const lc = String(req.headers['x-lang'] || '').replace(/[^a-z]/g, '').slice(0, 3);
+      let last = '';
+      for (const model of ['scribe_v2', 'scribe_v1']) {
+        const fd = new FormData(); fd.append('file', new Blob([Buffer.concat(chunks)], { type: 'audio/wav' }), 'clip.wav'); fd.append('model_id', model); fd.append('timestamps_granularity', 'word'); fd.append('tag_audio_events', 'false'); if (lc) fd.append('language_code', lc);
+        let r; try { r = await fetch('https://api.elevenlabs.io/v1/speech-to-text', { method: 'POST', headers: { 'xi-api-key': EL_KEY }, body: fd, signal: AbortSignal.timeout(180000) }); }
+        catch (e) { iaErr('elevenlabs', 'sin respuesta: ' + (e.message || e)); return json(res, 502, { error: { message: 'No se pudo hablar con el servicio de subtítulos.' } }); }
+        const txt = await r.text();
+        if (r.ok) { res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); return res.end(txt); }
+        last = r.status + ' ' + txt.slice(0, 300); iaErr('elevenlabs ' + model, last);
+        if (r.status === 401 || r.status === 403) { console.error('ELEVENLABS_KEY rechazada:', txt.slice(0, 200)); return json(res, 503, { error: { message: 'Los subtítulos en la nube no están disponibles ahora mismo.' } }); }
+        if (!/model/i.test(txt)) break;
+      }
+      return json(res, 502, { error: { message: 'El servicio de subtítulos ha fallado: ' + last.slice(0, 120) } });
     }
     if (req.method === 'POST' && url.pathname === '/api/clip') {
       if (!sameSite(req)) return json(res, 403, { error: 'origen no permitido' });
