@@ -13729,9 +13729,12 @@ async function getLiveDir(ask) {
   try {
     let p = await liveDir.queryPermission({ mode: 'readwrite' });
     if (p !== 'granted' && ask) p = await liveDir.requestPermission({ mode: 'readwrite' });
+    liveDirWhy = p === 'granted' ? '' : p;
     return p === 'granted' ? liveDir : null;
-  } catch { return null; }
+  } catch (e) { liveDirWhy = (e && e.name) || 'error'; console.warn('carpeta del grabador', e); return null; }
 }
+let liveDirWhy = '';   // por qué el navegador no dio permiso la última vez (para poder explicarlo)
+const BROWSER_FILES = /Edg\//.test(navigator.userAgent) ? 'edge://settings/content/fileEditing' : 'chrome://settings/content/filesystem';
 async function wfile(dir, name, data) { const fh = await dir.getFileHandle(name, { create: true }); const w = await fh.createWritable(); await w.write(data); await w.close(); }
 async function subDir(dir, path) { let d = dir; for (const p of path.split('/').filter(Boolean)) d = await d.getDirectoryHandle(p); return d; }
 async function fileAt(dir, path) { const parts = path.split('/').filter(Boolean), name = parts.pop(); const d = await subDir(dir, parts.join('/')); return (await d.getFileHandle(name)).getFile(); }
@@ -13848,9 +13851,19 @@ setInterval(async () => {
     if (cur !== liveCfgSeen) { await writeLiveConfig(); liveCfgSeen = cur; }
   } catch {} finally { liveCfgBusy = false; }
 }, 10000);
+let pickAborts = 0;
+const toastLong = (t, ms = 15000) => { const el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, ms); console.warn(t); };
 async function pickLiveDir() {
   if (!window.showDirectoryPicker) { toast('Este navegador no deja elegir carpetas: usa Google Chrome'); return null; }
-  let d; try { d = await showDirectoryPicker({ id: 'clipzi-grabador', mode: 'readwrite' }); } catch (e) { if (e.name !== 'AbortError') toast('Chrome no me deja abrir carpetas aquí (' + e.message + ')'); return null; }
+  let d; const opt = { id: 'clipzi-grabador', mode: 'readwrite' }; if (liveDir && liveDir.kind === 'directory') opt.startIn = liveDir;   // se abre ya en tu carpeta: solo hay que pulsar «Seleccionar carpeta»
+  try { d = await showDirectoryPicker(opt); }
+  catch (e) {
+    if (e.name === 'AbortError') { pickAborts++; if (pickAborts >= 2) toastLong('Si ya has elegido la carpeta y te la vuelve a pedir, es que el navegador tiene bloqueado «editar archivos» para Cortex. Abre ' + BROWSER_FILES + ' en una pestaña nueva, activa «Los sitios pueden pedir permiso para editar archivos» y quita Cortex de la lista de bloqueados. Después recarga esta página.'); }
+    else toastLong('El navegador no me deja abrir carpetas aquí (' + e.name + ': ' + e.message + ').');
+    return null;
+  }
+  pickAborts = 0;
+  try { if ((await d.queryPermission({ mode: 'readwrite' })) !== 'granted' && (await d.requestPermission({ mode: 'readwrite' })) !== 'granted') { toastLong('Has elegido la carpeta, pero el navegador no me deja guardar en ella. Cuando salga el aviso «¿Guardar cambios?», pulsa «Guardar cambios» / «Editar archivos».'); return null; } } catch (e) { console.warn(e); }
   liveDir = d; kv.set('grabDir', d).catch(e => { console.warn('carpeta', e); toast('He abierto la carpeta, pero el navegador no me deja recordarla: te la pedirá otra vez al recargar. Cierra todas las ventanas de Edge y vuelve a abrirlo.'); });
   try { await writeGrabadorFiles(); await writeLiveConfig(); toast('Listo: en esa carpeta abre «Grabador Clipzi.bat» con doble clic'); }
   catch (e) { console.warn(e); toast('No pude escribir en esa carpeta'); }
@@ -13870,7 +13883,10 @@ async function renderLiveBox(cl) {
 }
 async function openLive() {
   let d = await getLiveDir(true);
-  if (!d) { d = await pickLiveDir(); if (!d) return; }
+  if (!d) {
+    if (liveDir) toastLong(liveDirWhy === 'denied' ? 'El navegador ha bloqueado el permiso de tu carpeta del grabador. Elígela otra vez (se abre en ella: pulsa «Seleccionar carpeta»).' : 'Necesito permiso para tu carpeta del grabador: se abre en ella, pulsa «Seleccionar carpeta».', 7000);
+    d = await pickLiveDir(); if (!d) return;
+  }
   try { await writeGrabadorFiles(); await writeLiveConfig(); } catch (e) { console.warn(e); }
   try { liveHidden = new Set((await kv.get('live-hidden')) || []); } catch {}
   $('home').hidden = true; $('livePage').hidden = false; $('liveBack').hidden = true; lvFmtUI(); lvMiniOff = false; stMode();
