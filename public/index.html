@@ -1513,6 +1513,23 @@ body.se-rzing{cursor:ew-resize;user-select:none}
 #lvMini:not(.rw) #lvRwV{display:none!important}#lvRwV{display:none;width:100%;aspect-ratio:16/9;background:#000;object-fit:contain}
 #lvMini.rw #lvRwV{display:block}#lvMini.rw #lvMiniV,#lvMini.rw #lvMiniF{position:absolute;width:1px!important;height:1px!important;opacity:0;pointer-events:none}
 #lvMini.rw{box-shadow:0 0 0 2px #FBBF24,0 18px 50px rgba(0,0,0,.6)}
+/* modo Pantalla: el directo lo más grande posible; el estado, los criterios y el modo automático se quedan en la pestaña Transcripción */
+#livePage.stage .lv-status,#livePage.stage .lv-crit,#livePage.stage .lv-auto,#livePage.stage .home-in>p.hint{display:none!important}
+#livePage.stage .home-in{max-width:none;padding:10px 18px 14px;gap:8px}
+#livePage.stage .lv-mini,#livePage.stage .lv-stage{width:min(100%,calc((100vh - 280px)*16/9));min-width:420px}
+#livePage.stage .lv-mini{margin:0 auto}
+#livePage.stage .lv-stage{margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 10px}
+#livePage.stage .lv-stage[hidden]{display:none}
+#livePage.stage .lv-stage .st-det{flex:0 0 100%;order:0}
+#livePage.stage .lv-stage .st-tl{flex:0 0 100%;order:1;height:46px}
+#livePage.stage .lv-stage .st-rw{order:2;margin:0}
+#livePage.stage .lv-stage .st-btns{order:4;margin:0;flex-wrap:nowrap;gap:6px}
+#livePage.stage .lv-stage .st-btns.st-mk{order:3}
+#livePage.stage .lv-stage .st-btns .st-b{padding:8px 16px;font-size:15px}
+#livePage.stage .lv-stage .st-btns .st-b2{padding:8px 14px}
+#livePage.stage #stMarkT{display:none}
+#livePage.stage .lv-stage .st-rw .hint{flex-basis:auto}
+
 .st-rw{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 2px}.st-rw button{width:auto;padding:7px 12px;font-weight:700}
 .st-rw.on .hint{color:#FBBF24;font-weight:700}
 .st-tl{cursor:pointer}
