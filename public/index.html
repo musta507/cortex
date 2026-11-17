@@ -2612,7 +2612,7 @@ No hace falta tocar nada aquí: Clipzi escribe config.json y tú solo abres
 """
 import os, sys, json, time, threading, subprocess, shutil, re, glob, wave, traceback, datetime, uuid
 
-GRABADOR_VERSION = 28   # Clipzi solo lo sobrescribe con una versión más nueva
+GRABADOR_VERSION = 29   # Clipzi solo lo sobrescribe con una versión más nueva
 BASE = os.path.dirname(os.path.abspath(__file__))
 CFG = os.path.join(BASE, 'config.json')
 DIRS = os.path.join(BASE, 'directos')
@@ -3074,7 +3074,7 @@ class Session:
         self.feat_cache = {}
         self.status()
         log('🔴 %s está en directo: grabando en %s' % (self.slug, self.dir))
-        for fn in (self.rec_loop, self.chat_loop, self.spike_loop, self.kick_clips_loop, self.clippers_loop, self.req_loop):
+        for fn in (self.rec_loop, self.chat_loop, self.spike_loop, self.kick_clips_loop, self.clippers_loop, self.req_loop, self.wav_loop):
             threading.Thread(target=self.safe(fn), daemon=True).start()
 
     def safe(self, fn):
@@ -3131,30 +3131,16 @@ class Session:
             cmd += ['-i', url, '-map', '0:v:0?', '-map', '0:a:0?', '-c', 'copy', '-f', 'segment', '-segment_time', SEGLEN,
                     '-reset_timestamps', '1', '-segment_list', listf, '-segment_list_type', 'csv', pattern]
             # además, el audio en vivo (16 kHz, mono, sin cabecera) para los subtítulos en directo de Cortex
-            pcm_rel = 'aud/live_%d.pcm' % run_n
-            pcm = os.path.join(self.dir, pcm_rel)
-            cmd += ['-map', '0:a:0?', '-vn', '-ac', '1', '-ar', '16000', '-f', 's16le', '-flush_packets', '1', pcm]
-            pcm_t0 = None
+            # (sale por una tubería: solo se guarda en disco mientras la transcripción está encendida en Clipzi)
+            cmd += ['-map', '0:a:0?', '-vn', '-ac', '1', '-ar', '16000', '-f', 's16le', '-flush_packets', '1', 'pipe:1']
             errf = open(os.path.join(self.dir, 'ffmpeg.log'), 'a')
-            self.proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=errf, creationflags=NOWIN)
+            self.proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=errf, creationflags=NOWIN)
             job_add(self.proc)
+            threading.Thread(target=self.pcm_pump, args=(self.proc, run_n), daemon=True).start()
             done = 0
             while self.proc.poll() is None and self.alive:
                 time.sleep(2)
                 done = self.read_list(listf, done)
-                # hora real del primer segundo de audio (para saber en qué momento del directo cae cada palabra)
-                if pcm_t0 is None:
-                    try:
-                        sz = os.path.getsize(pcm)
-                    except Exception:
-                        sz = 0
-                    if sz >= 64000:
-                        pcm_t0 = round(time.time() - sz / 32000.0, 3)
-                        try:
-                            with open(os.path.join(self.dir, 'aud', 'live.json'), 'w', encoding='utf-8') as f:
-                                json.dump({'file': pcm_rel, 't0': pcm_t0, 'rate': 16000, 'run': run_n}, f)
-                        except Exception:
-                            pass
             if self.proc.poll() is None:
                 self.proc.terminate()
             time.sleep(1)
@@ -3169,6 +3155,65 @@ class Session:
                 time.sleep(60)
                 self.alive = False
         self.status()
+
+    def pcm_pump(self, proc, run_n):
+        """Recoge el audio en vivo de ffmpeg. Con la transcripción apagada en Clipzi se tira; encendida, se guarda para los subtítulos en directo."""
+        part, f, rel, t0, nbytes, told = 0, None, '', 0, 0, False
+        while True:
+            try:
+                b = proc.stdout.read(6400)       # 0,2 s de audio
+            except Exception:
+                b = b''
+            if not b:
+                break
+            try:
+                if is_off('voz'):
+                    if f:
+                        f.close()
+                        f = None
+                    continue
+                if f is None:                    # se enciende (o empieza): archivo nuevo con su hora real de inicio
+                    part += 1
+                    rel = 'aud/live_%d_%d.pcm' % (run_n, part)
+                    f = open(os.path.join(self.dir, rel), 'wb')
+                    t0, nbytes, told = time.time() - len(b) / 32000.0, 0, False
+                f.write(b)
+                f.flush()
+                nbytes += len(b)
+                if not told and nbytes >= 64000:  # hora real del primer segundo de audio (para saber en qué momento del directo cae cada palabra)
+                    told = True
+                    with open(os.path.join(self.dir, 'aud', 'live.json'), 'w', encoding='utf-8') as j:
+                        json.dump({'file': rel, 't0': round(t0, 3), 'rate': 16000, 'run': run_n}, j)
+            except Exception:
+                pass                             # pase lo que pase se sigue leyendo: si no, ffmpeg se atasca y deja de grabar
+        try:
+            if f:
+                f.close()
+        except Exception:
+            pass
+
+    def need_wav(self):
+        # el audio de cada trozo solo hace falta para: otros clippers, la IA que escucha o la transcripción
+        return not (is_off('clipper') and is_off('ia') and is_off('voz'))
+
+    def ensure_wav(self, s):
+        wav = os.path.join(self.dir, s['wav'])
+        if os.path.exists(wav):
+            return True
+        return to_wav(os.path.join(self.dir, s['f']), wav)
+
+    def wav_loop(self):
+        """Si enciendes una función que usa el audio de los trozos, se preparan los que faltan (primero los más recientes)."""
+        while self.alive:
+            time.sleep(3)
+            if not self.need_wav():
+                continue
+            for s in reversed(self.segs[-90:]):
+                if not self.alive or not self.need_wav():
+                    break
+                if not os.path.exists(os.path.join(self.dir, s['wav'])):
+                    self.ensure_wav(s)
+                    time.sleep(0.5)
 
     def read_list(self, listf, done):
         try:
@@ -3193,7 +3238,8 @@ class Session:
             return
         t1 = os.path.getmtime(path)
         wav = path[:-4] + '.wav'
-        to_wav(path, wav)
+        if self.need_wav() or dur is None:
+            to_wav(path, wav)
         if dur is None:
             try:
                 with wave.open(wav, 'rb') as w:
@@ -3552,6 +3598,7 @@ class Session:
             k = s['wav']
             if k not in self.feat_cache:
                 try:
+                    self.ensure_wav(s)
                     aa, rr = read_wav(os.path.join(self.dir, k))
                     self.feat_cache[k] = features(aa, rr)
                 except Exception:
@@ -13742,12 +13789,17 @@ async function getLive(cl) {
 async function saveLive(cl, L) { const st = await getClientStore(cl.id); st.live = L; try { await kv.set('client:' + cl.id, st); } catch {} await writeLiveConfig(); }
 async function writeLiveConfig() {
   const d = await getLiveDir(false); if (!d) return;
-  const canales = [];
+  const canales = []; let anyAI = false;
   for (const c of clients) {
-    const L = await getLive(c);
+    const L = await getLive(c); if (L.ai && L.kick && L.kick.trim()) anyAI = true;
     if (L.kick && L.kick.trim()) canales.push({ kick: L.kick.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?kick\.com\//i, '').split(/[/?#]/)[0], client: c.name, clippers: (L.clippers || '').split(/[\s,;]+/).map(x => x.trim()).filter(Boolean) });
   }
-  try { await wfile(d, 'config.json', JSON.stringify({ canales, apagados: [...critOff()], actualizado: new Date().toISOString() }, null, 2)); } catch (e) { console.warn(e); }
+  // lo que no se está usando se le dice al grabador, para que no trabaje para nada
+  const apagados = [...critOff()];
+  if (!anyAI && !apagados.includes('ia')) apagados.push('ia');   // la IA que escucha no está puesta en ningún cliente
+  let trOn = true; try { trOn = lvTrOn(); } catch {}
+  if (!trOn) apagados.push('voz');   // transcripción en directo en pausa
+  try { await wfile(d, 'config.json', JSON.stringify({ canales, apagados, actualizado: new Date().toISOString() }, null, 2)); } catch (e) { console.warn(e); }
 }
 async function pickLiveDir() {
   if (!window.showDirectoryPicker) { toast('Este navegador no deja elegir carpetas: usa Google Chrome'); return null; }
@@ -16184,7 +16236,7 @@ setTimeout(() => {
   if (!$('lvTrB')) return;
   const box = $('lvTrB');
   const upd = () => { $('lvTrOn').textContent = lvTrOn() ? '⏸ Pausar' : '▶ Activar'; if (!lvTrOn()) $('lvTrS').textContent = ''; };
-  $('lvTrOn').onclick = () => { ezPref('liveTr', lvTrOn() ? '0' : '1'); upd(); lvTrStick = true; if (lvTrOn()) { const S = lvTrSess(); if (S) lvTrLoad(S).then(() => lvTrRender(S)); lvTrTick(); } };
+  $('lvTrOn').onclick = () => { ezPref('liveTr', lvTrOn() ? '0' : '1'); upd(); writeLiveConfig(); lvTrStick = true; if (lvTrOn()) { const S = lvTrSess(); if (S) lvTrLoad(S).then(() => lvTrRender(S)); lvTrTick(); } };
   upd();
   setInterval(lvTrTick, 250);
   box.addEventListener('mousedown', e => { if (e.button === 0) lvTrDown = true; });
