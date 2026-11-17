@@ -13723,15 +13723,21 @@ $('tplBarCancel').onclick = tplCancelEdit;
    El «Grabador» (un programa pequeño en tu PC) graba Kick en trozos, lee el chat, mira los clips de Kick
    y vigila a otros clippers. Cortex lee esa carpeta, te propone los momentos y, con un clic, los edita. */
 let liveDir = null, liveTimer = null, liveSessions = {}, liveSeen = new Set(), liveHidden = new Set(), liveNew = 0, liveFrom = null;
+const liveDiag = []; const ldg = t => { liveDiag.push(new Date().toLocaleTimeString('es-ES') + ' ' + t); if (liveDiag.length > 40) liveDiag.shift(); };
+function liveDiagShow() {
+  let b = $('lvDiag'); if (!b) { b = document.createElement('div'); b.id = 'lvDiag'; b.style.cssText = 'position:fixed;left:16px;bottom:16px;z-index:99999;max-width:560px;background:#16161b;border:1px solid #FBBF24;border-radius:12px;padding:12px 14px;font:12.5px/1.5 ui-monospace,monospace;color:#F4F4F5;white-space:pre-wrap;box-shadow:0 10px 40px rgba(0,0,0,.6)'; document.body.append(b); }
+  b.textContent = '🔎 Carpeta del grabador (haz una captura de esto y mándasela a Claude)\n' + navigator.userAgent.replace(/.*(Chrome\/[\d.]+).*?(Edg\/[\d.]+|Electron\/[\d.]+)?.*/, '$1 $2') + ' · ' + location.protocol + '\n' + liveDiag.join('\n');
+  const x = document.createElement('button'); x.textContent = 'Cerrar'; x.style.cssText = 'display:block;margin-top:8px;width:auto;padding:4px 12px'; x.onclick = () => b.remove(); b.append(x);
+}
 async function getLiveDir(ask) {
-  if (!liveDir) { try { liveDir = await kv.get('grabDir'); } catch {} }
+  if (!liveDir) { try { liveDir = await kv.get('grabDir'); if (ask) ldg('carpeta guardada: ' + (liveDir ? '«' + liveDir.name + '» (' + (liveDir.kind || typeof liveDir) + ')' : 'NINGUNA')); } catch (e) { if (ask) ldg('no puedo leer la carpeta guardada: ' + e.name + ' ' + e.message); } }
   if (!liveDir) return null;
   try {
-    let p = await liveDir.queryPermission({ mode: 'readwrite' });
-    if (p !== 'granted' && ask) p = await liveDir.requestPermission({ mode: 'readwrite' });
+    let p = await liveDir.queryPermission({ mode: 'readwrite' }); if (ask) ldg('permiso ahora: ' + p);
+    if (p !== 'granted' && ask) { p = await liveDir.requestPermission({ mode: 'readwrite' }); ldg('al pedir permiso: ' + p); }
     liveDirWhy = p === 'granted' ? '' : p;
     return p === 'granted' ? liveDir : null;
-  } catch (e) { liveDirWhy = (e && e.name) || 'error'; console.warn('carpeta del grabador', e); return null; }
+  } catch (e) { liveDirWhy = (e && e.name) || 'error'; if (ask) ldg('fallo al pedir permiso: ' + e.name + ' · ' + e.message); console.warn('carpeta del grabador', e); return null; }
 }
 let liveDirWhy = '';   // por qué el navegador no dio permiso la última vez (para poder explicarlo)
 const BROWSER_FILES = /Edg\//.test(navigator.userAgent) ? 'edge://settings/content/fileEditing' : 'chrome://settings/content/filesystem';
@@ -13856,17 +13862,19 @@ const toastLong = (t, ms = 15000) => { const el = $('toast'); el.textContent = t
 async function pickLiveDir() {
   if (!window.showDirectoryPicker) { toast('Este navegador no deja elegir carpetas: usa Google Chrome'); return null; }
   let d; const opt = { id: 'clipzi-grabador', mode: 'readwrite' }; if (liveDir && liveDir.kind === 'directory') opt.startIn = liveDir;   // se abre ya en tu carpeta: solo hay que pulsar «Seleccionar carpeta»
-  try { d = await showDirectoryPicker(opt); }
+  ldg('abro el selector de carpetas' + (opt.startIn ? ' (en tu carpeta)' : ''));
+  try { d = await showDirectoryPicker(opt); ldg('carpeta elegida: «' + d.name + '»'); }
   catch (e) {
-    if (e.name === 'AbortError') { pickAborts++; if (pickAborts >= 2) toastLong('Si ya has elegido la carpeta y te la vuelve a pedir, es que el navegador tiene bloqueado «editar archivos» para Cortex. Abre ' + BROWSER_FILES + ' en una pestaña nueva, activa «Los sitios pueden pedir permiso para editar archivos» y quita Cortex de la lista de bloqueados. Después recarga esta página.'); }
+    ldg('el selector ha fallado: ' + e.name + ' · ' + e.message); liveDiagShow();
+    if (e.name === 'AbortError') { pickAborts++; if (pickAborts >= 2) toastLong('No he recibido ninguna carpeta: o se cerró el selector, o el navegador la rechazó. Abajo a la izquierda tienes el detalle: hazle una captura y mándasela a Claude.'); }
     else toastLong('El navegador no me deja abrir carpetas aquí (' + e.name + ': ' + e.message + ').');
     return null;
   }
   pickAborts = 0;
   try { if ((await d.queryPermission({ mode: 'readwrite' })) !== 'granted' && (await d.requestPermission({ mode: 'readwrite' })) !== 'granted') { toastLong('Has elegido la carpeta, pero el navegador no me deja guardar en ella. Cuando salga el aviso «¿Guardar cambios?», pulsa «Guardar cambios» / «Editar archivos».'); return null; } } catch (e) { console.warn(e); }
-  liveDir = d; kv.set('grabDir', d).catch(e => { console.warn('carpeta', e); toast('He abierto la carpeta, pero el navegador no me deja recordarla: te la pedirá otra vez al recargar. Cierra todas las ventanas de Edge y vuelve a abrirlo.'); });
+  liveDir = d; kv.set('grabDir', d).then(() => ldg('carpeta recordada: sí')).catch(e => { ldg('NO se pudo recordar la carpeta: ' + e.name + ' · ' + e.message); liveDiagShow(); console.warn('carpeta', e); toast('He abierto la carpeta, pero el navegador no me deja recordarla: te la pedirá otra vez al recargar. Cierra todas las ventanas de Edge y vuelve a abrirlo.'); });
   try { await writeGrabadorFiles(); await writeLiveConfig(); toast('Listo: en esa carpeta abre «Grabador Clipzi.bat» con doble clic'); }
-  catch (e) { console.warn(e); toast('No pude escribir en esa carpeta'); }
+  catch (e) { console.warn(e); ldg('no pude escribir en la carpeta: ' + e.name + ' · ' + e.message); liveDiagShow(); toast('No pude escribir en esa carpeta'); }
   return d;
 }
 async function renderLiveBox(cl) {
