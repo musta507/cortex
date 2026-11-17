@@ -13887,7 +13887,7 @@ function stEdPrep() {
   $('seT').innerHTML = '<i></i>Próximo clip <em>sin sacar</em>'; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = k ? k.t : ''; $('seExp').disabled = true;
   $('seS').textContent = '✏️ Escribe el título y elige el formato: se usarán en el próximo clip que saques.';
   const c = $('seCv'), x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#A1A1AA'; x.font = '600 26px system-ui'; x.textAlign = 'center';
-  x.fillText('✏️ Preparando el próximo clip', c.width / 2, c.height / 2 - 18); x.font = '500 21px system-ui'; x.fillText('Saca el clip cuando quieras', c.width / 2, c.height / 2 + 20);
+  x.fillText('Saca el clip cuando quieras', c.width / 2, c.height / 2);
   stEdFmts(stPendFmt); stEdTT(); try { mtBlank(); } catch {} cancelAnimationFrame(stEdRaf); stEdLoop(); setTimeout(() => $('seTitle').focus(), 50);
 }
 function stEdPend(m) {
