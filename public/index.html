@@ -4891,8 +4891,13 @@ function layout(s, vw, vh, t) {
     const sc = (contain ? Math.min(vr.w / sw, vr.h / sh) : Math.max(vr.w / sw, vr.h / sh)) * (cr.zk || 1) * s.zoom;
     const dw = sw * sc, dh = sh * sc;
     const cx = vr.x + vr.w / 2 + s.offX, cy = vr.y + vr.h / 2 + s.offY;
-    return { split: true, react: true, vr, ir, seam: T0 + cH, top: T0, bot: T0 + AH, more: more.length ? more : null, call: nC, cr, contain, src: { x: vw * k.x, y: vh * k.y, w: sw, h: sh },
-             video: { x: cx - dw / 2, y: cy - dh / 2, w: dw, h: dh }, subArea: vr };
+    // el vídeo no se corta: se dibuja entero (el recorte solo dice el encuadre de partida), así al moverlo o alejarlo se ve el resto
+    // (con un tweet o una web «entera» se queda como estaba, con el fondo difuminado, hasta que lo muevas o cambies el zoom)
+    const crop = { x: vw * k.x, y: vh * k.y, w: sw, h: sh }, v0 = { x: cx - dw / 2, y: cy - dh / 2, w: dw, h: dh };
+    const whole = !contain || s.zoom !== 1 || s.offX || s.offY;
+    return { split: true, react: true, vr, ir, seam: T0 + cH, top: T0, bot: T0 + AH, more: more.length ? more : null, call: nC, cr, contain, crop,
+             src: whole ? { x: 0, y: 0, w: vw, h: vh } : crop,
+             video: whole ? { x: v0.x - vw * k.x * sc, y: v0.y - vh * k.y * sc, w: vw * sc, h: vh * sc } : v0, subArea: vr };
   }
   if (layoutMode === 'split') {
     const vH = Math.round(AH * s.ratio), iH = AH - vH;
@@ -5044,7 +5049,7 @@ function draw0(t, forExport, src, T) {
       else blurInto(src, 0, 0, vw, vh, { x: 0, y: 0, w: W, h: H }, +s.bg.slice(4));
     }
     // Reacción con contenido entero (tweet, web, YouTube): fondo difuminado del propio contenido
-    if (L.react && L.contain) blurInto(src, L.src.x, L.src.y, L.src.w, L.src.h, L.vr, 2);
+    if (L.react && L.contain) { const c0 = L.crop || L.src; blurInto(src, c0.x, c0.y, c0.w, c0.h, L.vr, 2); }
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     if (L.src) ctx.drawImage(src, L.src.x, L.src.y, L.src.w, L.src.h, dx, dy, dw, dh);
     else ctx.drawImage(src, dx, dy, dw, dh);
