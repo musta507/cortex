@@ -4651,6 +4651,16 @@ async function pxBuild() {
     const v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.playsInline = true; v.src = url;
     await new Promise((ok, ko) => { v.onloadeddata = ok; v.onerror = () => ko(new Error('px: no se abre')); setTimeout(() => ko(new Error('px: tarda')), 15000); });
     stop();
+    // control: si la copia sale en negro (pasa con algunas tarjetas gráficas), no se usa y el arrastre sigue como antes
+    const probe = document.createElement('canvas'); probe.width = 16; probe.height = 9; const pz = probe.getContext('2d', { willReadFrequently: true });
+    let lit = 0;
+    for (const q of [0.2, 0.5, 0.8]) {
+      v.currentTime = Math.max(0, (v.duration || 1) * q);
+      await new Promise(r => { const tt = setTimeout(r, 3000); v.addEventListener('seeked', () => { clearTimeout(tt); setTimeout(r, 30); }, { once: true }); });
+      try { pz.drawImage(v, 0, 0, 16, 9); const d = pz.getImageData(0, 0, 16, 9).data; let m = 0; for (let i = 0; i < d.length; i += 4) m = Math.max(m, d[i], d[i + 1], d[i + 2]); if (m > 24) lit++; } catch {}
+    }
+    if (!lit) throw new Error('px: la copia sale en negro');
+    stop();
     v.addEventListener('seeked', () => { if (PX.pend != null) { const p = PX.pend; PX.pend = null; if (Math.abs(p - (PX.req ?? -1)) > 1e-4) { PX.req = p; v.currentTime = p; } } });
     if (PX.url) { try { URL.revokeObjectURL(PX.url); } catch {} }
     if (PX.v) { try { PX.v.removeAttribute('src'); PX.v.load(); } catch {} }
@@ -5137,7 +5147,7 @@ function draw0(t, forExport, src, T) {
   lastLayout = L;
   const { x: dx, y: dy, w: dw, h: dh } = L.video;
   boxes.video = L.vr;
-  const ready = isFrame || (loaded && vid.readyState >= 2);
+  const ready = isFrame || (src !== vid && !!src) || (loaded && vid.readyState >= 2);   // con la copia ligera (al arrastrar) hay imagen aunque el vídeo aún esté saltando
 
   // bandas de arriba y abajo (si se han movido los bordes): negras o con el vídeo difuminado
   if (L.split && (L.top > 0 || L.bot < H) && ready && String(s.bg).startsWith('blur')) blurInto(src, 0, 0, vw, vh, { x: 0, y: 0, w: W, h: H }, +s.bg.slice(4) || 2);
