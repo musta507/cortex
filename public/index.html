@@ -1509,6 +1509,14 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .se-rz::after{content:"";width:4px;height:56px;border-radius:9px;background:rgba(255,255,255,.22);transition:background .15s,height .15s}
 .se-rz:hover::after,.se-rz.on::after{background:#fff;height:90px}
 body.se-rzing{cursor:ew-resize;user-select:none}
+/* rebobinar el directo */
+#lvRwV{display:none;width:100%;aspect-ratio:16/9;background:#000;object-fit:contain}
+#lvMini.rw #lvRwV{display:block}#lvMini.rw #lvMiniV,#lvMini.rw #lvMiniF{position:absolute;width:1px!important;height:1px!important;opacity:0;pointer-events:none}
+#lvMini.rw{box-shadow:0 0 0 2px #FBBF24,0 18px 50px rgba(0,0,0,.6)}
+.st-rw{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 2px}.st-rw button{width:auto;padding:7px 12px;font-weight:700}
+.st-rw.on .hint{color:#FBBF24;font-weight:700}
+.st-tl{cursor:pointer}
+#livePage.drop{outline:3px dashed rgba(110,151,255,.7);outline-offset:-10px}
 /* ajustar logo sobre fondos 9:16 */
 .lgx{display:grid;grid-template-columns:auto minmax(260px,440px);justify-content:start;gap:32px;align-items:start;margin-top:14px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)}
 .lgx-st{position:relative;height:clamp(320px,calc(100vh - 260px),560px);aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:#0b0b0d;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 18px 40px rgba(0,0,0,.45)}
@@ -1906,13 +1914,14 @@ body.se-rzing{cursor:ew-resize;user-select:none}
     </div>
     <div class="home" id="livePage" hidden>
       <div class="home-in">
-        <div class="lv-head"><button class="ib" id="lvBackHome" style="width:auto;padding:0 10px;font-size:14px">← Clientes</button><h2 class="home-h" style="margin:0">📡 En directo</h2><span class="lv-modes" role="tablist"><button id="lvModeTr" title="Clipear leyendo lo que se dice">📝 Transcripción</button><button id="lvModeSt" title="Clipear viendo el directo en grande">📺 Pantalla</button></span><button id="lvData" style="margin-left:auto;width:auto;padding:0 14px" title="Descarga un archivo con todo lo exportado, abierto y descartado">📥 Datos de clips</button><button class="primary" id="lvMiniShow" style="width:auto;padding:0 14px">📺 Ver el directo</button></div>
+        <div class="lv-head"><button class="ib" id="lvBackHome" style="width:auto;padding:0 10px;font-size:14px">← Clientes</button><h2 class="home-h" style="margin:0">📡 En directo</h2><span class="lv-modes" role="tablist"><button id="lvModeTr" title="Clipear leyendo lo que se dice">📝 Transcripción</button><button id="lvModeSt" title="Clipear viendo el directo en grande">📺 Pantalla</button></span><button id="lvUpB" style="margin-left:auto;width:auto;padding:0 14px" title="Edita un vídeo que no es del directo (de tu ordenador) en el mismo panel · también puedes arrastrarlo aquí">➕ Subir un vídeo</button><input type="file" id="lvUpF" accept="video/*,.mp4,.mov,.webm,.mkv,.m4v" hidden><button id="lvData" style="width:auto;padding:0 14px" title="Descarga un archivo con todo lo exportado, abierto y descartado">📥 Datos de clips</button><button class="primary" id="lvMiniShow" style="width:auto;padding:0 14px">📺 Ver el directo</button></div>
         <div class="lv-status" id="lvStatus"></div>
         <div class="lv-crit" id="lvCrit"></div>
         <div class="lv-auto" id="lvAuto"><button id="auBtn" title="Cada clip que suban los otros clippers se saca del directo con el mismo inicio y final, se monta con el fondo difuminado y se exporta solo">🤖 Modo automático: apagado</button><span class="au-cfg"><label>Formato <select id="auFmt"></select></label><label>Fondo <select id="auBg"><option value="tpl">El de la plantilla</option><option value="black">Negro</option><option value="blur1">Difuminado suave</option><option value="blur2">Difuminado medio</option><option value="blur3">Difuminado fuerte</option><option value="blur4">Muy difuminado</option></select></label><label>Título <select id="auTT"></select></label><label class="check"><input type="checkbox" id="auSubs">Subtítulos</label><button id="auTplEd" title="Abre la página de Plantillas para cambiar el diseño de ese formato">✏️ Editar la plantilla</button></span><span class="hint" id="auS">Saca, monta con fondo difuminado y exporta solo cada clip que suben los otros clippers. No tienes que tocar nada.</span></div>
-        <div class="lv-mini" id="lvMini" hidden><div class="lv-mh"><span id="lvMiniT">🔴 En directo</span><button id="lvMiniSnd" title="Activar el sonido">🔇</button><a id="lvMiniOpen" class="lv-mo" target="_blank" rel="noopener" title="Abrir en Kick">↗</a><button id="lvMiniBig" title="Más grande">⤢</button><button id="lvMiniMin" title="Minimizar">–</button><button id="lvMiniX" title="Cerrar">✕</button></div><video id="lvMiniV" muted playsinline hidden></video><iframe id="lvMiniF" allow="autoplay; fullscreen" allowfullscreen title="Directo"></iframe></div>
+        <div class="lv-mini" id="lvMini" hidden><div class="lv-mh"><span id="lvMiniT">🔴 En directo</span><button id="lvMiniSnd" title="Activar el sonido">🔇</button><a id="lvMiniOpen" class="lv-mo" target="_blank" rel="noopener" title="Abrir en Kick">↗</a><button id="lvMiniBig" title="Más grande">⤢</button><button id="lvMiniMin" title="Minimizar">–</button><button id="lvMiniX" title="Cerrar">✕</button></div><video id="lvMiniV" muted playsinline hidden></video><video id="lvRwV" playsinline></video><iframe id="lvMiniF" allow="autoplay; fullscreen" allowfullscreen title="Directo"></iframe></div>
         <div class="lv-stage" id="lvStage" hidden>
           <div class="st-det" id="stDet" hidden><span id="stDetT"></span><button class="primary" id="stDetGo">✂️ Sacar este</button></div>
+          <div class="st-rw" id="stRw"><button id="stRwB30" title="Volver 30 segundos atrás en el directo (tecla J)">⏪ 30 s</button><button id="stRwB10" title="Volver 10 segundos atrás (tecla ←)">⏪ 10 s</button><button id="stRwPP" title="Pausar o seguir (lo rebobinado)" hidden>⏸</button><button id="stRwF10" title="Avanzar 10 segundos (tecla →)" hidden>10 s ⏩</button><button class="primary" id="stRwLive" hidden>🔴 Volver al directo</button><span class="hint" id="stRwT">Rebobina para sacar un clip de algo que ya pasó · o pulsa en la línea de tiempo</span></div>
           <div class="st-tl" id="stTl" title="Los últimos 2 minutos de lo que estás viendo. Los bloques de color son momentos detectados: pulsa uno para sacarlo."><div class="st-zone" id="stZone" hidden></div><div class="st-items" id="stItems"></div><div class="st-now">▼ lo que ves ahora</div><div class="st-flag2" id="stFlag" hidden title="Arrastra para ajustar dónde empieza el clip"><img id="stFlagI" alt=""><b id="stFlagT">📍 inicio</b></div></div>
           <div class="st-btns st-mk"><button id="stMark" title="Pon una marca en lo que estás viendo ahora (tecla M)">📍 Marcar inicio</button><button class="primary st-b2" id="stMarkCut" hidden>✂️ Sacar desde la marca</button><button id="stMarkX" hidden title="Quitar la marca">✕</button><span class="hint" id="stMarkT">Cuando empiece algo bueno, marca el inicio (tecla M) y sácalo cuando acabe.</span><button id="stPrepB" title="Abre el panel sin clip: escribe el título y elige el formato, y se usarán en el próximo clip que saques">✏️ Preparar el título</button></div>
           <div class="st-btns"><span class="hint">✂️ Sacar los últimos</span><button class="primary st-b" data-n="20">20 s</button><button class="primary st-b" data-n="30">30 s</button><button class="primary st-b" data-n="50">50 s</button><button class="st-b" data-n="90">1 min 30</button><span class="hint" id="stS"></span></div>
@@ -7431,6 +7440,93 @@ setTimeout(() => { const g = $('callNSeg'); if (!g) return; g.addEventListener('
 })();
 setTimeout(() => { const b = $('stPrepB'); if (!b) return; b.onclick = () => stEdPrep();
   setInterval(() => { const ed = $('stEd'); b.hidden = !!(ed && !ed.hidden && stPend !== 'prep'); b.textContent = stPrepKeep ? '✏️ Título preparado: «' + (stPrepKeep.t.trim().slice(0, 24) || 'solo formato') + (stPrepKeep.t.trim().length > 24 ? '…' : '') + '»' : '✏️ Preparar el título'; }, 600); }, 0);
+
+/* ---------- rebobinar el directo: se ve lo ya grabado (los trozos del grabador) y los botones sacan desde ese momento ---------- */
+const stRw = { on: false, seg: null, url: '', S: null, busy: false };
+function stRwEpoch() { const v = $('lvRwV'); return stRw.on && stRw.seg && v ? stRw.seg.t0 + (v.currentTime || 0) : null; }
+function stLiveEdge() { let lat = 7; try { if (lvHls && lvHls.latency != null && isFinite(lvHls.latency)) lat = lvHls.latency + 1; } catch {} const pe = lvPlayEpoch(); return pe != null ? pe : Date.now() / 1000 - lat; }
+async function stRwGo(T) {
+  const S = lvTrSess(); if (!S || !S.h || !S.segs || !S.segs.length) { toast('Aún no hay nada grabado de este directo'); return; }
+  if (stRw.busy) return; stRw.busy = true;
+  try {
+    const segs = S.segs, last = segs[segs.length - 1];
+    if (T >= Math.min(last.t1 - 0.5, stLiveEdge() - 1.5)) { if (T >= stLiveEdge() - 3) { stRwLive(); return; } T = last.t1 - 1.5; }
+    T = Math.max(segs[0].t0, T);
+    const seg = segs.find(x => x.t0 <= T && T < x.t1) || segs.find(x => x.t0 > T) || last;
+    await stRwLoad(S, seg, Math.max(0, T - seg.t0));
+  } catch (e) { console.warn('rebobinar', e); toast('No se pudo rebobinar: ' + (e.message || e)); stRwLive(); }
+  finally { stRw.busy = false; }
+}
+async function stRwLoad(S, seg, at) {
+  const v = $('lvRwV'), f = await fileAt(S.h, seg.f), url = URL.createObjectURL(f);
+  const old = stRw.url; stRw.url = url; stRw.seg = seg; stRw.S = S;
+  await new Promise((ok, ko) => { v.onloadedmetadata = ok; v.onerror = () => ko(new Error('no se puede abrir ese trozo')); v.src = url; });
+  v.currentTime = Math.min(at, Math.max(0, (v.duration || 20) - 0.2));
+  if (old) URL.revokeObjectURL(old);
+  stRw.on = true; $('lvMini').classList.add('rw'); v.muted = !lvMiniSound; v.play().catch(() => { v.muted = true; v.play().catch(() => {}); });
+  stRwUI(); try { stTick(); } catch {}
+}
+function stRwLive() {
+  const v = $('lvRwV'); stRw.on = false; stRw.seg = null; try { v.pause(); v.removeAttribute('src'); v.load(); } catch {}
+  if (stRw.url) { URL.revokeObjectURL(stRw.url); stRw.url = ''; } $('lvMini').classList.remove('rw'); stRwUI(); try { stTick(); lvMiniCheck(); } catch {}
+}
+function stRwUI() {
+  const on = stRw.on; $('stRwLive').hidden = $('stRwPP').hidden = $('stRwF10').hidden = !on; $('stRw').classList.toggle('on', on);
+  const v = $('lvRwV'); $('stRwPP').textContent = on && v.paused ? '▶' : '⏸';
+  if (on) { const back = Math.max(0, stLiveEdge() - (stRwEpoch() || 0)); $('stRwT').textContent = `⏪ Viendo lo de hace ${hms(back)} · «Sacar los últimos» y la marca van desde aquí`; }
+  else $('stRwT').textContent = 'Rebobina para sacar un clip de algo que ya pasó · o pulsa en la línea de tiempo';
+}
+setTimeout(() => {
+  const v = $('lvRwV'); if (!v || !$('stRwB30')) return;
+  v.addEventListener('ended', async () => {   // se sigue con el trozo siguiente; si no hay más, al directo
+    const S = stRw.S, cur = stRw.seg; if (!S || !cur) return stRwLive();
+    const nx = (S.segs || []).find(x => x.t0 >= cur.t1 - 1 && x.f !== cur.f);
+    if (!nx) { stRwLive(); toast('🔴 Has llegado al directo'); return; }
+    try { await stRwLoad(S, nx, Math.max(0, cur.t1 - nx.t0)); } catch { stRwLive(); }
+  });
+  const step = d => { const T = (stRwEpoch() ?? stLiveEdge()) + d; stRwGo(T); };
+  $('stRwB30').onclick = () => step(-30); $('stRwB10').onclick = () => step(-10); $('stRwF10').onclick = () => step(10);
+  $('stRwLive').onclick = () => stRwLive();
+  $('stRwPP').onclick = () => { if (v.paused) v.play().catch(() => {}); else v.pause(); stRwUI(); };
+  setInterval(() => { if (stRw.on) { stRwUI(); v.muted = !lvMiniSound; } }, 500);
+  // pulsar en la línea de tiempo (fuera de los bloques): ir a ese momento
+  $('stTl').addEventListener('click', e => {
+    if (e.target.closest('.st-m,.st-flag2,button')) return;
+    const r = $('stTl').getBoundingClientRect(), fr = (e.clientX - r.left) / r.width, ref = stRef();
+    stRwGo(ref - ST_W + fr * ST_W);
+  });
+  // teclas: J/← atrás, → adelante, L/Esc al directo (solo en la vista Pantalla y sin estar escribiendo)
+  addEventListener('keydown', e => {
+    if (!stOn() || $('livePage').hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target; if (t && (t.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(t.tagName))) return;
+    if (!$('stEd').hidden && stPend !== 'prep') return;
+    const k = e.key.toLowerCase();
+    if (k === 'j') { e.preventDefault(); step(-30); } else if (k === 'arrowleft') { e.preventDefault(); step(-10); }
+    else if (k === 'arrowright' && stRw.on) { e.preventDefault(); step(10); } else if ((k === 'l' || k === 'escape') && stRw.on) { e.preventDefault(); stRwLive(); }
+  });
+}, 0);
+
+/* ---------- subir un vídeo (que no es del directo) y editarlo en el mismo panel ---------- */
+async function stUpload(f) {
+  if (!f || !/^video\//.test(f.type || '') && !/\.(mp4|mov|webm|mkv|m4v)$/i.test(f.name)) { toast('Eso no parece un vídeo'); return; }
+  if (auBusy) { toast('El modo automático está terminando un clip: prueba en unos segundos'); return; }
+  if (!$('stEd').hidden && stPend !== 'prep') { toast('Termina o cierra (✕) el clip que tienes abierto'); return; }
+  const dur = await new Promise(ok => { const v = document.createElement('video'), u = URL.createObjectURL(f); v.preload = 'metadata'; v.onloadedmetadata = () => { ok(v.duration || 30); URL.revokeObjectURL(u); }; v.onerror = () => { ok(30); URL.revokeObjectURL(u); }; v.src = u; });
+  const S0 = lvTrSess(), cl = clientOf(curClient);
+  const S = { name: 'subido', status: { client: (S0 && S0.status && S0.status.client) || (cl && cl.name) || '', slug: f.name.replace(/\.[^.]+$/, '').replace(/[^\w-]+/g, '_').slice(0, 40) || 'video', started: 0 } };
+  const g = { id: 'up' + Date.now().toString(36), t0: 0, t1: dur, kinds: new Set(['subido']), items: [{ src: 'subido', info: '' }] };
+  try { pvClose(); } catch {}
+  stEdPend(g); $('seS').textContent = '⏳ Abriendo tu vídeo… Mientras, ve poniendo el título y el formato.';
+  try { await stEdOpen(S, g, { f, off: 0, dur }); } catch (e) { console.warn(e); $('seS').textContent = '⚠ No se pudo abrir el vídeo: ' + (e.message || e); stPend = null; }
+}
+setTimeout(() => {
+  const b = $('lvUpB'), i = $('lvUpF'); if (!b || !i) return;
+  b.onclick = () => i.click(); i.onchange = () => { const f = i.files[0]; i.value = ''; if (f) stUpload(f); };
+  const lp = $('livePage');
+  lp.addEventListener('dragover', e => { if ([...(e.dataTransfer.items || [])].some(x => x.kind === 'file')) { e.preventDefault(); lp.classList.add('drop'); } });
+  lp.addEventListener('dragleave', e => { if (e.target === lp) lp.classList.remove('drop'); });
+  lp.addEventListener('drop', e => { lp.classList.remove('drop'); const f = [...(e.dataTransfer.files || [])].find(x => /^video\//.test(x.type) || /\.(mp4|mov|webm|mkv|m4v)$/i.test(x.name)); if (!f) return; e.preventDefault(); stUpload(f); });
+}, 0);
 // configuración del logo: se recuerda siempre, aparte de plantillas y proyectos
 const logoCfgNow = () => ({ size: $('logoSize').value, op: $('logoOp').value, rot: $('logoRot').value, x: logoPos.x, y: logoPos.y, lock: trk.logo.lock });
 function saveLogoCfg() { persistClient(); }   // posición, tamaño, opacidad y candado: de cada cliente
@@ -13577,7 +13673,7 @@ const clockOf = s => { const d = Math.max(0, s); const h = Math.floor(d / 3600),
 // ventanita con el directo (arriba a la derecha)
 let lvMiniSlug = '', lvMiniOff = false, lvMiniSound = false, lvMiniMutedNow = null;
 // se silencia solo mientras ves un clip, editas o la pestaña no está delante
-const lvMiniQuiet = () => !$('pvModal').hidden || $('livePage').hidden || (stDock && stEdSound && !vid.paused);   // cambiar de pestaña ya no lo silencia   // con la ventanita de Kick no se silencia al cambiar de pestaña (habría que recargarla)
+const lvMiniQuiet = () => (typeof stRw !== "undefined" && stRw.on) || !$('pvModal').hidden || $('livePage').hidden || (stDock && stEdSound && !vid.paused);   // cambiar de pestaña ya no lo silencia   // con la ventanita de Kick no se silencia al cambiar de pestaña (habría que recargarla)
 // reproductor propio (con el vídeo que graba el grabador): se silencia al instante, sin recargar ni pararse
 let lvHls = null, lvHlsUrl = '', lvHlsCheck = 0, lvHlsSess = '';
 const HLS_URL = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js';
@@ -13628,6 +13724,7 @@ setInterval(() => {
 const stOn = () => ezPref('liveMode') === 'stage';
 // el momento del directo (hora real) que estás viendo en la pantalla
 function stRef() {
+  const rw = stRwEpoch(); if (rw != null) return rw;
   const pe = lvPlayEpoch(); if (pe != null) return pe;
   let lat = 7; try { if (lvHls && lvHls.latency != null && isFinite(lvHls.latency)) lat = lvHls.latency + 1; } catch {}
   return Date.now() / 1000 - lat;
