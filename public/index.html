@@ -4576,6 +4576,92 @@ function seekSrc(t) {
   }
   pseg = i; vid.currentTime = t;
 }
+/* ---------- arrastrar la línea con la imagen al instante: copia ligera del clip en la que cada fotograma se puede mostrar sin esperar ----------
+   El vídeo de verdad tarda en saltar (tiene que leer desde el último fotograma completo). Mientras salta, se enseña el fotograma exacto
+   de esta copia (más pequeña) y en cuanto el vídeo de verdad llega, se ve a calidad completa. */
+var PX = { file: null, ready: false, busy: false, v: null, c: null, url: null, off: 0, want: null, req: null, pend: null };
+function pxWantOut(T) { try { PX.want = segs.length ? locate(Math.max(0, Math.min(totalDur() - 0.0005, T))).t : T; } catch { PX.want = null; } }
+function pxSeek(p) {
+  const v = PX.v; if (!v) return;
+  if (PX.req != null && Math.abs(p - PX.req) < 1e-4) return;
+  if (v.seeking) { PX.pend = p; return; }
+  PX.req = p; v.currentTime = p;
+}
+// lienzo del tamaño del vídeo con el fotograma de la copia ligera para el segundo t del original (o null si aún no está)
+function pxFrame(t) {
+  if (!PX.ready || PX.file !== file || !PX.v || PX.v.readyState < 2) return null;
+  const p = Math.max(0, Math.min((PX.v.duration || 0) - 0.001, t - PX.off - 0.45 / (PX.fps || 30)));   // la copia cambia de fotograma medio fotograma antes: se compensa
+  pxSeek(p);
+  const w = vid.videoWidth || 1920, h = vid.videoHeight || 1080, c = PX.c;
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+  c.getContext('2d').drawImage(PX.v, 0, 0, w, h);
+  return c;
+}
+async function pxBuild() {
+  const f = file;
+  if (!f || PX.busy || exporting || (PX.file === f && PX.ready)) return;
+  if (!('VideoEncoder' in window) || !('VideoDecoder' in window) || typeof OffscreenCanvas === 'undefined') return;
+  if (!(vid.duration > 0) || vid.duration > 1200 || !vid.videoWidth) return;   // directos de horas: no
+  PX.busy = true;
+  let dec = null, enc = null;
+  const stop = () => { if (file !== f || exporting) throw new Error('px: cancelado'); };
+  try {
+    const M = await movieIndex(f), samples = M.vs, config = M.vcfg; stop();
+    if (!samples.length || !config || !(await VideoDecoder.isConfigSupported(config)).supported) throw new Error('px: códec');
+    const vw = vid.videoWidth, vh = vid.videoHeight, pw = Math.min(640, vw) & ~1, ph = Math.max(2, Math.round(pw * vh / vw / 2) * 2);
+    const fps = Math.max(1, Math.min(60, Math.round(samples.length / vid.duration)));
+    let ecfg = null;
+    for (const codec of ['avc1.42001f', 'avc1.4d001f', 'avc1.640028']) {
+      const c = { codec, width: pw, height: ph, bitrate: 5e6, framerate: fps, avc: { format: 'avc' } };
+      try { if ((await VideoEncoder.isConfigSupported(c)).supported) { ecfg = c; break; } } catch {}
+    }
+    if (!ecfg) throw new Error('px: sin codificador');
+    await loadScript(MUXER_URL, 'Mp4Muxer'); stop();
+    const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video: { codec: 'avc', width: pw, height: ph, frameRate: fps }, fastStart: 'in-memory', firstTimestampBehavior: 'offset' });
+    let err = null, first = null, lastT = -1;
+    const oc = new OffscreenCanvas(pw, ph), ox = oc.getContext('2d');
+    const firstTs = Math.min(...samples.slice(0, 64).map(s => s.cts)) / samples[0].timescale;
+    enc = new VideoEncoder({ output: (c, m) => { try { muxer.addVideoChunk(c, m); } catch (e) { err = e; } }, error: e => err = e });
+    enc.configure(ecfg);
+    dec = new VideoDecoder({ output: fr => {
+      try {
+        const t = fr.timestamp / 1e6 - firstTs;
+        if (t > lastT + 1e-4 && !err) {
+          lastT = t; if (first == null) first = t;
+          ox.drawImage(fr, 0, 0, pw, ph);
+          const vf = new VideoFrame(oc, { timestamp: Math.round(t * 1e6), duration: Math.round(1e6 / fps) });
+          enc.encode(vf, { keyFrame: true }); vf.close();   // todos los fotogramas completos: saltar a cualquiera es instantáneo
+        }
+      } catch (e) { err = e; }
+      fr.close();
+    }, error: e => err = e });
+    dec.configure(config);
+    for (let i = 0; i < samples.length;) {
+      const j = Math.min(samples.length, i + 120), part = samples.slice(i, j), data = await loadSampleData(f, part); stop();
+      for (let k = 0; k < part.length; k++) {
+        const s = part[k];
+        dec.decode(new EncodedVideoChunk({ type: s.is_sync ? 'key' : 'delta', timestamp: Math.round(s.cts * 1e6 / s.timescale), duration: Math.round(s.duration * 1e6 / s.timescale), data: data[k] }));
+        while (dec.decodeQueueSize > 12 || enc.encodeQueueSize > 12) { await tick(); if (err) throw err; }
+      }
+      if (err) throw err; await tick(); stop(); i = j;
+    }
+    await dec.flush(); await enc.flush(); if (err) throw err; stop();
+    muxer.finalize();
+    const url = URL.createObjectURL(new Blob([muxer.target.buffer], { type: 'video/mp4' }));
+    const v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.playsInline = true; v.src = url;
+    await new Promise((ok, ko) => { v.onloadeddata = ok; v.onerror = () => ko(new Error('px: no se abre')); setTimeout(() => ko(new Error('px: tarda')), 15000); });
+    stop();
+    v.addEventListener('seeked', () => { if (PX.pend != null) { const p = PX.pend; PX.pend = null; if (Math.abs(p - (PX.req ?? -1)) > 1e-4) { PX.req = p; v.currentTime = p; } } });
+    if (PX.url) { try { URL.revokeObjectURL(PX.url); } catch {} }
+    if (PX.v) { try { PX.v.removeAttribute('src'); PX.v.load(); } catch {} }
+    Object.assign(PX, { file: f, ready: true, v, url, fps, c: PX.c || document.createElement('canvas'), off: first || 0, req: null, pend: null });
+  } catch (e) { if (!/cancelado/.test(String(e && e.message))) console.warn('vista previa rápida:', e); }
+  finally {
+    PX.busy = false;
+    try { if (dec && dec.state !== 'closed') dec.close(); } catch {} try { if (enc && enc.state !== 'closed') enc.close(); } catch {}
+  }
+}
+vid.addEventListener('loadeddata', () => { if (PX.file !== file) { PX.ready = false; } setTimeout(pxBuild, 1500); });
 // en qué momentos del vídeo final aparece un segundo del original (puede repetirse si duplicas trozos)
 function srcToOutAll(t) { const r = []; let acc = 0; for (const g of segs) { if (t >= g.s && t <= g.e) r.push(acc + t - g.s); acc += g.e - g.s; } return r; }
 // reproducción saltando de un trozo al siguiente
@@ -5280,9 +5366,11 @@ function draw0(t, forExport, src, T) {
 }
 
 function loop() {
-  if (!exporting && !(loaded && vid.readyState < 2 && !cropMode)) {   // mientras busca, se queda el último fotograma
-    advancePlayback();
-    draw(vid.currentTime || 0, false);
+  const jumping = loaded && !exporting && !cropMode && vid.paused && (vid.seeking || mtSeekBusy || vid.readyState < 2);
+  const pxT = jumping ? (mtSeekBusy && PX.want != null ? PX.want : vid.currentTime || 0) : 0, pxC = jumping ? pxFrame(pxT) : null;
+  if (pxC || (!exporting && !(loaded && vid.readyState < 2 && !cropMode))) {   // mientras busca, se queda el último fotograma
+    if (pxC) draw(pxT, false, pxC);   // el vídeo de verdad aún está saltando: se ve ya el fotograma exacto de la copia ligera
+    else { advancePlayback(); draw(vid.currentTime || 0, false); }
     if (logoAuto.due && performance.now() > logoAuto.due && !drag) computeLogoAvoid();
     scTick();
     if (vid.duration) {
@@ -14190,7 +14278,7 @@ function mtSeek(fn) {
   const go = () => { const f = mtWantFn; mtWantFn = null; if (!f) { mtSeekBusy = false; return; } mtSeekBusy = true; try { f(); } catch {} const done = () => { clearTimeout(t); go(); }, t = setTimeout(done, 250); vid.addEventListener('seeked', done, { once: true }); };
   go();
 }
-const mtSeekOut = T => { MT.phHold = { T, at: performance.now() }; mtSeek(() => seekOut(T)); };
+const mtSeekOut = T => { MT.phHold = { T, at: performance.now() }; pxWantOut(T); mtSeek(() => seekOut(T)); };
 // dónde está la línea blanca: lo que pediste aunque el vídeo aún esté saltando, y al reproducir avanza en cada fotograma de la pantalla
 function mtPhSync() { const h = MT.phHold; if (h && (mtSeekBusy || performance.now() - h.at < 350) && Math.abs(curT() - h.T) > 1e-3) { try { seekOut(h.T); } catch {} } }
 function mtPhNow() { const h = MT.phHold; return h && (mtSeekBusy || (MT.drag && MT.drag.type === 'seek') || performance.now() - h.at < 350) ? h.T : curT(); }
@@ -14598,6 +14686,7 @@ function mtScrub(vx) {   // la línea va pegada al ratón y tiene un pequeño im
 }
 function mtDown(ev) {
   if (!loaded || exporting || stPend) return;
+  if (!PX.ready && !PX.busy) pxBuild();
   try { $('seTl').focus({ preventScroll: true }); } catch {}   // para que funcionen S, Q, W, Supr, espacio…
   ctxClose(); mtCapCommit(); MT.fit = false; const [vx, vy] = mtPt(ev), h = mtHit(vx, vy), cv = $('mtCv'); MT.ptr = { x: vx, y: vy };
   if (ev.button === 1) { ev.preventDefault(); MT.drag = { type: 'pan', x0: vx, sx0: MT.sx }; try { cv.setPointerCapture(ev.pointerId); } catch {} return; }
