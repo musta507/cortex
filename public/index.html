@@ -2612,7 +2612,7 @@ No hace falta tocar nada aquí: Clipzi escribe config.json y tú solo abres
 """
 import os, sys, json, time, threading, subprocess, shutil, re, glob, wave, traceback, datetime, uuid
 
-GRABADOR_VERSION = 29   # Clipzi solo lo sobrescribe con una versión más nueva
+GRABADOR_VERSION = 30   # Clipzi solo lo sobrescribe con una versión más nueva
 BASE = os.path.dirname(os.path.abspath(__file__))
 CFG = os.path.join(BASE, 'config.json')
 DIRS = os.path.join(BASE, 'directos')
@@ -2761,7 +2761,16 @@ def write_json(path, obj):
     tmp = path + '.tmp'
     with open(tmp, 'w', encoding='utf-8') as f:
         json.dump(obj, f, ensure_ascii=False)
-    os.replace(tmp, path)
+    for i in range(6):      # en Windows falla si Clipzi lo está leyendo justo en ese instante: se reintenta
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            time.sleep(0.15)
+    try:
+        os.remove(tmp)
+    except Exception:
+        pass
 
 
 def load_cfg():
@@ -13801,6 +13810,17 @@ async function writeLiveConfig() {
   if (!trOn) apagados.push('voz');   // transcripción en directo en pausa
   try { await wfile(d, 'config.json', JSON.stringify({ canales, apagados, actualizado: new Date().toISOString() }, null, 2)); } catch (e) { console.warn(e); }
 }
+// el grabador tiene que saber siempre qué está encendido: se revisa cada 10 s y se le escribe si ha cambiado o si aún no se le ha dicho
+let liveCfgSeen = null, liveCfgBusy = false;
+setInterval(async () => {
+  if (liveCfgBusy) return; liveCfgBusy = true;
+  try {
+    const d = await getLiveDir(false); if (!d) return;
+    let trOn = true; try { trOn = lvTrOn(); } catch {}
+    const cur = JSON.stringify([[...critOff()], trOn]);
+    if (cur !== liveCfgSeen) { await writeLiveConfig(); liveCfgSeen = cur; }
+  } catch {} finally { liveCfgBusy = false; }
+}, 10000);
 async function pickLiveDir() {
   if (!window.showDirectoryPicker) { toast('Este navegador no deja elegir carpetas: usa Google Chrome'); return null; }
   let d; try { d = await showDirectoryPicker({ id: 'clipzi-grabador', mode: 'readwrite' }); } catch (e) { if (e.name !== 'AbortError') toast('Chrome no me deja abrir carpetas aquí (' + e.message + ')'); return null; }
