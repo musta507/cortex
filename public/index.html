@@ -1914,7 +1914,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
     </div>
     <div class="home" id="livePage" hidden>
       <div class="home-in">
-        <div class="lv-head"><button class="ib" id="lvBackHome" style="width:auto;padding:0 10px;font-size:14px">← Clientes</button><h2 class="home-h" style="margin:0">📡 En directo</h2><span class="lv-modes" role="tablist"><button id="lvModeTr" title="Clipear leyendo lo que se dice">📝 Transcripción</button><button id="lvModeSt" title="Clipear viendo el directo en grande">📺 Pantalla</button></span><button id="lvPrepH" style="margin-left:auto;width:auto;padding:0 14px" title="Abre el panel vacío: prepara el título, el formato y la plantilla del próximo clip">✏️ Preparar clip</button><button id="lvUpB" style="width:auto;padding:0 14px" title="Edita un vídeo que no es del directo (de tu ordenador) en el mismo panel · también puedes arrastrarlo aquí">➕ Subir un vídeo</button><input type="file" id="lvUpF" accept="video/*,.mp4,.mov,.webm,.mkv,.m4v" hidden><button id="lvData" style="width:auto;padding:0 14px" title="Descarga un archivo con todo lo exportado, abierto y descartado">📥 Datos de clips</button><button class="primary" id="lvMiniShow" style="width:auto;padding:0 14px">📺 Ver el directo</button></div>
+        <div class="lv-head"><button class="ib" id="lvBackHome" style="width:auto;padding:0 10px;font-size:14px">← Clientes</button><h2 class="home-h" style="margin:0">📡 En directo</h2><span class="lv-modes" role="tablist"><button id="lvModeTr" title="Clipear leyendo lo que se dice">📝 Transcripción</button><button id="lvModeSt" title="Clipear viendo el directo en grande">📺 Pantalla</button></span><button id="lvPrepH" style="margin-left:auto;width:auto;padding:0 14px" title="Abre el editor vacío (lo que pongas se usa en el próximo clip que saques o subas)">✂️ Abrir el editor</button><button id="lvUpB" style="width:auto;padding:0 14px" title="Edita un vídeo que no es del directo (de tu ordenador) en el mismo panel · también puedes arrastrarlo aquí">➕ Subir un vídeo</button><input type="file" id="lvUpF" accept="video/*,.mp4,.mov,.webm,.mkv,.m4v" hidden><button id="lvData" style="width:auto;padding:0 14px" title="Descarga un archivo con todo lo exportado, abierto y descartado">📥 Datos de clips</button><button class="primary" id="lvMiniShow" style="width:auto;padding:0 14px">📺 Ver el directo</button></div>
         <div class="lv-status" id="lvStatus"></div>
         <div class="lv-crit" id="lvCrit"></div>
         <div class="lv-auto" id="lvAuto"><button id="auBtn" title="Cada clip que suban los otros clippers se saca del directo con el mismo inicio y final, se monta con el fondo difuminado y se exporta solo">🤖 Modo automático: apagado</button><span class="au-cfg"><label>Formato <select id="auFmt"></select></label><label>Fondo <select id="auBg"><option value="tpl">El de la plantilla</option><option value="black">Negro</option><option value="blur1">Difuminado suave</option><option value="blur2">Difuminado medio</option><option value="blur3">Difuminado fuerte</option><option value="blur4">Muy difuminado</option></select></label><label>Título <select id="auTT"></select></label><label class="check"><input type="checkbox" id="auSubs">Subtítulos</label><button id="auTplEd" title="Abre la página de Plantillas para cambiar el diseño de ese formato">✏️ Editar la plantilla</button></span><span class="hint" id="auS">Saca, monta con fondo difuminado y exporta solo cada clip que suben los otros clippers. No tienes que tocar nada.</span></div>
@@ -1923,7 +1923,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
           <div class="st-det" id="stDet" hidden><span id="stDetT"></span><button class="primary" id="stDetGo">✂️ Sacar este</button></div>
           <div class="st-rw" id="stRw"><button id="stRwB30" title="Volver 30 segundos atrás en el directo (tecla J)">⏪ 30 s</button><button id="stRwB10" title="Volver 10 segundos atrás (tecla ←)">⏪ 10 s</button><button id="stRwPP" title="Pausar o seguir (lo rebobinado)" hidden>⏸</button><button id="stRwF10" title="Avanzar 10 segundos (tecla →)" hidden>10 s ⏩</button><button class="primary" id="stRwLive" hidden>🔴 Volver al directo</button><span class="hint" id="stRwT">Rebobina para sacar un clip de algo que ya pasó · o pulsa en la línea de tiempo</span></div>
           <div class="st-tl" id="stTl" title="Los últimos 2 minutos de lo que estás viendo. Los bloques de color son momentos detectados: pulsa uno para sacarlo."><div class="st-zone" id="stZone" hidden></div><div class="st-items" id="stItems"></div><div class="st-now">▼ lo que ves ahora</div><div class="st-flag2" id="stFlag" hidden title="Arrastra para ajustar dónde empieza el clip"><img id="stFlagI" alt=""><b id="stFlagT">📍 inicio</b></div></div>
-          <div class="st-btns st-mk"><button id="stMark" title="Pon una marca en lo que estás viendo ahora (tecla M)">📍 Marcar inicio</button><button class="primary st-b2" id="stMarkCut" hidden>✂️ Sacar desde la marca</button><button id="stMarkX" hidden title="Quitar la marca">✕</button><span class="hint" id="stMarkT">Cuando empiece algo bueno, marca el inicio (tecla M) y sácalo cuando acabe.</span><button id="stPrepB" title="Abre el panel sin clip: escribe el título y elige el formato, y se usarán en el próximo clip que saques">✏️ Preparar el título</button></div>
+          <div class="st-btns st-mk"><button id="stMark" title="Pon una marca en lo que estás viendo ahora (tecla M)">📍 Marcar inicio</button><button class="primary st-b2" id="stMarkCut" hidden>✂️ Sacar desde la marca</button><button id="stMarkX" hidden title="Quitar la marca">✕</button><span class="hint" id="stMarkT">Cuando empiece algo bueno, marca el inicio (tecla M) y sácalo cuando acabe.</span></div>
           <div class="st-btns"><span class="hint">✂️ Sacar los últimos</span><button class="primary st-b" data-n="20">20 s</button><button class="primary st-b" data-n="30">30 s</button><button class="primary st-b" data-n="50">50 s</button><button class="st-b" data-n="90">1 min 30</button><span class="hint" id="stS"></span></div>
         </div>
         <aside class="st-ed" id="stEd" hidden aria-label="Editar el clip sin salir del directo">
@@ -7438,8 +7438,8 @@ setTimeout(() => { const g = $('callNSeg'); if (!g) return; g.addEventListener('
   rz.addEventListener('dblclick', () => { set(null); try { localStorage.removeItem('clipzi-seW'); } catch {} dispatchEvent(new Event('resize')); });
   addEventListener('resize', () => { const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--seW')); if (v > maxW()) set(maxW()); });
 })();
-setTimeout(() => { const b = $('stPrepB'); if (!b) return; b.onclick = () => stEdPrep(); const hb = $('lvPrepH'); if (hb) { hb.onclick = () => stEdPrep(); setInterval(() => { const ed = $('stEd'); hb.hidden = !!(ed && !ed.hidden); }, 600); }
-  setInterval(() => { const ed = $('stEd'); b.hidden = !!(ed && !ed.hidden && stPend !== 'prep'); b.textContent = stPrepKeep ? '✏️ Título preparado: «' + (stPrepKeep.t.trim().slice(0, 24) || 'solo formato') + (stPrepKeep.t.trim().length > 24 ? '…' : '') + '»' : '✏️ Preparar el título'; }, 600); }, 0);
+setTimeout(() => { const hb = $('lvPrepH'); if (hb) { hb.onclick = () => stEdPrep(); setInterval(() => { const ed = $('stEd'); hb.hidden = !!(ed && !ed.hidden); }, 600); }
+}, 0);
 
 /* ---------- rebobinar el directo: se ve lo ya grabado (los trozos del grabador) y los botones sacan desde ese momento ---------- */
 const stRw = { on: false, seg: null, url: '', S: null, busy: false };
@@ -7525,6 +7525,9 @@ setTimeout(() => {
   const lp = $('livePage');
   lp.addEventListener('dragover', e => { if ([...(e.dataTransfer.items || [])].some(x => x.kind === 'file')) { e.preventDefault(); lp.classList.add('drop'); } });
   lp.addEventListener('dragleave', e => { if (e.target === lp) lp.classList.remove('drop'); });
+  const ed = $('stEd');   // también se puede soltar el vídeo encima del editor vacío
+  ed.addEventListener('dragover', e => { if (stPend === 'prep' && [...(e.dataTransfer.items || [])].some(x => x.kind === 'file')) e.preventDefault(); });
+  ed.addEventListener('drop', e => { if (stPend !== 'prep') return; const f = [...(e.dataTransfer.files || [])].find(x => /^video\//.test(x.type) || /\.(mp4|mov|webm|mkv|m4v)$/i.test(x.name)); if (!f) return; e.preventDefault(); stUpload(f); });
   lp.addEventListener('drop', e => { lp.classList.remove('drop'); const f = [...(e.dataTransfer.files || [])].find(x => /^video\//.test(x.type) || /\.(mp4|mov|webm|mkv|m4v)$/i.test(x.name)); if (!f) return; e.preventDefault(); stUpload(f); });
 }, 0);
 // configuración del logo: se recuerda siempre, aparte de plantillas y proyectos
@@ -13981,8 +13984,8 @@ function stEdPrep() {
   if (!$('stEd').hidden && stPend !== 'prep') return;
   const k = stPrepKeep; stPrepKeep = null;
   stPend = 'prep'; stPendFmt = k ? k.f : ''; stDock = true; $('livePage').classList.add('dock'); $('stEd').classList.remove('full'); $('stEd').hidden = false;
-  $('seT').innerHTML = '<i></i>Próximo clip <em>sin sacar</em>'; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = k ? k.t : ''; $('seExp').disabled = true;
-  $('seS').textContent = '✏️ Escribe el título y elige el formato: se usarán en el próximo clip que saques.';
+  $('seT').innerHTML = '<i></i>Tu clip <em>vacío</em>'; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = k ? k.t : ''; $('seExp').disabled = true;
+  $('seS').textContent = 'Editor vacío: saca un clip del directo o sube un vídeo (➕ Subir un vídeo, o arrástralo aquí). El título, el formato y la plantilla que pongas se usan en él.';
   stEdFmts(stPendFmt); stPrepDraw(); stEdTT(); try { mtBlank(); } catch {} cancelAnimationFrame(stEdRaf); stEdLoop(); setTimeout(() => $('seTitle').focus(), 50);
 }
 // lo que se ve en el panel mientras preparas el próximo clip: el formato elegido y tu título con su plantilla
@@ -13992,8 +13995,8 @@ function stPrepDraw() {
   const c = $('seCv'), x = c.getContext('2d'), w = c.width, h = c.height, k = w / 1080;
   const fmt = stPendFmt || ezPref('stFmtDef') || 'horizontal'; let st = null; try { st = fmtStyle(fmt); } catch {}
   const lay = st ? st.layoutMode : 'single', cc = (st && st.c) || {};
-  const gr = (y0, y1, a, b) => { const g = x.createLinearGradient(0, y0 * h, w, y1 * h); g.addColorStop(0, a); g.addColorStop(1, b); x.fillStyle = g; x.fillRect(0, y0 * h, w, (y1 - y0) * h); };
-  const lbl = (t, y) => { x.save(); x.fillStyle = 'rgba(255,255,255,.55)'; x.font = `800 ${Math.round(46 * k)}px Inter, system-ui`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(t, w / 2, y * h); x.restore(); };
+  const gr = () => {};
+  const lbl = (t, y) => { return; x.save(); x.fillStyle = 'rgba(255,255,255,.55)'; x.font = `800 ${Math.round(46 * k)}px Inter, system-ui`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(t, w / 2, y * h); x.restore(); };
   x.fillStyle = '#0d0d12'; x.fillRect(0, 0, w, h);
   let ty = 0.5;
   if (lay === 'split') { const r = +cc.ratio ? +cc.ratio / 100 : 0.55; gr(0, r, '#5B8CFF', '#7C4DFF'); gr(r, 1, '#FF5FA2', '#FF8A4C'); lbl('VÍDEO', r / 2); lbl('IMAGEN', (1 + r) / 2); ty = r; }
@@ -14012,7 +14015,7 @@ function stPrepDraw() {
       x.drawImage(T, 0, sy, T.width, band, 0, ty * h - dh / 2, w, dh);
     } catch (e) { console.warn('vista previa del título', e); }
   }
-  x.save(); x.fillStyle = 'rgba(0,0,0,.55)'; x.fillRect(0, h - 64 * k, w, 64 * k); x.fillStyle = '#e4e4e7'; x.font = `600 ${Math.round(28 * k)}px Inter, system-ui`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('Saca el clip cuando quieras', w / 2, h - 32 * k); x.restore();
+  x.save(); x.fillStyle = 'rgba(0,0,0,.55)'; x.fillRect(0, h - 64 * k, w, 64 * k); x.fillStyle = '#e4e4e7'; x.font = `600 ${Math.round(28 * k)}px Inter, system-ui`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('Sin vídeo', w / 2, h - 32 * k); x.restore();
 }
 setTimeout(() => {
   const t = $('seTitle'); if (t) t.addEventListener('input', () => { if (stPend === 'prep') stPrepDraw(); });
