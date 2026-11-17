@@ -1527,6 +1527,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
 .st-panel.st-float{position:fixed;z-index:75;right:24px;top:70px;bottom:auto;max-height:calc(100vh - 100px);overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.65)}
 .se-fmts button.own b{color:#FDE68A}
 .se-subt{font-size:13px;font-weight:700}.se-subt em{font-weight:500}
+.se-q select{margin-top:6px;width:100%}
 .se-more{display:flex;flex-wrap:wrap;gap:6px}.se-more button{width:auto;padding:7px 11px;font-size:12.5px;font-weight:700;border-radius:9px}
 .call-opts{display:grid;gap:8px;margin-bottom:10px}.call-opts .seg{display:flex;gap:6px}.call-opts .seg button{flex:1;padding:6px 0;font-weight:800}.call-opts .seg button.on{background:#fff;color:#111}
 .lgx-zm{position:absolute;right:10px;bottom:10px;z-index:2;width:auto!important;padding:6px 11px!important;font-size:12px;font-weight:800;border-radius:99px!important;background:rgba(0,0,0,.62)!important;color:#fff!important;border:1px solid rgba(255,255,255,.25)!important;backdrop-filter:blur(6px)}
@@ -1692,8 +1693,8 @@ body.se-rzing{cursor:ew-resize;user-select:none}
       <span class="sep"></span>
       <select id="quality" aria-label="Calidad">
         <option value="fast" selected>⚡ Rápida (30 fps)</option>
-        <option value="35000000">Calidad máxima</option>
-        <option value="20000000">Calidad alta</option>
+        <option value="20000000">⚖️ Normal: más calidad</option>
+        <option value="35000000">💎 Máxima (más lenta)</option>
       </select>
       <select id="fps" aria-label="Fotogramas por segundo">
         <option value="auto">FPS del original</option>
@@ -1952,6 +1953,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
               <div hidden><span id="seTrimT"></span><button id="seAiTrim"></button><input type="range" id="seA" step="0.1"><input type="range" id="seB" step="0.1"></div>
               <div class="se-bar" id="seBarW" hidden><i id="seBar"></i></div>
               <div id="seRes"></div>
+              <label class="se-l se-q">Calidad del vídeo<select id="seQ" title="Rápida: con la tarjeta gráfica, en segundos. Normal: con el procesador, mejor imagen. Máxima: la mejor imagen, tarda más."><option value="fast">⚡ Rápida: en segundos</option><option value="20000000">⚖️ Normal: más calidad</option><option value="35000000">💎 Máxima: la mejor (más lenta)</option></select></label>
               <div class="se-btns"><button class="primary" id="seExp"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar</button><button id="seFull" title="Abrir este clip en el editor completo"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Editor completo</button></div>
               <button class="se-cc" id="seCC" title="Crea un proyecto de CapCut con este clip ya montado: cortes, encuadre, título, subtítulos, logo y música"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 9l3 3-3 3M13 15h3"/></svg>Abrir en CapCut</button>
             </div>
@@ -6040,7 +6042,12 @@ function demux(ab) {
 // «Rápida»: tarjeta gráfica + 30 fps (lo que más tarda al exportar es comprimir el vídeo, no dibujarlo)
 let encNoHw = false;   // si la tarjeta gráfica falla al comprimir, no se vuelve a intentar con ella
 const expFast = () => $('quality').value === 'fast';
-setTimeout(() => { const f = () => { $('fps').hidden = expFast(); }; $('quality').addEventListener('change', f); f(); }, 0);
+setTimeout(() => {
+  const q = $('quality'), sq = $('seQ'), f = () => { $('fps').hidden = expFast(); };
+  try { const v = ezPref('expQ'); if (v && [...q.options].some(o => o.value === v)) q.value = v; } catch {}   // la calidad elegida se recuerda
+  if (sq) { sq.value = q.value; sq.addEventListener('change', () => { q.value = sq.value; q.dispatchEvent(new Event('change')); }); }
+  q.addEventListener('change', () => { f(); try { ezPref('expQ', q.value); } catch {} if (sq) sq.value = q.value; }); f();
+}, 0);
 const expBitrate = () => expFast() ? 22e6 : +$('quality').value;   // rápida: 22 Mb/s (las tarjetas gráficas se quedan cortas con menos)
 const fps30 = () => expFast() || $('fps').value === '30';
 async function pickVideoEncoder(fps, bitrate, fast) {
