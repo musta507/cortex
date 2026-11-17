@@ -1512,6 +1512,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 .lgx-c{display:grid;gap:14px}
 .st-panel.st-float{position:fixed;z-index:75;right:24px;top:70px;bottom:auto;max-height:calc(100vh - 100px);overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.65)}
 .se-fmts button.own b{color:#FDE68A}
+.se-subt{font-size:13px;font-weight:700}.se-subt em{font-weight:500}
 .se-more{display:flex;flex-wrap:wrap;gap:6px}.se-more button{width:auto;padding:7px 11px;font-size:12.5px;font-weight:700;border-radius:9px}
 .call-opts{display:grid;gap:8px;margin-bottom:10px}.call-opts .seg{display:flex;gap:6px}.call-opts .seg button{flex:1;padding:6px 0;font-weight:800}.call-opts .seg button.on{background:#fff;color:#111}
 .lgx-zm{position:absolute;right:10px;bottom:10px;z-index:2;width:auto!important;padding:6px 11px!important;font-size:12px;font-weight:800;border-radius:99px!important;background:rgba(0,0,0,.62)!important;color:#fff!important;border:1px solid rgba(255,255,255,.25)!important;backdrop-filter:blur(6px)}
@@ -1930,6 +1931,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
               <label class="se-l">Título<textarea id="seTitle" rows="3" placeholder="Título del clip (Enter: línea nueva · Ctrl+Enter: listo)"></textarea></label>
               <div class="se-hl" id="seHlW"><span>Destacar en color <em>toca una palabra</em></span><div class="chips" id="seChips"></div></div>
               <div class="se-l">Formato<div class="se-fmts" id="seFmts"></div><button id="seFmtDef" class="se-def" title="Los próximos clips se abrirán ya con este formato">⭐ Usar siempre este formato</button></div>
+              <label class="toggle se-subt"><input type="checkbox" id="seSubsOn"><span></span>Subtítulos en este clip <em class="hint">(apágalo y los siguientes clips también saldrán sin subtítulos)</em></label>
               <div class="se-l">Más<div class="se-more"><button type="button" id="seSubSt" title="Letra, tamaño, color, contorno y fondo de los subtítulos">💬 Estilo de subtítulos</button><button type="button" id="seTxtAdd" title="Añade un texto encima del vídeo">T Añadir texto</button><button type="button" id="seLogoT" title="Poner o cambiar el logo de este creador">🖼️ Logo</button><button type="button" id="seMoreM" title="Todas las opciones: lo mismo que el clic derecho en el vídeo">⋯ Más opciones</button></div><span class="hint">Clic derecho en el vídeo para ver todas las opciones de cada cosa.</span></div>
               <label class="se-l">Plantilla de título <span class="hint">(la que elijas queda por defecto)</span><select id="seTT"></select></label>
               <div hidden><span id="seTrimT"></span><button id="seAiTrim"></button><input type="range" id="seA" step="0.1"><input type="range" id="seB" step="0.1"></div>
@@ -2591,7 +2593,7 @@ No hace falta tocar nada aquí: Clipzi escribe config.json y tú solo abres
 """
 import os, sys, json, time, threading, subprocess, shutil, re, glob, wave, traceback, datetime, uuid
 
-GRABADOR_VERSION = 26   # Clipzi solo lo sobrescribe con una versión más nueva
+GRABADOR_VERSION = 27   # Clipzi solo lo sobrescribe con una versión más nueva
 BASE = os.path.dirname(os.path.abspath(__file__))
 CFG = os.path.join(BASE, 'config.json')
 DIRS = os.path.join(BASE, 'directos')
@@ -4221,8 +4223,63 @@ def capcut_loop():
 
 
 # ---------------------------------------------------------------- vigilar los canales
+# ---------------------------------------------------------------- un solo grabador a la vez
+# (si hay dos abiertos graban los mismos trozos a la vez y los clips salen rotos o en negro)
+_SOLO_PORT = 47831
+_SOLO_FLAG = os.path.join(BASE, 'cerrar_grabador.flag')
+
+def _solo_bind():
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(('127.0.0.1', _SOLO_PORT)); s.listen(1); return s
+    except OSError:
+        s.close(); return None
+
+def single_instance():
+    s = _solo_bind()
+    if s:
+        return s
+    log('Ya había otro grabador abierto: le pido que se cierre para quedarme solo yo (versión %d).' % GRABADOR_VERSION)
+    try:
+        with open(_SOLO_FLAG, 'w') as f:
+            f.write(str(time.time()))
+    except Exception:
+        pass
+    for _ in range(60):
+        time.sleep(0.5)
+        s = _solo_bind()
+        if s:
+            try: os.remove(_SOLO_FLAG)
+            except Exception: pass
+            log('El otro grabador se ha cerrado: sigo yo.')
+            return s
+    print()
+    print('  Hay otro grabador abierto y no se cierra. Cierra todas las ventanas negras del grabador')
+    print('  y vuelve a abrir «Grabador Clipzi.bat» (solo una vez).')
+    try: input('  Pulsa Enter para salir...')
+    except Exception: pass
+    sys.exit(1)
+
+def solo_watch(t0):
+    """Si se abre otro grabador (por ejemplo, uno más nuevo), este se cierra solo."""
+    while True:
+        time.sleep(1)
+        try:
+            if os.path.exists(_SOLO_FLAG) and os.path.getmtime(_SOLO_FLAG) > t0:
+                log('Se ha abierto otro grabador: cierro este para que no graben los dos a la vez.')
+                time.sleep(0.3)
+                os._exit(0)
+        except Exception:
+            pass
+
+
 def main():
     os.makedirs(DIRS, exist_ok=True)
+    test_mode = len(sys.argv) >= 3 and sys.argv[1] == '--prueba'
+    if not test_mode:
+        globals()['_SOLO_SOCK'] = single_instance()
+        threading.Thread(target=solo_watch, args=(time.time(),), daemon=True).start()
     kill_old_ffmpeg()
     clean_all_out()   # copias de clips de sesiones anteriores: fuera, para liberar disco
     threading.Thread(target=downloads_loop, daemon=True).start()
@@ -13460,7 +13517,7 @@ const clockOf = s => { const d = Math.max(0, s); const h = Math.floor(d / 3600),
 // ventanita con el directo (arriba a la derecha)
 let lvMiniSlug = '', lvMiniOff = false, lvMiniSound = false, lvMiniMutedNow = null;
 // se silencia solo mientras ves un clip, editas o la pestaña no está delante
-const lvMiniQuiet = () => !$('pvModal').hidden || $('livePage').hidden || (stDock && stEdSound && !vid.paused) || (lvHls ? document.hidden : false);   // con la ventanita de Kick no se silencia al cambiar de pestaña (habría que recargarla)
+const lvMiniQuiet = () => !$('pvModal').hidden || $('livePage').hidden || (stDock && stEdSound && !vid.paused);   // cambiar de pestaña ya no lo silencia   // con la ventanita de Kick no se silencia al cambiar de pestaña (habría que recargarla)
 // reproductor propio (con el vídeo que graba el grabador): se silencia al instante, sin recargar ni pararse
 let lvHls = null, lvHlsUrl = '', lvHlsCheck = 0, lvHlsSess = '';
 const HLS_URL = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js';
@@ -14834,6 +14891,15 @@ setTimeout(() => {
   $('seTitle').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $('seTitle').blur(); if (stPend) { $('seS').textContent = stQuick ? '👍 Título puesto: se aplica en cuanto la IA termine.' : '👍 Título puesto. En cuanto el clip esté guardado, la IA lo recorta y te lo deja listo.'; return; } if ($('seTitle').value.trim() && ezPref('stAutoX') !== '0' && !stTrimDone) stAiTrim(); } });
   $('seAiTrim').onclick = () => stAiTrim();
   $('seSubSt').onclick = () => { if (!loaded || stPend) return; if (!mtSubsOn()) { toast('Este clip no tiene subtítulos: pulsa «+ Subtítulos» en la línea de tiempo'); return; } stShow('sub'); };
+  $('seSubsOn').onchange = async () => {
+    const on = $('seSubsOn').checked; ezPref('stAutoS', on ? '1' : '0'); try { stEdAutoUI(); } catch {}
+    if (!loaded || stPend) { toast(on ? 'Los clips saldrán con subtítulos' : 'Los clips saldrán sin subtítulos'); return; }
+    if (!on) { mtSubsHide(); toast('Subtítulos quitados (los siguientes clips también saldrán sin ellos)'); return; }
+    trk.caps.hide = false; clipMeta.noSubs = false; try { syncTrackUI(); } catch {}
+    if (!captions.length) { $('seS').textContent = '💬 Escribiendo los subtítulos…'; await mtSubsAdd(); $('seS').textContent = ''; } else pushHistory();
+    mtDirty(); toast('Subtítulos puestos');
+  };
+  setInterval(() => { const c = $('seSubsOn'); if (c && document.activeElement !== c && !$('stEd').hidden) c.checked = loaded && !stPend ? mtSubsOn() : ezPref('stAutoS') !== '0'; }, 700);
   $('seTxtAdd').onclick = () => { if (!loaded || stPend) return; ezAddText(); };
   $('seLogoT').onclick = e => { if (!loaded || stPend) return; const it = ctxItems(logo ? 'logo' : null); if (!it) return; const r = e.currentTarget.getBoundingClientRect(); if (logo) ctxOpen(r.left, r.bottom + 4, it[0], it[1]); else $('logoFile').click(); };
   $('seMoreM').onclick = e => { if (!loaded || stPend) return; const it = ctxItems(null); const r = e.currentTarget.getBoundingClientRect(); if (it) ctxOpen(r.left, r.bottom + 4, it[0], it[1]); };
