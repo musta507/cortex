@@ -13790,7 +13790,7 @@ setInterval(stTick, 500);
 async function stCut(m, n) {
   if (stBusy) return; const S0 = lvTrSess(); if (!S0 || !S0.on) return;
   if (auBusy) { toast('El modo automático está terminando un clip: prueba en unos segundos'); return; }
-  if (!$('stEd').hidden) { toast('Termina o cierra (✕) el clip que tienes abierto al lado'); return; }
+  if (!$('stEd').hidden && stPend !== 'prep') { toast('Termina o cierra (✕) el clip que tienes abierto al lado'); return; }
   stBusy = true; let say = t => { $('stS').textContent = t; };
   try {
     if (!m) {
@@ -13882,7 +13882,7 @@ async function auTitle() {
 }
 async function auTick() {
   if (!auOn() || auBusy || stBusy || stPend || exporting) return;
-  if ($('livePage').hidden || !$('stEd').hidden || !$('pvModal').hidden) { if (auOn()) auUI('⏸ En pausa mientras editas o miras un clip. Sigue solo al volver al directo.'); return; }
+  if ($('livePage').hidden || (!$('stEd').hidden && stPend !== 'prep') || !$('pvModal').hidden) { if (auOn()) auUI('⏸ En pausa mientras editas o miras un clip. Sigue solo al volver al directo.'); return; }
   const S = lvTrSess(); if (!S || !S.on) { auUI('Esperando a que haya un directo grabándose…'); return; }
   if (!auDone) { try { auDone = new Set((await kv.get('auto-done')) || []); } catch { auDone = new Set(); } }
   const last = S.segs && S.segs.length ? S.segs[S.segs.length - 1].t1 : 0, now = performance.now();
@@ -15126,7 +15126,7 @@ setTimeout(() => {
 }, 0);
 setTimeout(() => {
   if (!$('lvStage')) return;
-  $('lvModeSt').onclick = () => stMode('stage'); $('lvModeTr').onclick = () => { if (!$('stEd').hidden) { toast('Cierra primero el clip que tienes abierto al lado'); return; } stMode('tr'); };
+  $('lvModeSt').onclick = () => stMode('stage'); $('lvModeTr').onclick = () => { if (!$('stEd').hidden && stPend !== 'prep') { toast('Cierra primero el clip que tienes abierto al lado'); return; } stMode('tr'); };
   for (const b of document.querySelectorAll('.st-b')) {
     const n = +b.dataset.n; b.onclick = () => stCut(null, n);
     b.onmouseenter = () => { const z = $('stZone'); z.style.width = (n / ST_W * 100) + '%'; z.hidden = false; }; b.onmouseleave = () => { $('stZone').hidden = true; };
@@ -15143,7 +15143,7 @@ setTimeout(() => {
   const mark = () => { const S = lvTrSess(); if (!S || !S.on) return; stMarkAt = stRef(); stTick(); toast('📍 Inicio marcado'); };
   $('stMark').onclick = mark; $('stMarkX').onclick = () => { stMarkAt = null; stTick(); };
   $('stMarkCut').onclick = () => { if (stMarkAt != null) stCut(null, 'mark'); };
-  document.addEventListener('keydown', e => { if ((e.key === 'm' || e.key === 'M') && !e.ctrlKey && !e.metaKey && !e.altKey && stOn() && !$('livePage').hidden && $('stEd').hidden && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '')) { e.preventDefault(); mark(); } });
+  document.addEventListener('keydown', e => { if ((e.key === 'm' || e.key === 'M') && !e.ctrlKey && !e.metaKey && !e.altKey && stOn() && !$('livePage').hidden && ($('stEd').hidden || stPend === 'prep') && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '')) { e.preventDefault(); mark(); } });
   stMode();
 }, 0);
 
@@ -15410,7 +15410,7 @@ async function liveCutFile0(S, g, pre) {
 }
 async function liveEdit(S, g, btn) {
   if (auBusy) { toast('El modo automático está terminando un clip: prueba en unos segundos'); return; }
-  if (!$('stEd').hidden) { toast('Termina o cierra (✕) el clip que tienes abierto'); return; }
+  if (!$('stEd').hidden && stPend !== 'prep') { toast('Termina o cierra (✕) el clip que tienes abierto'); return; }
   // el panel de edición se abre ya y el clip se prepara mientras escribes el título
   pvClose(); stEdPend(g);
   try { const c = await liveCutFile(S, g); if (stPend !== g.id) return; await stEdOpen(S, g, c); }
