@@ -13726,7 +13726,7 @@ let liveDir = null, liveTimer = null, liveSessions = {}, liveSeen = new Set(), l
 const liveDiag = []; const ldg = t => { liveDiag.push(new Date().toLocaleTimeString('es-ES') + ' ' + t); if (liveDiag.length > 40) liveDiag.shift(); };
 function liveDiagShow() {
   let b = $('lvDiag'); if (!b) { b = document.createElement('div'); b.id = 'lvDiag'; b.style.cssText = 'position:fixed;left:16px;bottom:16px;z-index:99999;max-width:560px;background:#16161b;border:1px solid #FBBF24;border-radius:12px;padding:12px 14px;font:12.5px/1.5 ui-monospace,monospace;color:#F4F4F5;white-space:pre-wrap;box-shadow:0 10px 40px rgba(0,0,0,.6)'; document.body.append(b); }
-  b.textContent = '🔎 Carpeta del grabador (haz una captura de esto y mándasela a Claude)\n' + navigator.userAgent.replace(/.*(Chrome\/[\d.]+).*?(Edg\/[\d.]+|Electron\/[\d.]+)?.*/, '$1 $2') + ' · ' + location.protocol + '\n' + liveDiag.join('\n');
+  b.textContent = '🔎 Carpeta del grabador (haz una captura de esto y mándasela a Claude)\n' + ((navigator.userAgent.match(/Edg\/[\d.]+/) || navigator.userAgent.match(/Electron\/[\d.]+/) || navigator.userAgent.match(/Chrome\/[\d.]+/) || ['?'])[0].replace('Edg/', 'Edge ').replace('Electron/', 'Aplicación Cortex ').replace('Chrome/', 'Chrome ')) + ' · ' + location.protocol + '\n' + liveDiag.join('\n');
   const x = document.createElement('button'); x.textContent = 'Cerrar'; x.style.cssText = 'display:block;margin-top:8px;width:auto;padding:4px 12px'; x.onclick = () => b.remove(); b.append(x);
 }
 async function getLiveDir(ask) {
