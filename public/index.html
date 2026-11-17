@@ -2612,7 +2612,7 @@ No hace falta tocar nada aquí: Clipzi escribe config.json y tú solo abres
 """
 import os, sys, json, time, threading, subprocess, shutil, re, glob, wave, traceback, datetime, uuid
 
-GRABADOR_VERSION = 27   # Clipzi solo lo sobrescribe con una versión más nueva
+GRABADOR_VERSION = 28   # Clipzi solo lo sobrescribe con una versión más nueva
 BASE = os.path.dirname(os.path.abspath(__file__))
 CFG = os.path.join(BASE, 'config.json')
 DIRS = os.path.join(BASE, 'directos')
@@ -2771,6 +2771,21 @@ def load_cfg():
         return c
     except Exception:
         return {}
+
+
+_OFF = {'at': 0, 'set': set()}
+
+
+def is_off(src):
+    """¿Está apagado en Clipzi este criterio («chat», «clipper»…)? Se vuelve a mirar config.json cada 5 s."""
+    now = time.time()
+    if now - _OFF['at'] > 5:
+        _OFF['at'] = now
+        try:
+            _OFF['set'] = set(load_cfg().get('apagados') or [])
+        except Exception:
+            pass
+    return src in _OFF['set']
 
 
 # ---------------------------------------------------------------- audio: huella para encontrar momentos
@@ -3073,7 +3088,7 @@ class Session:
 
     def status(self, **kw):
         st = {'slug': self.slug, 'client': self.client, 'started': self.t0, 'updated': time.time(), 'live': self.alive,
-              'segments': len(self.segs), 'chat': self.nchat, 'error': self.err, 'test': bool(self.test)}
+              'segments': len(self.segs), 'chat': self.nchat, 'chat_off': is_off('chat'), 'error': self.err, 'test': bool(self.test)}
         st.update(kw)
         try:
             write_json(os.path.join(self.dir, 'status.json'), st)
@@ -3205,6 +3220,8 @@ class Session:
         self.chat_ok = False
 
         def got(d):
+            if is_off('chat'):      # chat apagado en Clipzi: no se cuenta ni se guarda nada
+                return
             msg = find_chat_msg(d)
             if not msg:
                 return
@@ -3224,11 +3241,16 @@ class Session:
             async with websockets.connect(url, open_timeout=20, ping_interval=None, max_size=2 ** 22) as ws:
                 for ch in ('chatrooms.%s.v2' % self.chatroom, 'chatroom_%s' % self.chatroom):
                     await ws.send(json.dumps({'event': 'pusher:subscribe', 'data': {'auth': '', 'channel': ch}}))
-                while self.alive:
+                idle = 0
+                while self.alive and not is_off('chat'):
                     try:
-                        raw = await asyncio.wait_for(ws.recv(), timeout=90)
+                        raw = await asyncio.wait_for(ws.recv(), timeout=10)
+                        idle = 0
                     except asyncio.TimeoutError:
-                        await ws.send(json.dumps({'event': 'pusher:ping', 'data': {}}))
+                        idle += 10
+                        if idle >= 90:
+                            idle = 0
+                            await ws.send(json.dumps({'event': 'pusher:ping', 'data': {}}))
                         continue
                     m = json.loads(raw)
                     ev = m.get('event', '')
@@ -3257,8 +3279,16 @@ class Session:
                 for ch in ('chatrooms.%s.v2' % self.chatroom, 'chatroom_%s' % self.chatroom, 'channel.%s' % self.channel_id):
                     await ws.send(json.dumps({'subscribe': {'channel': ch, 'flag': 1}, 'id': n}))
                     n += 1
-                while self.alive:
-                    raw = await asyncio.wait_for(ws.recv(), timeout=120)
+                quiet = 0
+                while self.alive and not is_off('chat'):
+                    try:
+                        raw = await asyncio.wait_for(ws.recv(), timeout=10)
+                        quiet = 0
+                    except asyncio.TimeoutError:
+                        quiet += 10
+                        if quiet >= 120:
+                            raise
+                        continue
                     for line in str(raw).splitlines():
                         if not line.strip():
                             continue
@@ -3288,7 +3318,24 @@ class Session:
 
         async def main():
             fails = 0
+            was_off = False
             while self.alive:
+                if is_off('chat'):      # apagado en Clipzi: se desconecta del chat y espera a que lo vuelvas a encender
+                    if not was_off:
+                        log('💬 Chat apagado en Clipzi: dejo de leer el chat de %s' % self.slug)
+                        was_off = True
+                        self.chat_ok = False
+                        self.chat_start = 0
+                        self.bins.clear()
+                        if self.err == 'chat':
+                            self.err = ''
+                        self.status()
+                    await asyncio.sleep(3)
+                    continue
+                if was_off:
+                    log('💬 Chat encendido otra vez: vuelvo a leer el chat de %s' % self.slug)
+                    was_off = False
+                    fails = 0
                 if not self.chatroom:
                     info = kick_info(self.slug) or {}
                     self.chatroom = (info.get('chatroom') or {}).get('id')
@@ -3318,6 +3365,8 @@ class Session:
                         res = 'err:%s' % e
                 if not self.alive:
                     break
+                if is_off('chat'):
+                    continue
                 fails += 1
                 if not self.chat_ok:
                     self.err = 'chat'
@@ -3345,6 +3394,8 @@ class Session:
             time.sleep(5)
             now = time.time()
             b = int(now // 5) - 1
+            if is_off('chat'):
+                continue
             # hace falta 2 minutos de chat para saber qué es «normal» (al conectar llega de golpe lo anterior)
             if not self.chat_start or now - self.chat_start < 120:
                 continue
@@ -3415,6 +3466,9 @@ class Session:
             return
         warned = set()
         while self.alive or time.time() - self.t0 < 3600 * 12 and time.time() - self.end_time() < 1800:
+            if is_off('clipper'):   # «Otros clippers» apagado en Clipzi: no se miran sus cuentas
+                time.sleep(15)
+                continue
             # la lista se vuelve a leer cada vez: puedes añadir cuentas en Clipzi sin reiniciar nada
             accounts = [a.strip().lstrip('@') for a in (self.cfg.get('clippers') or []) if a.strip()]
             blocked = False
@@ -13693,7 +13747,7 @@ async function writeLiveConfig() {
     const L = await getLive(c);
     if (L.kick && L.kick.trim()) canales.push({ kick: L.kick.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?kick\.com\//i, '').split(/[/?#]/)[0], client: c.name, clippers: (L.clippers || '').split(/[\s,;]+/).map(x => x.trim()).filter(Boolean) });
   }
-  try { await wfile(d, 'config.json', JSON.stringify({ canales, actualizado: new Date().toISOString() }, null, 2)); } catch (e) { console.warn(e); }
+  try { await wfile(d, 'config.json', JSON.stringify({ canales, apagados: [...critOff()], actualizado: new Date().toISOString() }, null, 2)); } catch (e) { console.warn(e); }
 }
 async function pickLiveDir() {
   if (!window.showDirectoryPicker) { toast('Este navegador no deja elegir carpetas: usa Google Chrome'); return null; }
@@ -15414,9 +15468,9 @@ function critOff() { try { return new Set(JSON.parse(ezPref('critOff') || '[]'))
 function critUI() {
   const box = $('lvCrit'); if (!box) return; const off = critOff(); box.innerHTML = '<span>Detectar clips con:</span>';
   for (const [id, n] of CRITS) { const b = document.createElement('button'); b.textContent = n; b.className = off.has(id) ? 'off' : 'on'; b.title = off.has(id) ? 'Apagado: pulsa para volver a verlo' : 'Encendido: pulsa para dejar de verlo';
-    b.onclick = () => { const o = critOff(); o.has(id) ? o.delete(id) : o.add(id); ezPref('critOff', JSON.stringify([...o])); critUI(); liveRender(); stTick(); }; box.append(b); }
+    b.onclick = () => { const o = critOff(); o.has(id) ? o.delete(id) : o.add(id); ezPref('critOff', JSON.stringify([...o])); critUI(); liveRender(); stTick(); writeLiveConfig(); }; box.append(b); }
   const all = off.size >= CRITS.length, b = document.createElement('button'); b.textContent = all ? '✅ Encender todos' : '🚫 Apagar todos (solo mis clips)';
-  b.onclick = () => { ezPref('critOff', JSON.stringify(all ? [] : CRITS.map(c => c[0]))); critUI(); liveRender(); stTick(); }; box.append(b);
+  b.onclick = () => { ezPref('critOff', JSON.stringify(all ? [] : CRITS.map(c => c[0]))); critUI(); liveRender(); stTick(); writeLiveConfig(); }; box.append(b);
 }
 setTimeout(critUI, 0);
 // «un formato por escena»: se enciende o se apaga para todos los clips
@@ -15431,7 +15485,7 @@ function liveRender(state) {
   for (const s of S.filter(s => s.on || Date.now() / 1000 - s.status.updated < 3600 * 3)) {
     const p = document.createElement('div'); p.className = 'lv-pill' + (s.on ? ' on' : '');
     const mins = Math.round(((s.segs.length ? s.segs[s.segs.length - 1].t1 : s.status.started) - s.status.started) / 60);
-    p.textContent = `${s.on ? '🔴' : '⚫'} ${s.status.slug}${s.status.client ? ' (' + s.status.client + ')' : ''} · ${s.on ? 'grabando' : 'terminado'} · ${mins} min grabados · ${s.status.chat || 0} mensajes del chat${s.status.test ? ' · PRUEBA' : ''}${s.status.error === 'chat' ? ' · ⚠️ no puedo leer el chat' : ''}`;
+    p.textContent = `${s.on ? '🔴' : '⚫'} ${s.status.slug}${s.status.client ? ' (' + s.status.client + ')' : ''} · ${s.on ? 'grabando' : 'terminado'} · ${mins} min grabados · ${critOff().has('chat') || s.status.chat_off ? 'chat apagado' : (s.status.chat || 0) + ' mensajes del chat'}${s.status.test ? ' · PRUEBA' : ''}${s.status.error === 'chat' ? ' · ⚠️ no puedo leer el chat' : ''}`;
     st.append(p);
   }
   liveMini(S.find(s => s.on));
