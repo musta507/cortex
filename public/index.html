@@ -4781,7 +4781,17 @@ async function pxBuild() {
     try { if (dec && dec.state !== 'closed') dec.close(); } catch {} try { if (enc && enc.state !== 'closed') enc.close(); } catch {}
   }
 }
-vid.addEventListener('loadeddata', () => { if (PX.file !== file) { PX.ready = false; } setTimeout(pxBuild, 1500); });
+// la copia ligera se prepara cuando el clip ya está montado (no mientras se guardan el clip o los subtítulos: los frenaría)
+let pxWaitT = null;
+vid.addEventListener('loadeddata', () => {
+  if (PX.file !== file) PX.ready = false;
+  clearInterval(pxWaitT); let n = 0;
+  pxWaitT = setInterval(() => {
+    if (++n > 150 || PX.ready || PX.busy) { if (n > 150 || PX.ready) clearInterval(pxWaitT); return; }
+    let busy = false; try { busy = !!stPend || exporting || /⏳|✨ Montando|💬 Escribiendo/.test(($('seS') && $('seS').textContent) || ''); } catch {}
+    if (!busy) { clearInterval(pxWaitT); pxBuild(); }
+  }, 2000);
+});
 // en qué momentos del vídeo final aparece un segundo del original (puede repetirse si duplicas trozos)
 function srcToOutAll(t) { const r = []; let acc = 0; for (const g of segs) { if (t >= g.s && t <= g.e) r.push(acc + t - g.s); acc += g.e - g.s; } return r; }
 // reproducción saltando de un trozo al siguiente
@@ -15394,6 +15404,10 @@ setTimeout(() => {
   $('seFmtDef').onclick = () => { const cur = ($('seFmts').querySelector('.on') || {}).dataset; if (!cur || !cur.id) { toast('Elige primero un formato'); return; } ezPref('stFmtDef', cur.id); ezPref('stAutoF', '0'); stEdAutoUI(); toast('Los próximos clips se abrirán con ese formato'); };
   $('seA').onchange = () => trim('a'); $('seB').onchange = () => trim('b');
   $('seA').oninput = $('seB').oninput = () => { $('seTrimT').textContent = `· dura ${Math.max(2, +$('seB').value - +$('seA').value).toFixed(1).replace('.', ',')} s`; };
+  { // el botón Exportar dice por qué no se puede pulsar todavía
+    const b = $('seExp'), lab = () => { const t = b.lastChild; if (!t || t.nodeType !== 3) return; const w = b.disabled ? (exporting ? 'Exportando…' : stPend === 'prep' ? 'Sin clip todavía' : 'Preparando el clip…') : 'Exportar'; if (t.textContent !== w) t.textContent = w; b.title = b.disabled && !exporting ? (stPend === 'prep' ? 'Saca un clip del directo o sube un vídeo para poder exportar' : 'El clip se está guardando y montando. En cuanto acabe podrás exportar.') : ''; };
+    new MutationObserver(lab).observe(b, { attributes: true, attributeFilter: ['disabled'] }); setInterval(lab, 1000);
+  }
   $('seExp').onclick = async () => {
     if (!loaded || exporting || stPend) return;
     $('seExp').disabled = true; $('seRes').innerHTML = '';
