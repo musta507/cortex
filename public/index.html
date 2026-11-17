@@ -1914,7 +1914,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
         <div class="lv-stage" id="lvStage" hidden>
           <div class="st-det" id="stDet" hidden><span id="stDetT"></span><button class="primary" id="stDetGo">✂️ Sacar este</button></div>
           <div class="st-tl" id="stTl" title="Los últimos 2 minutos de lo que estás viendo. Los bloques de color son momentos detectados: pulsa uno para sacarlo."><div class="st-zone" id="stZone" hidden></div><div class="st-items" id="stItems"></div><div class="st-now">▼ lo que ves ahora</div><div class="st-flag2" id="stFlag" hidden title="Arrastra para ajustar dónde empieza el clip"><img id="stFlagI" alt=""><b id="stFlagT">📍 inicio</b></div></div>
-          <div class="st-btns st-mk"><button id="stMark" title="Pon una marca en lo que estás viendo ahora (tecla M)">📍 Marcar inicio</button><button class="primary st-b2" id="stMarkCut" hidden>✂️ Sacar desde la marca</button><button id="stMarkX" hidden title="Quitar la marca">✕</button><span class="hint" id="stMarkT">Cuando empiece algo bueno, marca el inicio (tecla M) y sácalo cuando acabe.</span></div>
+          <div class="st-btns st-mk"><button id="stMark" title="Pon una marca en lo que estás viendo ahora (tecla M)">📍 Marcar inicio</button><button class="primary st-b2" id="stMarkCut" hidden>✂️ Sacar desde la marca</button><button id="stMarkX" hidden title="Quitar la marca">✕</button><span class="hint" id="stMarkT">Cuando empiece algo bueno, marca el inicio (tecla M) y sácalo cuando acabe.</span><button id="stPrepB" title="Abre el panel sin clip: escribe el título y elige el formato, y se usarán en el próximo clip que saques">✏️ Preparar el título</button></div>
           <div class="st-btns"><span class="hint">✂️ Sacar los últimos</span><button class="primary st-b" data-n="20">20 s</button><button class="primary st-b" data-n="30">30 s</button><button class="primary st-b" data-n="50">50 s</button><button class="st-b" data-n="90">1 min 30</button><span class="hint" id="stS"></span></div>
         </div>
         <aside class="st-ed" id="stEd" hidden aria-label="Editar el clip sin salir del directo">
@@ -7429,6 +7429,8 @@ setTimeout(() => { const g = $('callNSeg'); if (!g) return; g.addEventListener('
   rz.addEventListener('dblclick', () => { set(null); try { localStorage.removeItem('clipzi-seW'); } catch {} dispatchEvent(new Event('resize')); });
   addEventListener('resize', () => { const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--seW')); if (v > maxW()) set(maxW()); });
 })();
+setTimeout(() => { const b = $('stPrepB'); if (!b) return; b.onclick = () => stEdPrep();
+  setInterval(() => { const ed = $('stEd'); b.hidden = !!(ed && !ed.hidden && stPend !== 'prep'); b.textContent = stPrepKeep ? '✏️ Título preparado: «' + (stPrepKeep.t.trim().slice(0, 24) || 'solo formato') + (stPrepKeep.t.trim().length > 24 ? '…' : '') + '»' : '✏️ Preparar el título'; }, 600); }, 0);
 // configuración del logo: se recuerda siempre, aparte de plantillas y proyectos
 const logoCfgNow = () => ({ size: $('logoSize').value, op: $('logoOp').value, rot: $('logoRot').value, x: logoPos.x, y: logoPos.y, lock: trk.logo.lock });
 function saveLogoCfg() { persistClient(); }   // posición, tamaño, opacidad y candado: de cada cliente
@@ -13876,13 +13878,25 @@ function stEdLoop() {
   stEdRaf = requestAnimationFrame(stEdLoop);
 }
 // el panel se abre en cuanto pulsas: mientras el clip se guarda ya puedes escribir el título y elegir el formato
-let stPend = null, stPendFmt = '';
+let stPend = null, stPendFmt = '', stPrepKeep = null;
+// abrir el panel sin clip para ir preparando el título y el formato del próximo clip
+function stEdPrep() {
+  if (!$('stEd').hidden && stPend !== 'prep') return;
+  const k = stPrepKeep; stPrepKeep = null;
+  stPend = 'prep'; stPendFmt = k ? k.f : ''; stDock = true; $('livePage').classList.add('dock'); $('stEd').classList.remove('full'); $('stEd').hidden = false;
+  $('seT').innerHTML = '<i></i>Próximo clip <em>sin sacar</em>'; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = k ? k.t : ''; $('seExp').disabled = true;
+  $('seS').textContent = '✏️ Escribe el título y elige el formato: se usarán en el próximo clip que saques.';
+  const c = $('seCv'), x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#A1A1AA'; x.font = '600 26px system-ui'; x.textAlign = 'center';
+  x.fillText('✏️ Preparando el próximo clip', c.width / 2, c.height / 2 - 18); x.font = '500 21px system-ui'; x.fillText('Saca el clip cuando quieras', c.width / 2, c.height / 2 + 20);
+  stEdFmts(stPendFmt); stEdTT(); try { mtBlank(); } catch {} cancelAnimationFrame(stEdRaf); stEdLoop(); setTimeout(() => $('seTitle').focus(), 50);
+}
 function stEdPend(m) {
-  stPend = m.id; stPendFmt = ''; stDock = true; $('livePage').classList.add('dock'); $('stEd').classList.remove('full'); $('stEd').hidden = false;
-  $('seT').innerHTML = `<i></i>Tu clip <em>${Math.round(m.t1 - m.t0)} s</em>`; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = ''; $('seExp').disabled = true;
-  $('seS').textContent = '⏳ Guardando el clip… Mientras, ve poniendo el título y el formato.';
+  const prep = stPend === 'prep' ? { t: $('seTitle').value, f: stPendFmt } : stPrepKeep; stPrepKeep = null;
+  stPend = m.id; stPendFmt = prep ? prep.f : ''; stDock = true; $('livePage').classList.add('dock'); $('stEd').classList.remove('full'); $('stEd').hidden = false;
+  $('seT').innerHTML = `<i></i>Tu clip <em>${Math.round(m.t1 - m.t0)} s</em>`; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = prep ? prep.t : ''; $('seExp').disabled = true;
+  $('seS').textContent = prep && (prep.t.trim() || prep.f) ? '⏳ Guardando el clip… Le pongo el título y el formato que preparaste.' : '⏳ Guardando el clip… Mientras, ve poniendo el título y el formato.';
   const c = $('seCv'), x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#A1A1AA'; x.font = '600 26px system-ui'; x.textAlign = 'center'; x.fillText('⏳ Guardando el clip…', c.width / 2, c.height / 2);
-  stEdFmts(''); stEdTT(); try { mtBlank(); } catch {} cancelAnimationFrame(stEdRaf); stEdLoop(); setTimeout(() => $('seTitle').focus(), 50);
+  stEdFmts(stPendFmt); stEdTT(); try { mtBlank(); } catch {} cancelAnimationFrame(stEdRaf); stEdLoop(); setTimeout(() => $('seTitle').focus(), 50);
 }
 async function stEdOpen(S, g, c) {
   const aT = ezPref('stAutoT') !== '0', aF = ezPref('stAutoF') !== '0', aS = ezPref('stAutoS') !== '0';
@@ -14909,6 +14923,7 @@ async function stEdClose(full) {
     if (!full) { try { vid.pause(); await saveNow(); } catch (e) { console.warn(e); } try { $('homeBtn').click(); } catch {} }
     return;
   }
+  if (stPend === 'prep') { const t = $('seTitle').value; stPrepKeep = t.trim() || stPendFmt ? { t, f: stPendFmt } : null; if (stPrepKeep) toast('✏️ Título guardado para el próximo clip'); }
   if (stPend) { stPend = null; cancelAnimationFrame(stEdRaf); $('stEd').hidden = true; $('livePage').classList.remove('dock'); stDock = false; $('stS').textContent = ''; return; }
   cancelAnimationFrame(stEdRaf); $('stEd').hidden = true; $('livePage').classList.remove('dock'); vid.muted = false;
   if (full) { stDock = false; $('livePage').hidden = true; $('liveBack').hidden = false; return; }
