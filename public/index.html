@@ -6053,7 +6053,8 @@ async function pickVideoEncoder(fps, bitrate, fast) {
 }
 const encOpts = (venc, key) => venc.q == null ? { keyFrame: key } : venc.mux === 'avc' ? { keyFrame: key, avc: { quantizer: venc.q } } : { keyFrame: key, vp9: { quantizer: venc.q } };
 async function pickAudioEncoder() {
-  const cands = [{ codec: 'mp4a.40.2', mux: 'aac', bitrate: 320000 }, { codec: 'opus', mux: 'opus', bitrate: 320000 }];
+  // AAC primero (TikTok no siempre acepta Opus dentro de un MP4); el compresor de Windows solo admite 96–192 kb/s
+  const cands = [320000, 256000, 192000, 160000, 128000, 96000].map(b => ({ codec: 'mp4a.40.2', mux: 'aac', bitrate: b })).concat([{ codec: 'opus', mux: 'opus', bitrate: 320000 }]);
   for (const c of cands) {
     const cfg = { codec: c.codec, sampleRate: 48000, numberOfChannels: 2, bitrate: c.bitrate };
     try { if ((await AudioEncoder.isConfigSupported(cfg)).supported) return { cfg, mux: c.mux }; } catch {}
@@ -6062,6 +6063,36 @@ async function pickAudioEncoder() {
 }
 // trozos que se exportan (si no hay cortes, el clip entero)
 const exportSegs = () => segs.length ? segs.map(g => ({ s: g.s, e: g.e })) : [{ s: 0, e: vid.duration }];
+// el vídeo entra en el MP4 desde su primer fotograma clave con la configuración completa
+// (si la tarjeta gráfica se salta ese primer fotograma, el MP4 sale sin cabecera y TikTok no lo puede procesar)
+function vOut(muxer) {
+  const st = { ok: false, drop: 0 }; muxer.__vst = st;
+  return (c, m) => {
+    if (!st.ok) {
+      const dc = m && m.decoderConfig, d = dc && dc.description;
+      if (c.type !== 'key' || !dc || (/^avc|^hvc|^hev/.test(dc.codec || '') && !(d && d.byteLength))) { st.drop++; return; }
+      st.ok = true;
+    }
+    muxer.addVideoChunk(c, m);
+  };
+}
+// comprueba que el MP4 se puede leer: cabecera del vídeo (avcC) y que empieza por un fotograma clave
+function mp4Check(buf, muxer) {
+  const st = muxer && muxer.__vst; if (st && (!st.ok || st.drop > 0)) throw new Error('MP4 incompleto: el compresor no dio bien el primer fotograma');
+  const dv = new DataView(buf), u8 = new Uint8Array(buf), tag = o => String.fromCharCode(u8[o], u8[o + 1], u8[o + 2], u8[o + 3]);
+  const kids = (a, b) => { const out = []; let o = a; while (o + 8 <= b) { let z = dv.getUint32(o), h = 8; if (z === 1) { z = Number(dv.getBigUint64(o + 8)); h = 16; } if (z < 8 || o + z > b) break; out.push({ t: tag(o + 4), o, z, h }); o += z; } return out; };
+  const top = kids(0, buf.byteLength), moov = top.find(x => x.t === 'moov'); if (!moov) throw new Error('MP4 sin índice');
+  let video = false;
+  for (const tr of kids(moov.o + 8, moov.o + moov.z).filter(x => x.t === 'trak')) {
+    const find = (box, path) => { let cur = box; for (const t of path) { cur = kids(cur.o + cur.h, cur.o + cur.z).find(x => x.t === t); if (!cur) return null; } return cur; };
+    const hd = find(tr, ['mdia', 'hdlr']); if (!hd || tag(hd.o + 16) !== 'vide') continue; video = true;
+    const stbl = find(tr, ['mdia', 'minf', 'stbl']), sd = stbl && find(stbl, ['stsd']); if (!sd) throw new Error('MP4 sin descripción del vídeo');
+    const ent = kids(sd.o + 16, sd.o + sd.z)[0];
+    if (ent && /avc1|avc3/.test(ent.t) && !kids(ent.o + 86, ent.o + ent.z).some(x => x.t === 'avcC')) throw new Error('MP4 sin cabecera del vídeo (avcC)');
+    const ss = find(stbl, ['stss']); if (ss && dv.getUint32(ss.o + 12) > 0 && dv.getUint32(ss.o + 16) !== 1) throw new Error('MP4 que no empieza por un fotograma clave');
+  }
+  if (!video) throw new Error('MP4 sin vídeo');
+}
 async function makeMuxer(fps, venc, aenc) {
   await loadScript(MUXER_URL, 'Mp4Muxer');
   return new Mp4Muxer.Muxer({
@@ -6115,7 +6146,7 @@ async function exportFast(onProg, onStatus) {
   await encodeAudio(muxer, aenc, mix);
 
   let vErr = null, dErr = null;
-  const ve = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => vErr = e });
+  const ve = new VideoEncoder({ output: vOut(muxer), error: e => vErr = e });
   ve.configure(venc.cfg);
   const q = []; let poke = () => {};
   const dec = new VideoDecoder({ output: f => { q.push(f); poke(); }, error: e => { dErr = e; poke(); } });
@@ -6160,7 +6191,7 @@ async function exportFast(onProg, onStatus) {
   }
   await ve.flush(); ve.close(); dec.close();
   if (vErr) throw vErr;
-  muxer.finalize();
+  muxer.finalize(); mp4Check(muxer.target.buffer, muxer);
   return { blob: new Blob([muxer.target.buffer], { type: 'video/mp4' }), ext: 'mp4', fps, codec: venc.mux, mode: venc.hw ? 'rápida con tarjeta gráfica' : 'rápida', dur };
 }
 
@@ -6193,7 +6224,7 @@ async function exportPlay(onProg, onStatus) {
   const muxer = await makeMuxer(fps, venc, aenc);
   await encodeAudio(muxer, aenc, mix);
   let vErr = null;
-  const ve = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => vErr = e });
+  const ve = new VideoEncoder({ output: vOut(muxer), error: e => vErr = e });
   ve.configure(venc.cfg);
   const fdur = 1 / fps, total = Math.max(1, Math.round(dur * fps));
   let oi = 0, outBase = 0, dropped = 0;
@@ -6251,7 +6282,7 @@ async function exportPlay(onProg, onStatus) {
   if (vErr) throw vErr;
   console.info('exportación por reproducción: fotogramas repetidos', dropped);
   if (dropped > total * 0.05) throw new Error('demasiados fotogramas perdidos');
-  muxer.finalize();
+  muxer.finalize(); mp4Check(muxer.target.buffer, muxer);
   return { blob: new Blob([muxer.target.buffer], { type: 'video/mp4' }), ext: 'mp4', fps, codec: venc.mux, mode: 'completa' };
 }
 // exportación precisa para cualquier formato (HEVC/H.265, WEBM, MOV…): busca cada fotograma exacto en el vídeo
@@ -6271,7 +6302,7 @@ async function exportSeek(onProg, onStatus) {
   const muxer = await makeMuxer(fps, venc, aenc);
   await encodeAudio(muxer, aenc, mix);
   let vErr = null;
-  const ve = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => vErr = e });
+  const ve = new VideoEncoder({ output: vOut(muxer), error: e => vErr = e });
   ve.configure(venc.cfg);
   const n = Math.max(1, Math.round(dur * fps)), fdur = 1 / fps;
   const seekTo = t => new Promise(r => {
@@ -6295,7 +6326,7 @@ async function exportSeek(onProg, onStatus) {
   }
   await ve.flush(); ve.close();
   if (vErr) throw vErr;
-  muxer.finalize(); tv.removeAttribute('src'); tv.load();
+  muxer.finalize(); tv.removeAttribute('src'); tv.load(); mp4Check(muxer.target.buffer, muxer);
   return { blob: new Blob([muxer.target.buffer], { type: 'video/mp4' }), ext: 'mp4', fps, codec: venc.mux, mode: 'precisa' };
 }
 
