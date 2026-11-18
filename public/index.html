@@ -2629,7 +2629,7 @@ No hace falta tocar nada aquí: Clipzi escribe config.json y tú solo abres
 """
 import os, sys, json, time, threading, subprocess, shutil, re, glob, wave, traceback, datetime, uuid
 
-GRABADOR_VERSION = 30   # Clipzi solo lo sobrescribe con una versión más nueva
+GRABADOR_VERSION = 31   # Clipzi solo lo sobrescribe con una versión más nueva
 BASE = os.path.dirname(os.path.abspath(__file__))
 CFG = os.path.join(BASE, 'config.json')
 DIRS = os.path.join(BASE, 'directos')
@@ -4344,6 +4344,220 @@ def cc_one(rid, q):
     shutil.rmtree(job, ignore_errors=True)
 
 
+# ---------------------------------------------------------------- limpiar lo que CapCut va dejando en el disco
+# Archivos temporales de edición: CapCut los vuelve a crear solo cuando los necesita.
+CC_TMP_SKIP = {'effect', 'artisteffect', 'onlinematerial', 'music', 'template', 'aetemplate', 'heycan', 'resourcepanel', 'fontimage',
+               'aitexttemplate', 'aimusic', 'clouddraft'}
+CC_LOGS = ('Log', 'VELog', 'Crash', 'Feedback', 'Tracking', 'ByteBench')
+
+
+def cc_base():
+    la = os.environ.get('LOCALAPPDATA') or os.path.join(os.path.expanduser('~'), 'AppData', 'Local')
+    return os.path.join(la, 'CapCut')
+
+
+def _is_link(p):
+    try:
+        if os.path.islink(p):
+            return True
+        return bool(getattr(os.path, 'isjunction', lambda x: False)(p))
+    except Exception:
+        return True
+
+
+def _tree_size(p):
+    n = b = 0
+    try:
+        if os.path.isfile(p):
+            return 1, os.path.getsize(p)
+        for root, dirs, files in os.walk(p, followlinks=False):
+            dirs[:] = [d for d in dirs if not _is_link(os.path.join(root, d))]
+            for f in files:
+                try:
+                    b += os.path.getsize(os.path.join(root, f))
+                    n += 1
+                except Exception:
+                    pass
+    except Exception:
+        pass
+    return n, b
+
+
+def _inside_capcut(p):
+    try:
+        base = os.path.normcase(os.path.realpath(cc_base()))
+        q = os.path.normcase(os.path.realpath(p))
+        return q != base and q.startswith(base + os.sep)
+    except Exception:
+        return False
+
+
+def _wipe(p):
+    """Borra un archivo o una carpeta entera (sin seguir accesos directos). Devuelve (bytes liberados, archivos que no se dejaron borrar)."""
+    freed = locked = 0
+    if not _inside_capcut(p) or _is_link(p):
+        return 0, 0
+    if os.path.isfile(p):
+        try:
+            sz = os.path.getsize(p)
+            os.remove(p)
+            return sz, 0
+        except Exception:
+            return 0, 1
+    for root, dirs, files in os.walk(p, topdown=False, followlinks=False):
+        for f in files:
+            fp = os.path.join(root, f)
+            try:
+                sz = os.path.getsize(fp)
+                try:
+                    os.chmod(fp, 0o666)
+                except Exception:
+                    pass
+                os.remove(fp)
+                freed += sz
+            except Exception:
+                locked += 1
+        for d in dirs:
+            dp = os.path.join(root, d)
+            try:
+                if _is_link(dp):
+                    os.unlink(dp)
+                else:
+                    os.rmdir(dp)
+            except Exception:
+                pass
+    try:
+        os.rmdir(p)
+    except Exception:
+        pass
+    return freed, locked
+
+
+def _to_recycle(p):
+    """Manda una carpeta a la Papelera de reciclaje de Windows (se puede recuperar)."""
+    if not WIN or not _inside_capcut(p):
+        return False
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        class SHFILEOPSTRUCTW(ctypes.Structure):
+            _fields_ = [('hwnd', wintypes.HWND), ('wFunc', wintypes.UINT), ('pFrom', wintypes.LPCWSTR), ('pTo', wintypes.LPCWSTR),
+                        ('fFlags', ctypes.c_uint16), ('fAnyOperationsAborted', wintypes.BOOL), ('hNameMappings', ctypes.c_void_p), ('lpszProgressTitle', wintypes.LPCWSTR)]
+        op = SHFILEOPSTRUCTW(None, 3, os.path.abspath(p) + '\0\0', None, 0x0040 | 0x0010 | 0x0004 | 0x0400, False, None, None)   # borrar · a la papelera · sin preguntar · sin ventanas
+        return ctypes.windll.shell32.SHFileOperationW(ctypes.byref(op)) == 0 and not os.path.exists(p)
+    except Exception:
+        return False
+
+
+def _ver_key(name):
+    return tuple(int(x) if x.isdigit() else 0 for x in name.split('.'))
+
+
+def cc_groups(days=30):
+    """Qué se puede borrar, por grupos: [{id, label, note, items:[(ruta, modo)], on}]. modo: 'wipe' (borrar) o 'bin' (a la papelera de Windows)."""
+    base = cc_base()
+    ud = os.path.join(base, 'User Data')
+    cache = os.path.join(ud, 'Cache')
+    drafts = os.path.join(ud, 'Projects', 'com.lveditor.draft')
+    G = []
+
+    def sub(d):
+        try:
+            return [os.path.join(d, n) for n in sorted(os.listdir(d))]
+        except Exception:
+            return []
+    tmp = [p for p in sub(cache) if os.path.basename(p).strip().lower() not in CC_TMP_SKIP]
+    dl = [p for p in sub(cache) if os.path.basename(p).strip().lower() in CC_TMP_SKIP]
+    G.append({'id': 'tmp', 'label': 'Archivos temporales de edición', 'note': 'Vistas previas, miniaturas, ondas de audio y cálculos de la IA. CapCut los vuelve a crear solo.', 'on': True, 'items': [(p, 'wipe') for p in tmp]})
+    G.append({'id': 'dl', 'label': 'Efectos, plantillas, música y letras descargados', 'note': 'Se vuelven a descargar de internet cuando abras un proyecto que los use.', 'on': True, 'items': [(p, 'wipe') for p in dl]})
+    G.append({'id': 'log', 'label': 'Registros e informes de errores', 'note': 'Solo sirven a CapCut para diagnosticar fallos.', 'on': True,
+              'items': [(os.path.join(ud, n), 'wipe') for n in CC_LOGS if os.path.isdir(os.path.join(ud, n))]})
+    vers = [p for p in sub(os.path.join(base, 'Apps')) if os.path.isdir(p) and re.match(r'^\d+(\.\d+)+$', os.path.basename(p))]
+    vers.sort(key=lambda p: _ver_key(os.path.basename(p)))
+    # se conserva la más nueva que tiene el programa dentro (y cualquiera aún más nueva, por si es una actualización a medio bajar)
+    full = [i for i, p in enumerate(vers) if os.path.exists(os.path.join(p, 'CapCut.exe'))]
+    keep = full[-1] if full else len(vers)
+    G.append({'id': 'old', 'label': 'Versiones antiguas del programa', 'note': 'Copias de CapCut de antes de actualizar. Se conserva la que usas ahora%s.' % (' (%s)' % os.path.basename(vers[keep]) if full else ''),
+              'on': True, 'items': [(p, 'wipe') for p in vers[:keep]] if full else []})
+    G.append({'id': 'bin', 'label': 'Papelera de CapCut', 'note': 'Proyectos que ya borraste dentro de CapCut y siguen ocupando sitio.', 'on': True, 'items': [(p, 'wipe') for p in sub(os.path.join(drafts, '.recycle_bin'))]})
+    old = []
+    lim = time.time() - max(1, int(days)) * 86400
+    for p in sub(drafts):
+        n = os.path.basename(p)
+        if not os.path.isdir(p) or n.startswith('.') or _is_link(p):
+            continue
+        try:
+            newest = max([os.path.getmtime(p)] + [os.path.getmtime(os.path.join(p, f)) for f in os.listdir(p) if f.lower().startswith('draft_')])
+        except Exception:
+            continue
+        if newest < lim:
+            old.append((p, 'bin'))
+    G.append({'id': 'proj', 'label': 'Proyectos que no tocas desde hace más de %d días' % int(days), 'note': 'Van a la Papelera de reciclaje de Windows: si te equivocas, los puedes recuperar desde ahí.', 'on': False, 'items': old})
+    return G
+
+
+def cc_clean_one(rid, q):
+    outj = os.path.join(CCJ, 'out', rid + '.json')
+    op = q.get('op')
+    try:
+        if not os.path.isdir(cc_base()):
+            raise Exception('No encuentro CapCut en este ordenador.')
+        days = int(q.get('days') or 30)
+        G = cc_groups(days)
+        if op == 'cc_scan':
+            write_json(outj, {'status': 'working', 'msg': 'Midiendo cuánto ocupa cada cosa…'})
+            res = []
+            for g in G:
+                n = b = 0
+                for p, _ in g['items']:
+                    a, c = _tree_size(p)
+                    n += a
+                    b += c
+                res.append({'id': g['id'], 'label': g['label'], 'note': g['note'], 'on': g['on'], 'files': n, 'bytes': b, 'count': len(g['items']),
+                            'names': [os.path.basename(p) for p, _ in g['items']][:60] if g['id'] in ('proj', 'old') else []})
+            write_json(outj, {'status': 'done', 'v': GRABADOR_VERSION, 'groups': res, 'running': cc_running(), 'days': days})
+            return
+        # borrar
+        if cc_running():
+            raise Exception('CapCut está abierto. Ciérralo del todo y vuelve a pulsar: con CapCut abierto no se pueden borrar sus archivos.')
+        want = set(q.get('groups') or [])
+        freed = locked = 0
+        binned = []
+        for g in G:
+            if g['id'] not in want:
+                continue
+            write_json(outj, {'status': 'working', 'msg': 'Borrando: %s…' % g['label']})
+            for p, mode in g['items']:
+                if mode == 'bin':
+                    _, b = _tree_size(p)
+                    if _to_recycle(p):
+                        freed += b
+                        binned.append(os.path.basename(p))
+                    else:
+                        locked += 1
+                else:
+                    f, l = _wipe(p)
+                    freed += f
+                    locked += l
+        if binned:      # que no queden en la pantalla de inicio de CapCut como proyectos rotos
+            drafts = cc_root()
+            rm = os.path.join(drafts, 'root_meta_info.json')
+            try:
+                with open(rm, encoding='utf-8') as f:
+                    R = json.load(f)
+                shutil.copy(rm, rm + '.cortex.bak')
+                gone = set(x.lower() for x in binned)
+                R['all_draft_store'] = [e for e in R.get('all_draft_store', []) if os.path.basename(str(e.get('draft_fold_path', '')).replace('/', '\\').rstrip('\\')).lower() not in gone]
+                write_json(rm, R)
+            except Exception:
+                pass
+        log('🧹 CapCut limpiado: %.1f GB liberados' % (freed / 1e9))
+        write_json(outj, {'status': 'done', 'v': GRABADOR_VERSION, 'freed': freed, 'locked': locked, 'binned': len(binned)})
+    except Exception as e:
+        write_json(outj, {'status': 'error', 'error': str(e)[:300]})
+
+
 def capcut_loop():
     for d in ('req', 'out'):
         os.makedirs(os.path.join(CCJ, d), exist_ok=True)
@@ -4357,7 +4571,10 @@ def capcut_loop():
                     q = json.load(f)
             except Exception:
                 continue
-            cc_one(rid, q)
+            if q.get('op') in ('cc_scan', 'cc_clean'):
+                cc_clean_one(rid, q)
+            else:
+                cc_one(rid, q)
         # resultados viejos: fuera
         for o in glob.glob(os.path.join(CCJ, 'out', '*.json')):
             try:
@@ -8737,6 +8954,7 @@ function renderHnav(c) {
     for (const o of clients) item(o.name, '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', false, () => { curClient = o.id; renderHome(); });
   }
   const sp = document.createElement('div'); sp.className = 'hsp'; n.append(sp);
+  item('Limpiar CapCut', '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', false, ccCleanOpen);
   const f = document.createElement('div'); f.className = 'hfoot'; f.innerHTML = 'Versión de prueba' + (window.__cxMe ? ` · ${String(window.__cxMe).replace(/[<>&]/g, '')} · <a href="/salir" style="color:inherit">Salir</a>` : ''); n.append(f);
 }
 // lo que más rinde de cada creador (datos reales del análisis de clips virales)
@@ -13857,6 +14075,64 @@ setInterval(async () => {
     if (cur !== liveCfgSeen) { await writeLiveConfig(); liveCfgSeen = cur; }
   } catch {} finally { liveCfgBusy = false; }
 }, 10000);
+/* ---------- 🧹 limpiar lo que CapCut va dejando en el disco (lo hace el grabador; aquí se elige qué y se confirma) ---------- */
+const ccEsc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ccGB = b => b >= 1e9 ? (b / 1e9).toFixed(1).replace('.', ',') + ' GB' : b >= 1e6 ? Math.round(b / 1e6) + ' MB' : b > 0 ? Math.max(1, Math.round(b / 1e3)) + ' KB' : '0';
+async function ccAsk(dir, body, onMsg, maxMs = 180000) {
+  const id = 'l' + Date.now().toString(36), cc = await dir.getDirectoryHandle('capcut', { create: true }), rq = await cc.getDirectoryHandle('req', { create: true });
+  await wfile(rq, id + '.json', JSON.stringify(body)); const t0 = Date.now(); let seen = false;
+  for (;;) {
+    await sleep(700); const o = JSON.parse(await rtext(dir, 'capcut/out/' + id + '.json') || 'null');
+    if (o) { seen = true; if (o.status !== 'working') return o; if (o.msg && onMsg) onMsg(o.msg); }
+    if (!seen && Date.now() - t0 > 12000) return { status: 'error', error: 'El grabador no contesta. Ábrelo (o cierra y abre la aplicación Cortex) y vuelve a probar.' };
+    if (Date.now() - t0 > maxMs) return { status: 'error', error: 'Está tardando demasiado. Mira la ventana del grabador.' };
+  }
+}
+async function ccCleanOpen() {
+  let dir = await getLiveDir(true); if (!dir) { dir = await pickLiveDir(); if (!dir) return; }
+  try { await writeGrabadorFiles(); } catch {}
+  let m = $('ccClean'); if (m) m.remove();
+  m = document.createElement('div'); m.id = 'ccClean'; m.className = 'pv-modal'; m.style.zIndex = 9000;
+  m.innerHTML = `<div class="pv-card" role="dialog" aria-label="Limpiar CapCut" style="width:min(640px,100%)">
+    <div class="pv-head"><strong>🧹 Limpiar CapCut</strong><span class="hint" id="ccDays"></span><button class="ib" id="ccX" aria-label="Cerrar">✕</button></div>
+    <p class="hint" id="ccS">⏳ Midiendo cuánto ocupa cada cosa…</p>
+    <div id="ccList" style="display:grid;gap:8px"></div>
+    <div id="ccFoot" hidden style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><strong id="ccTot"></strong><span style="flex:1"></span><button id="ccRe" style="width:auto;padding:8px 14px">↻ Volver a medir</button><button class="primary" id="ccGo" style="width:auto;padding:10px 18px;font-weight:800">Borrar lo marcado</button></div>
+  </div>`;
+  document.body.append(m);
+  const close = () => m.remove(); $('ccX').onclick = close; m.addEventListener('mousedown', e => { if (e.target === m) close(); });
+  const say = t => { const e = $('ccS'); if (e) e.textContent = t; };
+  let G = [], days = +(ezPref('ccDays') || 30);
+  const tot = () => { const b = G.filter(g => $('ccg_' + g.id) && $('ccg_' + g.id).checked).reduce((a, g) => a + g.bytes, 0); $('ccTot').textContent = 'Se van a liberar ' + ccGB(b); $('ccGo').disabled = !b; };
+  async function scan() {
+    $('ccFoot').hidden = true; $('ccList').innerHTML = ''; say('⏳ Midiendo cuánto ocupa cada cosa…');
+    const o = await ccAsk(dir, { op: 'cc_scan', days }, say); if (!$('ccClean')) return;
+    if (o.status === 'error' || !o.groups) { say('⚠ ' + (o.groups === undefined && o.status !== 'error' || /proyecto|draft|name/i.test(o.error || '') ? 'El grabador que tienes abierto es antiguo y no sabe limpiar. Ciérralo y vuelve a abrirlo (o cierra y abre la aplicación Cortex), y pulsa «Volver a medir».' : o.error)); $('ccFoot').hidden = false; $('ccGo').disabled = true; $('ccTot').textContent = ''; return; }
+    G = o.groups;
+    $('ccList').innerHTML = G.map(g => `<label style="display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:12px;cursor:${g.bytes ? 'pointer' : 'default'};opacity:${g.bytes ? 1 : .5}">
+      <input type="checkbox" id="ccg_${g.id}" ${g.on && g.bytes ? 'checked' : ''} ${g.bytes ? '' : 'disabled'} style="width:18px;height:18px;margin-top:2px">
+      <span><b>${ccEsc(g.label)}</b>${g.id === 'proj' && g.count ? ` <span class="hint">(${g.count})</span>` : ''}<br><span class="hint">${ccEsc(g.note)}${g.names && g.names.length && g.id === 'proj' ? '<br>' + ccEsc(g.names.slice(0, 24).join(' · ')) + (g.count > 24 ? ' …' : '') : ''}</span></span>
+      <b style="white-space:nowrap">${g.bytes ? ccGB(g.bytes) : 'nada'}</b></label>`).join('');
+    G.forEach(g => { const c = $('ccg_' + g.id); if (c) c.onchange = tot; });
+    $('ccDays').innerHTML = `Proyectos sin tocar desde hace <select id="ccDaysS" style="width:auto;padding:2px 6px">${[7, 15, 30, 60, 90].map(d => `<option value="${d}"${d === days ? ' selected' : ''}>${d} días</option>`).join('')}</select>`;
+    $('ccDaysS').onchange = e => { days = +e.target.value; ezPref('ccDays', String(days)); scan(); };
+    say(o.running ? '⚠ CapCut está abierto. Puedes mirar cuánto ocupa todo, pero para borrar tienes que cerrarlo antes.' : 'Marca lo que quieras borrar. Tus proyectos no se tocan salvo que marques la última casilla.');
+    $('ccFoot').hidden = false; tot();
+  }
+  $('ccRe').onclick = scan;
+  $('ccGo').onclick = async () => {
+    const pick = G.filter(g => $('ccg_' + g.id).checked); if (!pick.length) return;
+    const b = pick.reduce((a, g) => a + g.bytes, 0), pj = pick.find(g => g.id === 'proj');
+    if (!$('ccGo').dataset.sure) { $('ccGo').dataset.sure = '1'; $('ccGo').textContent = '¿Seguro? Pulsa otra vez para borrar ' + ccGB(b); say('Esto no se puede deshacer' + (pj ? ', salvo los proyectos: esos van a la Papelera de reciclaje de Windows.' : '.') + ' Pulsa otra vez el botón para confirmar.'); setTimeout(() => { const g = $('ccGo'); if (g) { delete g.dataset.sure; g.textContent = 'Borrar lo marcado'; } }, 8000); return; }
+    delete $('ccGo').dataset.sure; $('ccGo').textContent = 'Borrar lo marcado'; $('ccGo').disabled = true; $('ccRe').disabled = true; say('🧹 Borrando…');
+    const o = await ccAsk(dir, { op: 'cc_clean', groups: pick.map(g => g.id), days }, t => say('🧹 ' + t), 900000); if (!$('ccClean')) return;
+    $('ccRe').disabled = false;
+    if (o.status === 'error') { say('⚠ ' + o.error); $('ccGo').disabled = false; return; }
+    await scan();
+    say(`✅ Liberados ${ccGB(o.freed || 0)}.` + (o.binned ? ` ${o.binned} proyecto${o.binned > 1 ? 's' : ''} en la Papelera de reciclaje de Windows.` : '') + (o.locked ? ` ${o.locked} archivo${o.locked > 1 ? 's' : ''} no se dejaron borrar (estaban en uso).` : ''));
+  };
+  scan();
+}
 let pickAborts = 0;
 const toastLong = (t, ms = 15000) => { const el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, ms); console.warn(t); };
 async function pickLiveDir() {
