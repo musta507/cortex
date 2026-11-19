@@ -63,6 +63,7 @@
 .se-h{display:flex;align-items:center;justify-content:space-between}
 .se-h button{width:auto;padding:4px 10px}
 .se-body{display:grid;grid-template-columns:auto minmax(220px,1fr);gap:16px;align-items:start;min-height:0}
+.se-off{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted, #A1A1AA);cursor:pointer;margin-bottom:6px}.se-off input{width:16px;height:16px;margin:0}.se-off:has(input:checked){color:#FCA5A5}
 .se-ai{position:relative;display:flex;gap:6px}
 .se-ai #seAi{flex:1;padding:12px;font-size:15px;font-weight:800}
 .se-ai #seAiMore{width:auto;padding:8px 12px}
@@ -1949,6 +1950,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
           <div class="se-body">
             <div class="se-pv"><canvas id="seCv" width="540" height="960"></canvas><span class="se-tip">Arrastra para mover · rueda del ratón para el zoom</span><div class="se-pvb"><button id="sePlay" title="Reproducir / parar">▶</button><button id="seSnd" title="Oír o no el sonido del clip (apagado: sigues oyendo el directo)">🔇</button></div></div>
             <div class="se-ctl">
+              <label class="se-off" title="Con esto activado la IA no hace nada sola: ni título, ni formato, ni subtítulos, ni recorte. Solo actúa si pulsas «Editar con IA»."><input type="checkbox" id="seOffAll"><span>🚫 Desactivar todo lo automático</span></label>
               <div class="se-ai"><button class="primary" id="seAi">✨ Editar con IA</button><button id="seAiMore" title="Elegir qué hace la IA"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
                 <div class="se-aid" id="seAiD" hidden>
                   <strong>Al pulsar «Editar con IA», la IA hace:</strong>
@@ -7234,6 +7236,18 @@ function camZoom(f) {
   c.x = Math.min(Math.max(0, cx - c.w / 2), 1 - c.w); c.y = Math.min(Math.max(0, cy - c.h / 2), 1 - c.h);
   tlSig = ''; pushHistory();
 }
+/* «Desactivar todo lo automático»: la IA no toca nada sola (directo y vídeos subidos); queda guardado */
+const AUTO_KEYS = ['stAutoT', 'stAutoF', 'stAutoS', 'stAutoX', 'stAutoE', 'stAutoO'];
+const autoOff = () => ezPref('stAutoOff') === '1';
+function setAutoOff(on) {
+  if (on && !autoOff()) { const prev = {}; for (const k of AUTO_KEYS) prev[k] = ezPref(k) || ''; ezPref('stAutoPrev', JSON.stringify(prev)); for (const k of AUTO_KEYS) ezPref(k, '0'); }
+  if (!on && autoOff()) { let prev = {}; try { prev = JSON.parse(ezPref('stAutoPrev') || '{}'); } catch {} for (const k of AUTO_KEYS) ezPref(k, prev[k] || ''); }
+  ezPref('stAutoOff', on ? '1' : '0');
+  try { stEdAutoUI(); $('seAutoO').checked = ezPref('stAutoO') !== '0'; } catch {}
+  for (const id of ['seAutoT', 'seAutoF', 'seAutoE', 'seAutoS', 'seAutoX', 'seAutoO']) { const el = $(id); if (el) el.disabled = on; }
+  const c = $('seOffAll'); if (c) c.checked = on;
+}
+setTimeout(() => { const c = $('seOffAll'); if (!c) return; c.onchange = () => { setAutoOff(c.checked); toast(c.checked ? 'Todo lo automático, desactivado: la IA solo actúa si pulsas «Editar con IA»' : 'La IA vuelve a preparar los clips sola'); }; setAutoOff(autoOff()); }, 0);
 /* pantalla dividida: controles */
 function setLayout(v, user) {
   layoutMode = v; if (typeof zoomMax === 'function') zoomMax(); setSeg([$('lyNormal'), $('lySplit'), $('lyReact')], v === 'split' ? $('lySplit') : v === 'react' ? $('lyReact') : $('lyNormal'));
@@ -14653,8 +14667,9 @@ async function stEdOpen(S, g, c) {
   try {
     const mine0 = $('seTitle').value.trim();
     ezSkip.title = !aT || !!mine0; ezSkip.subs = !aS; ezSkip.scenes = ezPref('stAutoE') === '1' ? false : true;   // un formato por escena solo si lo pides
+    ezSkip.speech = autoOff();   // todo lo automático desactivado: el clip empieza donde lo cortaste
     if (stPendFmt || !aF) ezSkip.scenes = true;
-    try { await openLiveClip(S, g, c.f, c.off, c.dur, stPendFmt || (aF ? 'auto' : (ezPref('stFmtDef') || 'horizontal'))); } finally { ezSkip.title = ezSkip.subs = ezSkip.scenes = false; }
+    try { await openLiveClip(S, g, c.f, c.off, c.dur, stPendFmt || (aF ? 'auto' : (ezPref('stFmtDef') || 'horizontal'))); } finally { ezSkip.title = ezSkip.subs = ezSkip.scenes = ezSkip.speech = false; }
     // lo que hayas puesto mientras se preparaba
     const mine = $('seTitle').value.trim(), pf = stPendFmt; stPend = null;
     if (mine) { try { titleHL.clear(); } catch {} $('title').value = mine; $('title').dispatchEvent(new Event('input', { bubbles: true })); try { renderChips(); pushHistory(); } catch {} }
@@ -15644,6 +15659,9 @@ async function stQuickOpen(fresh = true) {
   const auto = ezPref('stAutoO') !== '0', aT = auto && ezPref('stAutoT') !== '0', aF = auto && ezPref('stAutoF') !== '0', aS = auto && ezPref('stAutoS') !== '0';
   $('seS').textContent = aT || aF || aS ? '✨ La IA está preparando el clip… puedes ir escribiendo el título' : '⏳ Abriendo el clip…';
   stEdFmts(''); stEdTT(); stEdAutoUI(); cancelAnimationFrame(stEdRaf); stEdLoop(); setTimeout(() => $('seTitle').focus(), 60);
+  if (fresh && autoOff()) {   // todo lo automático desactivado: el clip se queda tal cual, sin IA
+    ezA = 0; ezB = ezDur(); ezApplyTrim(); ezShow('edit'); fresh = false;
+  }
   if (!fresh) {   // clip ya hecho: solo se enseña como está
     stPend = null; stEdR = [0, ezDur()]; for (const id of ['seA', 'seB']) { $(id).min = 0; $(id).max = ezDur(); }
     stEdTrimUI(); stEdTT(); stEdFmts(clipMeta.fmt || ''); vid.muted = !stEdSound; $('seS').textContent = ''; $('seExp').disabled = false; return;
