@@ -7093,7 +7093,8 @@ cv.addEventListener('pointerdown', e => {
   // dos personas: cada mitad se arrastra para encuadrar a su persona (y la rueda acerca o aleja)
   // (si la línea está en una parte del clip con su propia plantilla, lo que se ajusta es el encuadre de esa parte)
   const scA = sceneAdj(), scCr = scA && scA.ov.mode === 'react' && scA.ov.crops ? scA.ov.crops : null, scS = scA && scA.ov.mode !== 'react' ? (scA.ov.s || (scA.ov.s = {})) : null;
-  if (L && L.react && (scCr || $('duo').checked) && (k === 'cam' || k === 'video' || /^p\d$/.test(k))) {
+  // (en Reacción normal, la cámara de arriba también se arrastra y se acerca igual)
+  if (L && L.react && (scCr || $('duo').checked || k === 'cam') && (k === 'cam' || k === 'video' || /^p\d$/.test(k))) {
     const CR = scCr || crops, which = k === 'cam' ? 'cam' : k === 'video' ? 'content' : k, r = k === 'cam' ? L.ir : k === 'video' ? boxes.video : L.more && L.more[+k.slice(1) - 2] && L.more[+k.slice(1) - 2].R, c0 = cget(CR, which);
     if (r && r.w && c0) { drag = { k: 'duo', which, cr: CR, p0: p, c: { ...c0 }, rw: r.w, rh: r.h }; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; e.preventDefault(); return; }
   }
@@ -7214,7 +7215,7 @@ cv.addEventListener('wheel', e => {
     e.preventDefault(); const s = scA.ov.s || (scA.ov.s = {}); s.zoom = Math.max(0.3, Math.min(Math.max(800, +$('zoom').max || 800) / 100, Math.round(((s.zoom || 1) * 100 + (e.deltaY < 0 ? 5 : -5))) / 100));
     clearTimeout(duoWheelT); duoWheelT = setTimeout(pushHistory, 400); return;
   }
-  if ((scCr || (layoutMode === 'react' && $('duo').checked)) && (k === 'cam' || k === 'video' || /^p\d$/.test(k))) {
+  if ((scCr || (layoutMode === 'react' && ($('duo').checked || k === 'cam'))) && (k === 'cam' || k === 'video' || /^p\d$/.test(k))) {
     e.preventDefault(); const c = cget(scCr || crops, k === 'cam' ? 'cam' : k === 'video' ? 'content' : k); if (!c) return;
     let f = e.deltaY < 0 ? 0.94 : 1 / 0.94; f = Math.min(f, 1 / c.w, 1 / c.h); if (c.w * f < 0.025) return;
     const cx = c.x + c.w / 2, cy = c.y + c.h / 2; c.w *= f; c.h *= f;
@@ -7225,6 +7226,14 @@ cv.addEventListener('wheel', e => {
   if (k === 'image') { e.preventDefault(); setRange('imgZoom', +$('imgZoom').value + (e.deltaY < 0 ? 5 : -5)); }
 }, { passive: false });
 
+/* Reacción: acercar o alejar la cámara de arriba (sobre lo que se ve ahora) */
+function camZoom(f) {
+  const sa = sceneAdj(), CR = sa && sa.ov.mode === 'react' && sa.ov.crops ? sa.ov.crops : crops, c = cget(CR, 'cam'); if (!c) return;
+  f = Math.min(f, 1 / c.w, 1 / c.h); if (c.w * f < 0.025) return;
+  const cx = c.x + c.w / 2, cy = c.y + c.h / 2; c.w *= f; c.h *= f;
+  c.x = Math.min(Math.max(0, cx - c.w / 2), 1 - c.w); c.y = Math.min(Math.max(0, cy - c.h / 2), 1 - c.h);
+  tlSig = ''; pushHistory();
+}
 /* pantalla dividida: controles */
 function setLayout(v, user) {
   layoutMode = v; if (typeof zoomMax === 'function') zoomMax(); setSeg([$('lyNormal'), $('lySplit'), $('lyReact')], v === 'split' ? $('lySplit') : v === 'react' ? $('lyReact') : $('lyNormal'));
@@ -12387,6 +12396,8 @@ function ctxItems(k) {
     ...edgeItems(), ...callItems(),
   ]];
   if (k === 'cam') return ['Cámara', [
+    { icon: '🔍', label: 'Acercar la cámara', act: () => camZoom(0.88) },
+    { icon: '🔎', label: 'Alejar la cámara', act: () => camZoom(1 / 0.88) },
     { icon: '✂️', label: 'Marcar dónde está la cámara', act: () => enterCrop('cam') },
     { icon: '✨', label: 'Que la IA la vuelva a buscar', act: () => { camDetectedFor = null; autoDetectCam(true); } },
     { icon: '⬆', label: 'Más espacio para la cámara', act: () => step('ratio', 5) },
