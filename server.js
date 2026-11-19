@@ -228,7 +228,7 @@ http.createServer(async (req, res) => {
       for await (const c of req) { size += c.length; if (size > 60 * 1024 * 1024) return json(res, 413, { error: { message: 'El audio es demasiado largo.' } }); chunks.push(c); }
       const lc = String(req.headers['x-lang'] || '').replace(/[^a-z]/g, '').slice(0, 3);
       let last = '';
-      for (const model of ['scribe_v2', 'scribe_v1']) {
+      for (const model of ['scribe_v3', 'scribe_v2', 'scribe_v1']) {
         const fd = new FormData(); fd.append('file', new Blob([Buffer.concat(chunks)], { type: 'audio/wav' }), 'clip.wav'); fd.append('model_id', model); fd.append('timestamps_granularity', 'word'); fd.append('tag_audio_events', 'false'); if (lc) fd.append('language_code', lc);
         let r; try { r = await fetch('https://api.elevenlabs.io/v1/speech-to-text', { method: 'POST', headers: { 'xi-api-key': EL_KEY }, body: fd, signal: AbortSignal.timeout(180000) }); }
         catch (e) { iaErr('elevenlabs', 'sin respuesta: ' + (e.message || e)); return json(res, 502, { error: { message: 'No se pudo hablar con el servicio de subtítulos.' } }); }
@@ -236,7 +236,7 @@ http.createServer(async (req, res) => {
         if (r.ok) { res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); return res.end(txt); }
         last = r.status + ' ' + txt.slice(0, 300); iaErr('elevenlabs ' + model, last);
         if (r.status === 401 || r.status === 403) { console.error('ELEVENLABS_KEY rechazada:', txt.slice(0, 200)); return json(res, 503, { error: { message: 'Los subtítulos en la nube no están disponibles ahora mismo.' } }); }
-        if (!/model/i.test(txt)) break;
+        if (r.status === 429 || r.status >= 500) break;   // si este modelo no está disponible, se prueba el anterior
       }
       return json(res, 502, { error: { message: 'El servicio de subtítulos ha fallado: ' + last.slice(0, 120) } });
     }

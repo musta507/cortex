@@ -6179,7 +6179,7 @@ async function elevenWords(audio, a0, lang) {
     j = await r.json().catch(() => ({}));
     if (!r.ok) { if (r.status === 503 || r.status === 404) elOff = Date.now(); throw new Error((j.error && j.error.message) || ('servidor ' + r.status)); }
   } else {
-    for (const model of ['scribe_v2', 'scribe_v1']) {
+    for (const model of ['scribe_v3', 'scribe_v2', 'scribe_v1']) {   // primero el más nuevo; si la cuenta no lo tiene, se baja al anterior
       const fd = new FormData(); fd.append('file', wav, 'clip.wav'); fd.append('model_id', model); fd.append('timestamps_granularity', 'word'); fd.append('tag_audio_events', 'false'); if (lc) fd.append('language_code', lc);
       let r; try { r = await fetch('https://api.elevenlabs.io/v1/speech-to-text', { method: 'POST', headers: { 'xi-api-key': getElKey() }, body: fd }); }
       catch (e) { elOff = Date.now(); throw new Error('no se pudo conectar con ElevenLabs'); }
@@ -6187,7 +6187,7 @@ async function elevenWords(audio, a0, lang) {
       if (r.ok) break;
       err = (j && j.detail && (j.detail.message || j.detail.status || JSON.stringify(j.detail))) || ('error ' + r.status);
       if (r.status === 401) throw new Error('la clave de ElevenLabs no vale');
-      if (!/model/i.test(err)) throw new Error(err); j = null;   // si el modelo no existe, se prueba el anterior
+      if (r.status === 429 || r.status >= 500 || model === 'scribe_v1') throw new Error(err); j = null;   // si este modelo no está disponible, se prueba el anterior
     }
     if (!j) throw new Error(err || 'sin respuesta');
   }
