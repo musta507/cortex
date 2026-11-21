@@ -1963,7 +1963,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
           <div class="st-btns"><span class="hint">✂️ Sacar los últimos</span><button class="primary st-b" data-n="20">20 s</button><button class="primary st-b" data-n="30">30 s</button><button class="primary st-b" data-n="50">50 s</button><button class="st-b" data-n="90">1 min 30</button><span class="hint" id="stS"></span></div>
         </div>
         <aside class="st-ed" id="stEd" hidden aria-label="Editar el clip sin salir del directo">
-          <div class="se-h"><strong id="seT">✂️ Tu clip</strong><button class="primary se-exptop" id="seExp" title="Exportar (Ctrl+E): se guarda solo en la carpeta «exportados» del grabador"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar</button><button id="seEmpty" class="se-emp" title="Vaciar el editor (el panel sigue abierto; el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button><button id="seX" title="Cerrar (el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+          <div class="se-h"><strong id="seT">✂️ Tu clip</strong><button class="primary se-exptop" id="seExp" title="Exportar (Ctrl+E): se guarda solo en tu carpeta de Descargas"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar</button><button id="seEmpty" class="se-emp" title="Vaciar el editor (el panel sigue abierto; el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button><button id="seX" title="Cerrar (el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
           <div class="se-body">
             <div class="se-pv"><canvas id="seCv" width="540" height="960"></canvas><span class="se-tip">Arrastra para mover · rueda del ratón para el zoom</span><div class="se-pvb"><button id="sePlay" title="Reproducir / parar">▶</button><button id="seSnd" title="Oír o no el sonido del clip (apagado: sigues oyendo el directo)">🔇</button></div></div>
             <div class="se-ctl">
@@ -15821,14 +15821,12 @@ setTimeout(() => {
     $('seExp').disabled = true; $('seRes').innerHTML = '';
     const out = await doExport(); $('seBarW').hidden = true; $('seExp').disabled = false;
     if (!out) { $('seS').textContent = $('eStatus').textContent || 'No se pudo exportar'; return; }
+    // se descarga solo en la carpeta Descargas (sin ventana de «Guardar como»)
     const src = $('result').querySelector('a'), name = (src && src.download) || ('clip-' + Date.now() + '.mp4');
-    let where = '';
-    try { const d = await getLiveDir(false); if (d) { const ex = await d.getDirectoryHandle('exportados', { create: true }); await wfile(ex, name, out.blob); where = 'exportados'; } } catch (e) { console.warn('no se pudo guardar en exportados', e); }
-    if (where) {
-      const a = document.createElement('a'); a.href = src ? src.href : URL.createObjectURL(out.blob); a.download = name; a.textContent = '✅ Guardado en C:\\Clipzi Grabador\\exportados\\' + name + ' · descargar otra copia'; $('seRes').append(a);
-      if (window.cortexApp && window.cortexApp.openFolder) { const o = document.createElement('button'); o.type = 'button'; o.textContent = '📂 Abrir la carpeta'; o.style.cssText = 'width:auto;margin-top:6px;padding:6px 12px'; o.onclick = () => window.cortexApp.openFolder('C:\\Clipzi Grabador\\exportados'); $('seRes').append(o); }
-      toast('✅ Exportado y guardado en la carpeta «exportados»');
-    } else if (src) { const a = document.createElement('a'); a.href = src.href; a.download = name; a.textContent = '✅ ' + src.textContent; $('seRes').append(a); a.click(); toast('✅ Exportado: está en tu carpeta de Descargas'); }
+    const a = document.createElement('a'); a.href = src ? src.href : URL.createObjectURL(out.blob); a.download = name; a.click();
+    a.textContent = '✅ En Descargas: ' + name + ' · descargar otra vez'; $('seRes').append(a);
+    if (window.cortexApp && window.cortexApp.openFolder) { const o = document.createElement('button'); o.type = 'button'; o.textContent = '📂 Abrir Descargas'; o.style.cssText = 'width:auto;margin-top:6px;padding:6px 12px'; o.onclick = () => window.cortexApp.openFolder('descargas'); $('seRes').append(o); }
+    toast('✅ Exportado: está en tu carpeta de Descargas');
     $('seS').textContent = 'Exportado. Cierra con ✕ para seguir con el directo.';
   };
 }, 0);
