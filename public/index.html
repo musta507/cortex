@@ -75,6 +75,8 @@
 .se-h .se-exptop{margin-left:auto;margin-right:8px;display:inline-flex!important;align-items:center;gap:7px;height:34px;padding:0 16px!important;border-radius:10px!important;font-weight:800;font-size:14px}
 .se-h .se-exptop svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .se-h .se-exptop:disabled{opacity:.55}
+.se-h .se-redo{margin-left:auto;margin-right:8px;height:34px;padding:0 12px;border-radius:10px;font-weight:700;font-size:13px;white-space:nowrap}
+.se-h .se-redo:not([hidden])+.se-exptop{margin-left:0}
 .se-btns:has(> :only-child){grid-template-columns:1fr!important}
 .se-ai{justify-content:flex-start}
 .se-ai #seAi{flex:0 0 auto!important;padding:8px 14px!important;font-size:13px!important;border-radius:10px!important}
@@ -1965,7 +1967,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
           <div class="st-btns"><span class="hint">✂️ Sacar los últimos</span><button class="primary st-b" data-n="20">20 s</button><button class="primary st-b" data-n="30">30 s</button><button class="primary st-b" data-n="50">50 s</button><button class="st-b" data-n="90">1 min 30</button><span class="hint" id="stS"></span></div>
         </div>
         <aside class="st-ed" id="stEd" hidden aria-label="Editar el clip sin salir del directo">
-          <div class="se-h"><strong id="seT">✂️ Tu clip</strong><button class="primary se-exptop" id="seExp" title="Exportar (Ctrl+E): se guarda solo en tu carpeta de Descargas"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar</button><button id="seEmpty" class="se-emp" title="Vaciar el editor (el panel sigue abierto; el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button><button id="seX" title="Cerrar (el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+          <div class="se-h"><strong id="seT">✂️ Tu clip</strong><button class="se-redo" id="seRedo" hidden title="Para la exportación que esté en marcha y la empieza otra vez desde cero">🔁 Volver a exportar</button><button class="primary se-exptop" id="seExp" title="Exportar (Ctrl+E): se guarda solo en tu carpeta de Descargas"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar</button><button id="seEmpty" class="se-emp" title="Vaciar el editor (el panel sigue abierto; el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button><button id="seX" title="Cerrar (el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
           <div class="se-body">
             <div class="se-pv"><canvas id="seCv" width="540" height="960"></canvas><span class="se-tip">Arrastra para mover · rueda del ratón para el zoom</span><div class="se-pvb"><button id="sePlay" title="Reproducir / parar">▶</button><button id="seSnd" title="Oír o no el sonido del clip (apagado: sigues oyendo el directo)">🔇</button></div></div>
             <div class="se-ctl">
@@ -13377,6 +13379,7 @@ async function ezCensor(quiet, onMsg) {
   } finally { if (own) busy(false); }
 }
 // volver a buscar desde cero (las marcas a mano se quedan)
+var stExpFail = false;   // la última exportación del panel no terminó: se enseña «Volver a exportar»
 let flagKeep = [];   // lo que tenías silenciado antes de «Buscar otra vez»
 async function rescanFlags() {
   flagKeep = (clipMeta.flags || []).filter(f => f.on).map(f => ({ s: f.s, e: f.e }));
@@ -16687,6 +16690,7 @@ function stEdPrep() {
 }
 // vaciar el panel sin cerrarlo: el reproductor queda vacío y listo para el siguiente clip (se guardan el título y el formato)
 function stEdEmpty() {
+  stExpFail = false;
   if ($('stEd').hidden || exporting) return;
   if (stPend === 'prep') { toast('El editor ya está vacío'); return; }
   const t = $('seTitle').value, f = clipMeta.fmt || stPendFmt || '';
@@ -17731,6 +17735,7 @@ function stEdAutoUI() {
 // el mismo panel, a pantalla completa, nada más meter un clip (subido o por enlace): la IA lo prepara y tú solo corriges
 let stQuick = false;
 async function stQuickOpen(fresh = true) {
+  stExpFail = false;
   const ed = $('stEd'); if (ed.parentNode !== document.body) document.body.append(ed);   // fuera del panel en directo, para que se vea en cualquier pantalla
   stQuick = true; stDock = true; ed.classList.add('full'); ed.hidden = false;
   stEdSound = true; $('seSnd').textContent = '🔊';   // aquí no hay directo que escuchar: el clip suena
@@ -17834,6 +17839,7 @@ setTimeout(() => {
     const can = () => !exporting && loaded && stPend !== 'prep' && (stPend == null || stPend === 'quick');
     const lab = () => {
       if (exporting) { if (b.disabled) b.disabled = false; }   // mientras exporta, el mismo botón sirve para cancelar
+      const rd = $('seRedo'); if (rd) { const show = !!loaded && (exporting || stExpFail); if (rd.hidden === show) rd.hidden = !show; }
       else if (b.disabled && can() && !b.dataset.busy) b.disabled = false;
       const t = b.lastChild; if (!t || t.nodeType !== 3) return;
       const w = exporting ? 'Cancelar (exportando…)' : b.disabled ? (stPend === 'prep' || !loaded ? 'Sin clip todavía' : 'Guardando el clip…') : 'Exportar';
@@ -17842,13 +17848,24 @@ setTimeout(() => {
     };
     new MutationObserver(lab).observe(b, { attributes: true, attributeFilter: ['disabled'] }); setInterval(lab, 800);
   }
+  // «Volver a exportar»: corta lo que esté en marcha (aunque esté parado) y empieza de cero
+  $('seRedo').onclick = async () => {
+    const rd = $('seRedo'); if (rd.dataset.busy) return; rd.dataset.busy = '1';
+    try {
+      if (exporting && expAbort) expAbort();
+      for (let i = 0; i < 100 && exporting; i++) await sleep(50);
+      await sleep(80);
+      if (exporting) { toast('No he podido parar la exportación: recarga con F5'); return; }
+      toast('Exportando otra vez desde cero…'); $('seExp').click();
+    } finally { delete rd.dataset.busy; }
+  };
   $('seExp').onclick = async () => {
     if (exporting) { if (expAbort) expAbort(); return; }
     if (!loaded || (stPend && stPend !== 'quick')) return;
     if (stPend === 'quick') toast('La IA aún no había terminado: exporto el clip tal y como se ve ahora');
-    $('seRes').innerHTML = '';
+    $('seRes').innerHTML = ''; stExpFail = false;
     const out = await doExport(); $('seBarW').hidden = true; $('seExp').disabled = false;
-    if (!out) { $('seS').textContent = $('eStatus').textContent || 'No se pudo exportar'; return; }
+    if (!out) { stExpFail = true; $('seS').textContent = $('eStatus').textContent || 'No se pudo exportar'; return; }
     // se descarga solo en la carpeta Descargas (sin ventana de «Guardar como»)
     const src = $('result').querySelector('a'), name = (src && src.download) || ('clip-' + Date.now() + '.mp4');
     const a = document.createElement('a'); a.href = src ? src.href : URL.createObjectURL(out.blob); a.download = name; a.click();
