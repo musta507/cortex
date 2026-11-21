@@ -1157,6 +1157,8 @@ body.st-open .app.easy .ez-flags{visibility:hidden}
 .fl-w span{font-size:11px;color:var(--muted)}
 .fl-w:hover b{color:var(--accent)}
 .fl-scan{margin-top:auto}
+.fl-mode{width:100%;font-size:12px;padding:5px 8px}
+.se-flags{max-height:340px}
 .fl-busy{color:var(--accent)}
 @media (max-width:1150px){.app.easy .ez-flags,.app.easy .ez-side{display:none!important}.st-panel{right:8px;width:290px}}
 
@@ -1985,6 +1987,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
               <div class="se-l">Formato<div class="se-fmts" id="seFmts"></div><button id="seFmtDef" class="se-def" title="Los próximos clips se abrirán ya con este formato">⭐ Usar siempre este formato</button></div>
               <label class="toggle se-subt"><input type="checkbox" id="seSubsOn"><span></span>Subtítulos en este clip <em class="hint">(apágalo y los siguientes clips también saldrán sin subtítulos)</em></label>
               <div class="se-l">Más<div class="se-more"><button type="button" id="seSubSt" title="Letra, tamaño, color, contorno y fondo de los subtítulos">💬 Estilo de subtítulos</button><button type="button" id="seTxtAdd" title="Añade un texto encima del vídeo">T Añadir texto</button><button type="button" id="seLogoT" title="Poner o cambiar el logo de este creador">🖼️ Logo</button><button type="button" id="seMoreM" title="Todas las opciones: lo mismo que el clic derecho en el vídeo">⋯ Más opciones</button></div><span class="hint">Clic derecho en el vídeo para ver todas las opciones de cada cosa.</span></div>
+              <div class="rev-flags se-flags" id="seFlags" aria-label="Palabras malas"></div>
               <div class="se-l">Plantilla de título <span class="hint">(la que elijas queda por defecto)</span><select id="seTT" hidden></select><div class="se-tt" id="seTTG" role="listbox" aria-label="Plantillas de título"></div></div>
               <div hidden><span id="seTrimT"></span><button id="seAiTrim"></button><input type="range" id="seA" step="0.1"><input type="range" id="seB" step="0.1"></div>
               <div class="se-bar" id="seBarW" hidden><i id="seBar"></i></div>
@@ -8393,7 +8396,9 @@ async function renderMix(dur) {
       const s = oac.createBufferSource(); s.buffer = buf;
       const mg = oac.createGain(); s.connect(mg).connect(g);
       // palabras censuradas: silencio solo durante la palabra
-      for (const m of mutes) { const a = Math.max(m.s, sg.s), b = Math.min(m.e, sg.e); if (b > a) { mg.gain.setValueAtTime(0, at + a - sg.s); mg.gain.setValueAtTime(1, at + b - sg.s); } }
+      const cuts = []; for (const m of [...mutes].sort((x, y) => x.s - y.s)) { const a = Math.max(m.s, sg.s), b = Math.min(m.e, sg.e); if (b <= a) continue; const l = cuts[cuts.length - 1]; if (l && a <= l[1] + 0.012) l[1] = Math.max(l[1], b); else cuts.push([a, b]); }
+      for (const [a, b] of cuts) { const t0 = at + a - sg.s, t1 = at + b - sg.s, r = Math.min(0.005, (t1 - t0) / 4);
+        mg.gain.setValueAtTime(1, t0); mg.gain.linearRampToValueAtTime(0, t0 + r); mg.gain.setValueAtTime(0, t1 - r); mg.gain.linearRampToValueAtTime(1, t1); }
       s.start(at, ist ? sg.s - ist.s : 0, sg.e - sg.s); at += sg.e - sg.s;
     }
   } catch (e) { console.warn('Clip sin audio', e); }
@@ -12371,7 +12376,7 @@ Responde solo JSON: {"found": true, "topic_start": número, "start": número, "e
         if (out.reduce((x, g) => x + g.e - g.s, 0) >= 5) segsC = out;
       }
       if (A.censor && inW.length) try { const rk = await riskyWords(inW, A, extra, msg => agProg(null, null, msg)); for (const [k, v] of rk) inW[k].risk = v; } catch (err) { console.warn('Revisión TikTok', err); }
-      let mutesC = A.censor ? inW.map(w => ({ w, r: better(localRisk(w.text, A, extra), w.risk || null) })).filter(x => x.r).map(({ w, r }) => ({ s: Math.max(s, w.start - 0.06), e: Math.min(e, w.end + 0.06), w: w.text.trim().replace(/[.,!?¡¿;:…"«»]/g, ''), cat: r.cat, lvl: r.lvl })) : [];
+      let mutesC = A.censor ? inW.map(w => ({ w, r: better(localRisk(w.text, A, extra), w.risk || null) })).filter(x => x.r).map(({ w, r }) => ({ s: Math.max(s, w.start - 0.06), e: Math.min(e, w.end + 0.06), ws: Math.max(s, w.start), we: Math.min(e, w.end), w: w.text.trim().replace(/[.,!?¡¿;:…"«»]/g, ''), cat: r.cat, lvl: r.lvl })) : [];
       // sin marcas por palabra: los tiempos que dio Gemini (un poco más anchos)
       if (A.censor && !words.length) {
         mutesC = profan.filter(x => x.t >= s && x.t <= e).map(x => ({ s: Math.max(s, x.t - 0.2), e: Math.min(e, x.t + 0.55), w: x.w }));
@@ -12415,9 +12420,9 @@ Responde solo JSON: {"format":"...","why":"..."}` });
       const id = 'p' + Date.now().toString(36) + ci;
       const p = { v: 2, style, title, titleHL: hl, captions: caps, allWords: subsOn ? inW : [], crop: null, clipName: f.name,
         segs: segsC.map((g, k) => ({ id: k + 1, s: g.s, e: g.e })), texts: [], zones: [], trk: TRK0(), pseg: 0, streamer: '',
-        mutes: [], clipMeta: { flagsDone: A.censor ? [segsC[0].s, segsC[segsC.length - 1].e] : null, flags: mutesC.map((m, k) => ({ id: 9000 + k, s: m.s, e: m.e, w: m.w || '…', cat: m.cat || 'otro', lvl: m.lvl || 'media', on: m.lvl !== 'baja' })), batch: bid, fmt, reason: c.reason || '', score: +c.score || 0, imgPrompt: fmt === 'dividida' ? (c.image || 'algo que represente lo que dice') : '', noSubs: !subsOn, needDetect: fmt === 'reaccion', needDuo: fmt === 'duo' || fmt === 'llamada', needCam: fmt === 'horizontal_cam', needTrack: fmt === 'podcast', words: inW },
+        mutes: [], clipMeta: { flagsDone: A.censor ? [segsC[0].s, segsC[segsC.length - 1].e] : null, flags: mutesC.map((m, k) => ({ id: 9000 + k, s: m.s, e: m.e, ...(m.ws != null ? { ws: m.ws, we: m.we } : {}), w: m.w || '…', cat: m.cat || 'otro', lvl: m.lvl || 'media', on: m.lvl !== 'baja' })), batch: bid, fmt, reason: c.reason || '', score: +c.score || 0, imgPrompt: fmt === 'dividida' ? (c.image || 'algo que represente lo que dice') : '', noSubs: !subsOn, needDetect: fmt === 'reaccion', needDuo: fmt === 'duo' || fmt === 'llamada', needCam: fmt === 'horizontal_cam', needTrack: fmt === 'podcast', words: inW },
         logo: { x: W / 2, y: H - 230, size: logoCfg.size, op: logoCfg.op } };
-      p.mutes = p.clipMeta.flags.filter(f => f.on).map(f => ({ s: f.s, e: f.e, w: f.w, fid: f.id }));
+      p.mutes = p.clipMeta.flags.filter(f => f.on).map(flagMute);
       if (fmt === 'horizontal_cam') p.style.c.bg = p.style.c.bg && p.style.c.bg.startsWith('blur') ? p.style.c.bg : 'blur2';
       await kv.set('proj:' + id, { snap: JSON.stringify(p), time: Date.now() });
       made.push({ _s: s, _e: e, id, client: cl.id, batch: bid, name: title, time: Date.now(), status: 'pending', score: +c.score || 0, fmt, reason: c.reason || '', needImg: fmt === 'dividida', dur: segsC.reduce((x, g) => x + g.e - g.s, 0) });
@@ -13253,10 +13258,43 @@ const localRisk = (w, A, extra) => isBad(w, extra) ? { cat: 'palabrota', lvl: 'a
 const better = (a, b) => !a ? b : !b ? a : (LVL_RANK[b.lvl] > LVL_RANK[a.lvl] ? { ...b, cat: b.cat !== 'otro' ? b.cat : a.cat } : { ...a, cat: a.cat === 'delicada' && b.cat ? b.cat : a.cat });
 
 /* palabras delicadas del clip: se detectan, se enseñan a la derecha y tú eliges cuáles silenciar */
+// Cuánto se silencia de cada palabra: «corto» = solo el centro (se oye cómo empieza y cómo acaba), «palabra» = la palabra justa, «amplio» = la palabra y un poco más
+const MUTE_MODES = [['corto', 'Corto: se oye el principio y el final'], ['palabra', 'Solo la palabra'], ['amplio', 'Amplio: la palabra y un poco más']];
+const muteMode = () => { const m = ezPref('muteMode'); return MUTE_MODES.some(x => x[0] === m) ? m : 'corto'; };
+function muteSpan(f, mode) {
+  mode = mode || muteMode();
+  // sin el momento exacto de la palabra (clips antiguos, o la IA solo dio un tiempo aproximado) no se puede afinar: silencio completo
+  if (mode === 'amplio' || f.ws == null || !(f.we - f.ws > 0.05)) return [f.s, f.e];
+  if (mode === 'palabra') return [f.ws, f.we];
+  const L = f.we - f.ws, head = Math.min(0.14, Math.max(0.06, L * 0.28)), tail = Math.min(0.12, Math.max(0.05, L * 0.24));
+  let a = f.ws + head, b = f.we - tail;
+  if (b - a < 0.09) { const c = (f.ws + f.we) / 2, h = Math.min(0.045, L * 0.3); a = c - h; b = c + h; }   // palabra muy corta: un toque en el centro
+  return [a, b];
+}
+const flagMute = f => { const [s, e] = muteSpan(f); return { s, e, w: f.w, fid: f.id }; };
+// ajusta el principio y el final de la palabra a donde de verdad suena (quita el silencio de los bordes)
+function tightWords(list, au, au0) {
+  if (!au || !au.length) return list;
+  const fr = 80, n = Math.floor(au.length / fr), rms = new Float32Array(n);   // tramos de 5 ms
+  for (let i = 0; i < n; i++) { let q = 0; for (let j = i * fr; j < (i + 1) * fr; j++) q += au[j] * au[j]; rms[i] = Math.sqrt(q / fr); }
+  return list.map(m => {
+    if (m.ws == null) return m;
+    const i0 = Math.max(0, Math.round((m.ws - au0) * 200)), i1 = Math.min(n - 1, Math.round((m.we - au0) * 200)); if (i1 - i0 < 12) return m;
+    let pk = 0; for (let i = i0; i <= i1; i++) pk = Math.max(pk, rms[i]); if (pk < 0.003) return m;
+    const thr = pk * 0.14; let a = i0, b = i1; while (a < b && rms[a] < thr) a++; while (b > a && rms[b] < thr) b--;
+    if (b - a < 12) return m;
+    return { ...m, ws: au0 + a / 200, we: au0 + (b + 1) / 200 };
+  });
+}
 function flagMuteSync(f) {
   mutes = mutes.filter(m => m.fid !== f.id);
-  if (f.on) mutes.push({ s: f.s, e: f.e, w: f.w, fid: f.id });
+  if (f.on) mutes.push(flagMute(f));
   mutes.sort((x, y) => x.s - y.s); tlSig = '';
+}
+function setMuteMode(m) {
+  ezPref('muteMode', m);
+  for (const f of clipMeta.flags || []) if (f.on) flagMuteSync(f);
+  pushHistory(); renderFlags(); try { mtDirty(); } catch {}
 }
 function setFlag(f, on) { f.on = on; flagMuteSync(f); pushHistory(); renderFlags(); }
 // busca todo lo delicado. Devuelve cuántas palabras quedan silenciadas, o -1 si no se pudo escuchar el clip
@@ -13300,7 +13338,8 @@ async function ezCensor(quiet, onMsg) {
         } catch (e) { console.warn('Escucha de Gemini', e); }
       }
       const approx = clipMeta.wordMode && clipMeta.wordMode !== 'word', pd = approx ? 0.3 : 0.06;
-      cands = [...hit.entries()].sort((x, y) => x[0] - y[0]).map(([i, r]) => ({ s: Math.max(0, words[i].start - pd), e: words[i].end + pd, w: words[i].text.trim().replace(/[.,!?¡¿;:…"«»]/g, ''), cat: r.cat, lvl: r.lvl }));
+      cands = [...hit.entries()].sort((x, y) => x[0] - y[0]).map(([i, r]) => ({ s: Math.max(0, words[i].start - pd), e: words[i].end + pd, w: words[i].text.trim().replace(/[.,!?¡¿;:…"«»]/g, ''), cat: r.cat, lvl: r.lvl,
+        ...(approx ? {} : { ws: words[i].start, we: words[i].end }) }));   // con el momento exacto de la palabra se puede silenciar solo su centro
       cands = [...cands, ...heard.filter(g => !cands.some(x => x.s <= g.e && x.e >= g.s))];
     } else if (getGemKey()) {
       // sin Whisper: que Gemini escuche el audio y diga dónde están
@@ -13311,13 +13350,14 @@ async function ezCensor(quiet, onMsg) {
       if (!quiet) toast('No he podido escuchar el clip: hace falta internet la primera vez o la clave de Gemini');
       flagsBusy(null); return -1;
     }
-    if (cands.length) { try { const { a: au, a0 } = await clipAudio16k(600); cands = widenMutes(cands, au, a0); } catch (e) { cands = widenMutes(cands); } }
-    // a la lista (sin repetir las que ya estaban): alta y media se silencian solas, baja la decides tú
+    if (cands.length) { try { const { a: au, a0 } = await clipAudio16k(600); cands = tightWords(widenMutes(cands, au, a0), au, a0); } catch (e) { cands = widenMutes(cands); } }
+    // a la lista (sin repetir las que ya estaban): no se silencia ninguna sola, las eliges tú (al buscar otra vez se respeta lo que ya habías elegido)
     const flags = clipMeta.flags = clipMeta.flags || [];
     const added = [];
     for (const c of cands.sort((x, y) => x.s - y.s)) {
       if (flags.some(f => f.s <= c.e - 0.05 && f.e >= c.s + 0.05)) continue;
-      const f = { id: newId(), s: c.s, e: c.e, w: c.w || '…', cat: c.cat || 'otro', lvl: c.lvl || 'media', on: c.lvl !== 'baja' };
+      const f = { id: newId(), s: c.s, e: c.e, w: c.w || '…', cat: c.cat || 'otro', lvl: c.lvl || 'media', on: flagKeep.some(k => k.s <= c.e - 0.05 && k.e >= c.s + 0.05) };
+      if (c.ws != null) { f.ws = c.ws; f.we = c.we; }
       if (f.on && mutes.some(m => !m.fid && m.s <= f.s + 0.05 && m.e >= f.e - 0.05)) f.on = false;   // ya estaba silenciada a mano
       flags.push(f); added.push(f); flagMuteSync(f);
     }
@@ -13325,7 +13365,8 @@ async function ezCensor(quiet, onMsg) {
     clipMeta.flagsDone = srcRange();
     if (added.length) pushHistory();
     const on = added.filter(f => f.on);
-    if (!quiet) toast(added.length ? `🔇 ${added.length} palabra${added.length > 1 ? 's' : ''} delicada${added.length > 1 ? 's' : ''} (${on.length} silenciada${on.length !== 1 ? 's' : ''})` : 'No he encontrado nada delicado');
+    if (!quiet) toast(added.length ? `🔎 ${added.length} palabra${added.length > 1 ? 's' : ''} encontrada${added.length > 1 ? 's' : ''}: elige cuáles silenciar` : 'No he encontrado nada delicado');
+    flagKeep = [];
     lastMuted = on;
     flagsBusy(null);
     return on.length;
@@ -13336,7 +13377,9 @@ async function ezCensor(quiet, onMsg) {
   } finally { if (own) busy(false); }
 }
 // volver a buscar desde cero (las marcas a mano se quedan)
+let flagKeep = [];   // lo que tenías silenciado antes de «Buscar otra vez»
 async function rescanFlags() {
+  flagKeep = (clipMeta.flags || []).filter(f => f.on).map(f => ({ s: f.s, e: f.e }));
   for (const f of clipMeta.flags || []) mutes = mutes.filter(m => m.fid !== f.id);
   clipMeta.flags = []; renderFlags();
   await ezCensor(false);
@@ -13346,25 +13389,28 @@ let flagsMsg = null;
 function flagsBusy(m) { flagsMsg = m; renderFlags(); }
 function renderFlags() {
   if (typeof renderSide === 'function') renderSide();
-  const boxes2 = [$('ezFlags'), $('revFlags')].filter(Boolean); if (!boxes2.length) return;
+  const boxes2 = [$('ezFlags'), $('revFlags'), $('seFlags')].filter(Boolean); if (!boxes2.length) return;
   const flags = (clipMeta.flags || []).filter(f => { const [a, b] = srcRange(); return f.e > a && f.s < b; });
   for (const box of boxes2) {
     box.innerHTML = '';
     const h = document.createElement('div'); h.className = 'fl-h';
     const on = flags.filter(f => f.on).length;
-    h.innerHTML = `<strong>🔇 Palabras delicadas</strong><span class="hint"></span>`;
+    h.innerHTML = `<strong>🔇 Palabras malas</strong><span class="hint"></span>`;
     h.querySelector('.hint').textContent = flags.length ? `${flags.length} encontradas · ${on} silenciadas` : '';
     box.append(h);
     if (flagsMsg) { const p = document.createElement('p'); p.className = 'hint fl-busy'; p.textContent = '⏳ ' + flagsMsg; box.append(p); }
     else if (!clipMeta.flagsDone) {
-      const p = document.createElement('p'); p.className = 'hint'; p.textContent = 'Opcional: si lo vas a subir a TikTok, pulsa el botón y la IA busca las palabras que penalizan para silenciarlas.'; box.append(p);
+      const p = document.createElement('p'); p.className = 'hint'; p.textContent = 'Pulsa el botón: busco las palabras que pueden penalizar y tú eliges cuáles silenciar.'; box.append(p);
     } else if (!flags.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = '✓ No hay nada delicado para TikTok.'; box.append(p); }
     if (flags.length) {
       const tools = document.createElement('div'); tools.className = 'fl-tools';
       const all = document.createElement('button'); all.textContent = 'Silenciar todas'; all.onclick = () => { flags.forEach(f => { f.on = true; flagMuteSync(f); }); pushHistory(); renderFlags(); };
       const none = document.createElement('button'); none.textContent = 'Ninguna'; none.onclick = () => { flags.forEach(f => { f.on = false; flagMuteSync(f); }); pushHistory(); renderFlags(); };
       tools.append(all, none); box.append(tools);
-      const lg = document.createElement('p'); lg.className = 'hint'; lg.style.fontSize = '11px'; lg.textContent = '🔇/🔊 elige si se silencia · pulsa la palabra para escucharla · rojo: seguro que penaliza · naranja: probable · gris: dudosa'; box.append(lg);
+      const ms = document.createElement('select'); ms.className = 'fl-mode'; ms.title = 'Cuánto se silencia de cada palabra';
+      for (const [v, t] of MUTE_MODES) { const o = document.createElement('option'); o.value = v; o.textContent = t; ms.append(o); }
+      ms.value = muteMode(); ms.onchange = () => setMuteMode(ms.value); box.append(ms);
+      const lg = document.createElement('p'); lg.className = 'hint'; lg.style.fontSize = '11px'; lg.textContent = '🔊 se oye · 🔇 silenciada: púlsalo para cambiar · pulsa la palabra para escuchar cómo queda'; box.append(lg);
       const list = document.createElement('div'); list.className = 'fl-list';
       for (const f of flags) {
         const row = document.createElement('div'); row.className = 'fl-row lv-' + f.lvl + (f.on ? ' on' : '');
@@ -13381,7 +13427,7 @@ function renderFlags() {
       box.append(list);
     }
     const scan = document.createElement('button'); scan.className = 'fl-scan' + (clipMeta.flagsDone ? '' : ' primary');
-    scan.textContent = clipMeta.flagsDone ? '↻ Buscar otra vez' : '🔇 Silenciar malas palabras';
+    scan.textContent = clipMeta.flagsDone ? '↻ Buscar otra vez' : '🔎 Buscar palabras malas';
     scan.disabled = !!flagsMsg || !loaded; scan.onclick = () => clipMeta.flagsDone ? rescanFlags() : ezCensor(false);
     box.append(scan);
   }
@@ -13389,8 +13435,8 @@ function renderFlags() {
 let flagPrevT = null;
 function previewFlag(f) {
   ensureAudio(); clearTimeout(flagPrevT);
-  seekSrc(Math.max(srcRange()[0], f.s - 1)); vid.play().catch(() => {});
-  flagPrevT = setTimeout(() => vid.pause(), (f.e - f.s + 2) * 1000);
+  seekSrc(Math.max(srcRange()[0], f.s - 1)); vid.muted = false; vid.play().catch(() => {});
+  flagPrevT = setTimeout(() => { vid.pause(); try { if (!$('stEd').hidden && typeof stEdSound !== 'undefined') vid.muted = !stEdSound; } catch {} }, (f.e - f.s + 2) * 1000);
 }
 async function ezSetFormat0(fmt) {
   busy('Cambiando el formato', [['fmt', (EZ_FMTS.find(x => x[0] === fmt) || [])[2] || fmt]]); busyStep('fmt', 'work');
@@ -14460,7 +14506,7 @@ function ctxItems(k) {
     ...isoItems(),
     { icon: '🧬', label: 'Replicar un clip viral de este vídeo…', act: repFromCurrent },
     { icon: 'T', label: 'Añadir un texto', act: ezAddText },
-    { icon: '🔇', label: clipMeta.flagsDone ? 'Buscar malas palabras otra vez' : 'Silenciar malas palabras', act: () => clipMeta.flagsDone ? rescanFlags() : ezCensor(false) },
+    { icon: '🔇', label: clipMeta.flagsDone ? 'Buscar palabras malas otra vez' : 'Buscar palabras malas', act: () => clipMeta.flagsDone ? rescanFlags() : ezCensor(false) },
     mutes.length ? { icon: '🔊', label: `Quitar los silencios (${mutes.length})`, act: () => { mutes = []; (clipMeta.flags || []).forEach(f => f.on = false); renderFlags(); tlSig = ''; pushHistory(); toast('Ya no se silencia nada'); } } : null,
     trk.title.hide ? { icon: '👁', label: 'Volver a poner el título', act: () => { trk.title.hide = false; syncTrackUI(); pushHistory(); } } : null,
     trk.caps.hide || (clipMeta.noSubs && !captions.length) ? { icon: '💬', label: 'Poner subtítulos', act: () => { trk.caps.hide = false; syncTrackUI(); if (!captions.length) ezResubs(); else { clipMeta.noSubs = false; pushHistory(); } } } : null,
