@@ -63,6 +63,15 @@
 .se-h{display:flex;align-items:center;justify-content:space-between}
 .se-h button{width:auto;padding:4px 10px}
 .se-body{display:grid;grid-template-columns:auto minmax(220px,1fr);gap:16px;align-items:start;min-height:0}
+.se-tt{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:6px;max-height:236px;overflow:auto;padding:2px}
+.se-ttc{position:relative;display:grid;gap:4px;padding:6px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:#141418;cursor:pointer;transition:border-color .15s,transform .15s}
+.se-ttc:hover{border-color:rgba(255,255,255,.3)}.se-ttc.on{border-color:#fff;box-shadow:0 0 0 1px #fff}
+.se-ttpv{height:48px;border-radius:8px;display:grid;place-items:center;overflow:hidden;background:linear-gradient(160deg,#3b4658,#6b5a4a 50%,#2c3b2f)}
+.se-ttn{font-size:11px;font-weight:600;color:#D4D4D8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.se-tted{position:absolute;top:3px;right:3px;width:24px!important;height:24px;padding:0!important;border-radius:7px!important;font-size:12px;line-height:1;background:rgba(0,0,0,.6)!important;border:0!important;opacity:0;transition:opacity .15s}
+.se-ttc:hover .se-tted,.se-ttc:focus-within .se-tted,.se-ttc.on .se-tted{opacity:1}
+.se-ttnew{border:1px dashed rgba(255,255,255,.25)!important;border-radius:12px!important;background:transparent!important;color:#A1A1AA;font-size:12px;font-weight:700;min-height:74px}
+.se-emp{margin-left:auto;margin-right:6px}
 .se-off{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted, #A1A1AA);cursor:pointer;margin-bottom:6px}.se-off input{width:16px;height:16px;margin:0}.se-off:has(input:checked){color:#FCA5A5}
 .se-ai{position:relative;display:flex;gap:6px}
 .se-ai #seAi{flex:1;padding:12px;font-size:15px;font-weight:800}
@@ -1444,7 +1453,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:var(--ring)}
 #seT{display:inline-flex;align-items:center;gap:10px;font:700 17px var(--f-display);letter-spacing:-.3px}
 #seT i{width:26px;height:26px;border-radius:8px;flex:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 7l8 5-8 5z' fill='%2308080A'/%3E%3C/svg%3E") center/13px no-repeat,linear-gradient(135deg,#fff 30%,#8FB1FF);box-shadow:0 4px 14px rgba(110,151,255,.25)}
 #seT em{font:600 12px var(--f-mono);font-style:normal;color:#A1A1AA;padding:3px 8px;border-radius:99px;background:rgba(255,255,255,.06);border:1px solid var(--gline)}
-#seX{width:34px!important;height:34px;padding:0!important;display:grid;place-items:center;border-radius:10px!important}
+#seX,#seEmpty{width:34px!important;height:34px;padding:0!important;display:grid;place-items:center;border-radius:10px!important}
+#seEmpty svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #seX svg,.se-ai #seAiMore svg,.se-btns button svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #seX:hover{background:rgba(248,113,113,.12)!important;border-color:rgba(248,113,113,.35)!important;color:#FCA5A5}
 .se-ai #seAiMore{display:inline-flex;align-items:center;gap:4px}.se-ai #seAiMore .chev{width:12px;height:12px;opacity:.6;transition:transform .2s var(--ease)}
@@ -1946,7 +1956,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
           <div class="st-btns"><span class="hint">✂️ Sacar los últimos</span><button class="primary st-b" data-n="20">20 s</button><button class="primary st-b" data-n="30">30 s</button><button class="primary st-b" data-n="50">50 s</button><button class="st-b" data-n="90">1 min 30</button><span class="hint" id="stS"></span></div>
         </div>
         <aside class="st-ed" id="stEd" hidden aria-label="Editar el clip sin salir del directo">
-          <div class="se-h"><strong id="seT">✂️ Tu clip</strong><button id="seX" title="Cerrar (el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+          <div class="se-h"><strong id="seT">✂️ Tu clip</strong><button id="seEmpty" class="se-emp" title="Vaciar el editor (el panel sigue abierto; el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button><button id="seX" title="Cerrar (el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
           <div class="se-body">
             <div class="se-pv"><canvas id="seCv" width="540" height="960"></canvas><span class="se-tip">Arrastra para mover · rueda del ratón para el zoom</span><div class="se-pvb"><button id="sePlay" title="Reproducir / parar">▶</button><button id="seSnd" title="Oír o no el sonido del clip (apagado: sigues oyendo el directo)">🔇</button></div></div>
             <div class="se-ctl">
@@ -1968,7 +1978,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
               <div class="se-l">Formato<div class="se-fmts" id="seFmts"></div><button id="seFmtDef" class="se-def" title="Los próximos clips se abrirán ya con este formato">⭐ Usar siempre este formato</button></div>
               <label class="toggle se-subt"><input type="checkbox" id="seSubsOn"><span></span>Subtítulos en este clip <em class="hint">(apágalo y los siguientes clips también saldrán sin subtítulos)</em></label>
               <div class="se-l">Más<div class="se-more"><button type="button" id="seSubSt" title="Letra, tamaño, color, contorno y fondo de los subtítulos">💬 Estilo de subtítulos</button><button type="button" id="seTxtAdd" title="Añade un texto encima del vídeo">T Añadir texto</button><button type="button" id="seLogoT" title="Poner o cambiar el logo de este creador">🖼️ Logo</button><button type="button" id="seMoreM" title="Todas las opciones: lo mismo que el clic derecho en el vídeo">⋯ Más opciones</button></div><span class="hint">Clic derecho en el vídeo para ver todas las opciones de cada cosa.</span></div>
-              <label class="se-l">Plantilla de título <span class="hint">(la que elijas queda por defecto)</span><select id="seTT"></select></label>
+              <div class="se-l">Plantilla de título <span class="hint">(la que elijas queda por defecto)</span><select id="seTT" hidden></select><div class="se-tt" id="seTTG" role="listbox" aria-label="Plantillas de título"></div></div>
               <div hidden><span id="seTrimT"></span><button id="seAiTrim"></button><input type="range" id="seA" step="0.1"><input type="range" id="seB" step="0.1"></div>
               <div class="se-bar" id="seBarW" hidden><i id="seBar"></i></div>
               <div id="seRes"></div>
@@ -7236,6 +7246,7 @@ function camZoom(f) {
   c.x = Math.min(Math.max(0, cx - c.w / 2), 1 - c.w); c.y = Math.min(Math.max(0, cy - c.h / 2), 1 - c.h);
   tlSig = ''; pushHistory();
 }
+setTimeout(() => { const b = $('seEmpty'); if (b) b.onclick = () => stEdEmpty(); }, 0);
 /* «Desactivar todo lo automático»: la IA no toca nada sola (directo y vídeos subidos); queda guardado */
 const AUTO_KEYS = ['stAutoT', 'stAutoF', 'stAutoS', 'stAutoX', 'stAutoE', 'stAutoO'];
 const autoOff = () => ezPref('stAutoOff') === '1';
@@ -12074,7 +12085,7 @@ function ttcOpen(editName, base, suggest) {
     if (editName && editName !== name) { delete titleTpls[editName]; if (titleDef === editName) titleDef = name; }
     titleTpls[name] = out; if (q('#ttcFix').checked) titleDef = name; await saveTypeStore();
     if (loaded && q('#ttcFix').checked) { try { await ttApply(name); } catch {} }
-    close(); ttRender(); toast(`Plantilla de título «${name}» guardada` + (q('#ttcFix').checked && cl ? ` y fija para ${cl.name}` : ''));
+    close(); ttRender(); try { stEdTT(); } catch {} toast(`Plantilla de título «${name}» guardada` + (q('#ttcFix').checked && cl ? ` y fija para ${cl.name}` : ''));
   };
   requestAnimationFrame(draw); setTimeout(draw, 300); try { document.fonts.ready.then(draw); } catch {}
   setTimeout(() => q('#ttcName').focus(), 50);
@@ -14584,6 +14595,23 @@ function stEdTT() {
   sel.append(new Option('El del formato', ''));
   for (const n of names) sel.append(new Option(n, n));
   sel.value = titleDef && ttGet(titleDef) ? titleDef : '';
+  // cada plantilla se ve como queda (no solo su nombre), con un lápiz para editarla ahí mismo
+  const box = $('seTTG'); if (!box) return; box.innerHTML = '';
+  const pick = async n => { sel.value = n; try { if (sel.onchange) await sel.onchange(); } catch (e) { console.warn(e); } stEdTT(); };
+  const card = (n, tp) => {
+    const b = document.createElement('div'); b.className = 'se-ttc' + (sel.value === (n || '') ? ' on' : ''); b.tabIndex = 0; b.setAttribute('role', 'option'); b.setAttribute('aria-selected', sel.value === (n || ''));
+    const pv = document.createElement('div'); pv.className = 'se-ttpv'; const t = document.createElement('span');
+    if (tp) { const k = tp.c || {}; t.textContent = 'Título'; ttcStyle(t, tp, Math.max(11, Math.min(17, (+k.titleSize || 54) / 3.4)) / (+k.titleSize || 54)); t.style.whiteSpace = 'nowrap'; t.style.maxWidth = '94%'; t.style.overflow = 'hidden'; t.style.display = 'inline-block'; if (tp.titleStyle === 'box') { t.style.padding = '3px 8px'; t.style.borderRadius = Math.min(8, (+k.boxR || 20) / 3) + 'px'; } }
+    else { t.textContent = 'El del formato'; t.style.fontSize = '11px'; t.style.color = '#A1A1AA'; }
+    pv.append(t); const nm = document.createElement('div'); nm.className = 'se-ttn'; nm.textContent = n || 'Del formato'; nm.title = n || 'Cada formato usa su propio título';
+    b.append(pv, nm);
+    if (n && tp) { const ed = document.createElement('button'); ed.type = 'button'; ed.className = 'se-tted'; ed.textContent = '✏️'; ed.title = titleTpls[n] ? 'Editar esta plantilla' : 'Hacer una copia tuya y editarla';
+      ed.onclick = e => { e.stopPropagation(); ttcOpen(titleTpls[n] ? n : null, tp, titleTpls[n] ? n : n + ' (mía)'); }; b.append(ed); }
+    b.onclick = () => pick(n || ''); b.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(n || ''); } };
+    box.append(b);
+  };
+  card('', null); for (const n of names) card(n, ttGet(n));
+  const nw = document.createElement('button'); nw.type = 'button'; nw.className = 'se-ttnew'; nw.textContent = '＋ Nueva'; nw.title = 'Crear una plantilla de título nueva'; nw.onclick = () => ttcOpen(null, null, ''); box.append(nw);
 }
 function stEdTrimUI() {
   const [a, b] = srcRange(); $('seA').value = a; $('seB').value = b;
@@ -14617,6 +14645,18 @@ function stEdPrep() {
   $('seT').innerHTML = '<i></i>Tu clip <em>vacío</em>'; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = k ? k.t : ''; $('seExp').disabled = true;
   $('seS').textContent = 'Editor vacío: saca un clip del directo o sube un vídeo (➕ Subir un vídeo, o arrástralo aquí). El título, el formato y la plantilla que pongas se usan en él.';
   stEdFmts(stPendFmt); stPrepDraw(); stEdTT(); try { mtBlank(); } catch {} cancelAnimationFrame(stEdRaf); stEdLoop(); setTimeout(() => $('seTitle').focus(), 50);
+}
+// vaciar el panel sin cerrarlo: el reproductor queda vacío y listo para el siguiente clip (se guardan el título y el formato)
+function stEdEmpty() {
+  if ($('stEd').hidden || exporting) return;
+  if (stPend === 'prep') { toast('El editor ya está vacío'); return; }
+  const t = $('seTitle').value, f = clipMeta.fmt || stPendFmt || '';
+  try { vid.pause(); } catch {}
+  stPend = 'prep'; stPendFmt = f; stPrepKeep = null;
+  $('seT').innerHTML = '<i></i>Tu clip <em>vacío</em>'; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = t; $('seExp').disabled = true;
+  $('seS').textContent = 'Editor vacío: saca un clip del directo o sube un vídeo (arrástralo aquí). El título y el formato que tengas se usan en él.';
+  stEdFmts(f); stPrepDraw(); stEdTT(); try { mtBlank(); } catch {}
+  toast('Editor vaciado: el clip sigue guardado en Tus clips');
 }
 // lo que se ve en el panel mientras preparas el próximo clip: el formato elegido y tu título con su plantilla
 let stPrepTC = null;
@@ -15093,7 +15133,7 @@ function mtDel() {
   if (!loaded || exporting) return; const s = MT.sel;
   if (s && s.t === 'cap') { mtCapDel(s.i); return; }
   if (s && s.t === 'part' && s.i >= 0 && clipMeta.scenes && clipMeta.scenes.length > 1) { mtPartMerge(s.i, s.i > 0 ? -1 : 1); return; }
-  if (segs.length < 2) { mtSay('Solo hay un trozo: divide primero (S) lo que quieras quitar'); return; }
+  if (segs.length < 2) { if (!$('stEd').hidden) { stEdEmpty(); return; } mtSay('Solo hay un trozo: divide primero (S) lo que quieras quitar'); return; }
   let k = mtSelSeg(); if (k < 0) k = locate(curT()).i;
   segs.splice(k, 1); MT.sel = null; pseg = Math.min(k, segs.length - 1); seekOut(Math.min(totalDur() - 0.01, segStart(pseg))); pushHistory(); try { renderFlags(); } catch {} mtDirty();
 }
