@@ -71,7 +71,14 @@
 .se-tted{position:absolute;top:3px;right:3px;width:24px!important;height:24px;padding:0!important;border-radius:7px!important;font-size:12px;line-height:1;background:rgba(0,0,0,.6)!important;border:0!important;opacity:0;transition:opacity .15s}
 .se-ttc:hover .se-tted,.se-ttc:focus-within .se-tted,.se-ttc.on .se-tted{opacity:1}
 .se-ttnew{border:1px dashed rgba(255,255,255,.25)!important;border-radius:12px!important;background:transparent!important;color:#A1A1AA;font-size:12px;font-weight:700;min-height:74px}
-.se-emp{margin-left:auto;margin-right:6px}
+.se-emp{margin-right:6px}
+.se-h .se-exptop{margin-left:auto;margin-right:8px;display:inline-flex!important;align-items:center;gap:7px;height:34px;padding:0 16px!important;border-radius:10px!important;font-weight:800;font-size:14px}
+.se-h .se-exptop svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.se-h .se-exptop:disabled{opacity:.55}
+.se-btns:has(> :only-child){grid-template-columns:1fr!important}
+.se-ai{justify-content:flex-start}
+.se-ai #seAi{flex:0 0 auto!important;padding:8px 14px!important;font-size:13px!important;border-radius:10px!important}
+.se-ai #seAiMore{height:auto}
 .se-off{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted, #A1A1AA);cursor:pointer;margin-bottom:6px}.se-off input{width:16px;height:16px;margin:0}.se-off:has(input:checked){color:#FCA5A5}
 .se-ai{position:relative;display:flex;gap:6px}
 .se-ai #seAi{flex:1;padding:12px;font-size:15px;font-weight:800}
@@ -1956,7 +1963,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
           <div class="st-btns"><span class="hint">✂️ Sacar los últimos</span><button class="primary st-b" data-n="20">20 s</button><button class="primary st-b" data-n="30">30 s</button><button class="primary st-b" data-n="50">50 s</button><button class="st-b" data-n="90">1 min 30</button><span class="hint" id="stS"></span></div>
         </div>
         <aside class="st-ed" id="stEd" hidden aria-label="Editar el clip sin salir del directo">
-          <div class="se-h"><strong id="seT">✂️ Tu clip</strong><button id="seEmpty" class="se-emp" title="Vaciar el editor (el panel sigue abierto; el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button><button id="seX" title="Cerrar (el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+          <div class="se-h"><strong id="seT">✂️ Tu clip</strong><button class="primary se-exptop" id="seExp" title="Exportar (Ctrl+E): se guarda solo en la carpeta «exportados» del grabador"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar</button><button id="seEmpty" class="se-emp" title="Vaciar el editor (el panel sigue abierto; el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button><button id="seX" title="Cerrar (el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
           <div class="se-body">
             <div class="se-pv"><canvas id="seCv" width="540" height="960"></canvas><span class="se-tip">Arrastra para mover · rueda del ratón para el zoom</span><div class="se-pvb"><button id="sePlay" title="Reproducir / parar">▶</button><button id="seSnd" title="Oír o no el sonido del clip (apagado: sigues oyendo el directo)">🔇</button></div></div>
             <div class="se-ctl">
@@ -1983,7 +1990,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
               <div class="se-bar" id="seBarW" hidden><i id="seBar"></i></div>
               <div id="seRes"></div>
               <label class="se-l se-q">Calidad del vídeo<select id="seQ" title="Rápida: con la tarjeta gráfica, en segundos. Normal: con el procesador, mejor imagen. Máxima: la mejor imagen, tarda más."><option value="fast">⚡ Rápida: en segundos</option><option value="20000000">⚖️ Normal: más calidad</option><option value="35000000">💎 Máxima: la mejor (más lenta)</option></select></label>
-              <div class="se-btns"><button class="primary" id="seExp"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar</button><button id="seFull" title="Abrir este clip en el editor completo"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Editor completo</button></div>
+              <div class="se-btns"><button id="seFull" title="Abrir este clip en el editor completo"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Editor completo</button></div>
               <button class="se-cc" id="seCC" title="Crea un proyecto de CapCut con este clip ya montado: cortes, encuadre, título, subtítulos, logo y música"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 9l3 3-3 3M13 15h3"/></svg>Abrir en CapCut</button>
             </div>
             <div class="se-tl cc" id="seTl" tabindex="-1">
@@ -7247,6 +7254,12 @@ function camZoom(f) {
   tlSig = ''; pushHistory();
 }
 setTimeout(() => { const b = $('seEmpty'); if (b) b.onclick = () => stEdEmpty(); }, 0);
+// Ctrl+E: exportar el clip del panel
+document.addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || (e.key || '').toLowerCase() !== 'e') return;
+  const ed = $('stEd'); if (!ed || ed.hidden) return;
+  e.preventDefault(); const b = $('seExp'); if (b && !b.disabled) b.click(); else if (b) toast(b.title || 'Todavía no se puede exportar');
+}, true);
 /* «Desactivar todo lo automático»: la IA no toca nada sola (directo y vídeos subidos); queda guardado */
 const AUTO_KEYS = ['stAutoT', 'stAutoF', 'stAutoS', 'stAutoX', 'stAutoE', 'stAutoO'];
 const autoOff = () => ezPref('stAutoOff') === '1';
@@ -15808,7 +15821,14 @@ setTimeout(() => {
     $('seExp').disabled = true; $('seRes').innerHTML = '';
     const out = await doExport(); $('seBarW').hidden = true; $('seExp').disabled = false;
     if (!out) { $('seS').textContent = $('eStatus').textContent || 'No se pudo exportar'; return; }
-    const src = $('result').querySelector('a'); if (src) { const a = document.createElement('a'); a.href = src.href; a.download = src.download; a.textContent = '✅ ' + src.textContent; $('seRes').append(a); a.click(); }
+    const src = $('result').querySelector('a'), name = (src && src.download) || ('clip-' + Date.now() + '.mp4');
+    let where = '';
+    try { const d = await getLiveDir(false); if (d) { const ex = await d.getDirectoryHandle('exportados', { create: true }); await wfile(ex, name, out.blob); where = 'exportados'; } } catch (e) { console.warn('no se pudo guardar en exportados', e); }
+    if (where) {
+      const a = document.createElement('a'); a.href = src ? src.href : URL.createObjectURL(out.blob); a.download = name; a.textContent = '✅ Guardado en C:\\Clipzi Grabador\\exportados\\' + name + ' · descargar otra copia'; $('seRes').append(a);
+      if (window.cortexApp && window.cortexApp.openFolder) { const o = document.createElement('button'); o.type = 'button'; o.textContent = '📂 Abrir la carpeta'; o.style.cssText = 'width:auto;margin-top:6px;padding:6px 12px'; o.onclick = () => window.cortexApp.openFolder('C:\\Clipzi Grabador\\exportados'); $('seRes').append(o); }
+      toast('✅ Exportado y guardado en la carpeta «exportados»');
+    } else if (src) { const a = document.createElement('a'); a.href = src.href; a.download = name; a.textContent = '✅ ' + src.textContent; $('seRes').append(a); a.click(); toast('✅ Exportado: está en tu carpeta de Descargas'); }
     $('seS').textContent = 'Exportado. Cierra con ✕ para seguir con el directo.';
   };
 }, 0);
