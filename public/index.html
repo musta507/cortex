@@ -58,6 +58,7 @@
 .lc-m{padding:2px 0}
 .lc-m b{font-weight:700}
 .lc-m i{font-style:normal;font-size:11px;color:#A1A1AA;margin-right:5px}
+.lc-e{height:26px;width:auto;vertical-align:middle;margin:0 1px}
 .lc-note{padding:12px;font-size:13px;color:#A1A1AA}
 .lc-note button{width:auto;margin-top:8px;padding:6px 12px}
 .lc-new{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);width:auto;padding:5px 12px;font-size:12px;background:#fff;color:#111;border-radius:999px}
@@ -18070,7 +18071,7 @@ async function lcRead(S) {
   st.off += end + 1; if (start >= end) return 0;
   let n = 0;
   for (const l of new TextDecoder().decode(buf.subarray(start, end)).split('\n')) {
-    try { const j = JSON.parse(l); if (j && j.m != null) { st.msgs.push({ t: +j.t || 0, u: String(j.u || ''), m: String(j.m).replace(/\[emote:\d+:([^\]]+)\]/g, ':$1:'), c: String(S.status.slug || '') }); n++; } } catch {}
+    try { const j = JSON.parse(l); if (j && j.m != null) { st.msgs.push({ t: +j.t || 0, u: String(j.u || ''), m: String(j.m), c: String(S.status.slug || '') }); n++; } } catch {}
   }
   if (st.msgs.length > 150) st.msgs.splice(0, st.msgs.length - 150);
   return n;
@@ -18109,7 +18110,17 @@ function lcDraw(SS, hide) {
     const d = document.createElement('div'); d.className = 'lc-m';
     if (multi) { const i = document.createElement('i'); i.textContent = m.c; d.append(i); }
     const b = document.createElement('b'); b.textContent = m.u + ': '; b.style.color = `hsl(${lcHue(m.u)} 70% 68%)`;
-    d.append(b, document.createTextNode(m.m)); fr.append(d);
+    d.append(b);
+    // los emotes de Kick llegan como [emote:número:nombre]: se pinta su imagen (si no carga, queda el nombre)
+    let k = 0; const re = /\[emote:(\d+):([^\]]*)\]/g; let x;
+    while ((x = re.exec(m.m))) {
+      if (x.index > k) d.append(document.createTextNode(m.m.slice(k, x.index)));
+      const im = document.createElement('img'), nm = x[2] || 'emote'; im.className = 'lc-e'; im.alt = ':' + nm + ':'; im.title = nm; im.loading = 'lazy'; im.decoding = 'async';
+      im.src = 'https://files.kick.com/emotes/' + x[1] + '/fullsize'; im.onerror = () => im.replaceWith(document.createTextNode(':' + nm + ':'));
+      d.append(im); k = re.lastIndex;
+    }
+    if (k < m.m.length) d.append(document.createTextNode(m.m.slice(k)));
+    fr.append(d);
   }
   list.replaceChildren(fr); list.scrollTop = list.scrollHeight;
 }
