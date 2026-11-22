@@ -101,7 +101,7 @@
 .se-ai{justify-content:flex-start}
 .se-ai #seAi{flex:0 0 auto!important;padding:8px 14px!important;font-size:13px!important;border-radius:10px!important}
 .se-ai #seAiMore{height:auto}
-.se-off{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted, #A1A1AA);cursor:pointer;margin-bottom:6px}.se-off input{width:16px;height:16px;margin:0}.se-off:has(input:checked){color:#FCA5A5}
+.se-off{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted, #A1A1AA);cursor:pointer;margin-bottom:6px}.se-off input{width:16px;height:16px;margin:0}.se-off:has(input:checked){color:#FCA5A5}.se-rot:has(input:checked){color:#86EFAC}
 .se-ai{position:relative;display:flex;gap:6px}
 .se-ai #seAi{flex:1;padding:12px;font-size:15px;font-weight:800}
 .se-ai #seAiMore{width:auto;padding:8px 12px}
@@ -2004,6 +2004,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
             <div class="se-pv"><canvas id="seCv" width="540" height="960"></canvas><span class="se-tip">Arrastra para mover · rueda del ratón para el zoom</span><div class="se-pvb"><button id="sePlay" title="Reproducir / parar">▶</button><button id="seSnd" title="Oír o no el sonido del clip (apagado: sigues oyendo el directo)">🔇</button></div></div>
             <div class="se-ctl">
               <label class="se-off" title="Con esto activado la IA no hace nada sola: ni título, ni formato, ni subtítulos, ni recorte. Solo actúa si pulsas «Editar con IA»."><input type="checkbox" id="seOffAll"><span>🚫 Desactivar todo lo automático</span></label>
+              <label class="se-off se-rot" title="Gira el vídeo 1 grado sobre su centro sin que se note: se ajusta con el zoom mínimo y, si hay fondo arriba y abajo, el borde queda recto. Queda activado para los siguientes clips."><input type="checkbox" id="seRot"><span>↻ Girar 1° (no se nota)</span></label>
               <div class="se-ai"><button class="primary" id="seAi">✨ Editar con IA</button><button id="seAiMore" title="Elegir qué hace la IA"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
                 <div class="se-aid" id="seAiD" hidden>
                   <strong>Al pulsar «Editar con IA», la IA hace:</strong>
@@ -7330,6 +7331,48 @@ function layout(s, vw, vh, t) {
   return { split: false, vr: v, video: v, subArea: v };
 }
 
+/* ---------- giro de 1° (botón «Girar 1°») ----------
+   El vídeo se gira sobre su centro y se esconde el giro con lo mínimo:
+   · si llena su hueco: el zoom justo para que no asomen las esquinas;
+   · si tiene fondo a la vista arriba y abajo (o a los lados): casi sin zoom, y el borde inclinado se recorta recto (el fondo hace de tira). */
+const ROT_DEG = 1;
+const antiRot = () => ezPref('antiRot') === '1';
+const rotFit = new Map();
+function rotPlan(dx, dy, dw, dh, cR) {
+  const key = [dx, dy, dw, dh, cR.x, cR.y, cR.w, cR.h].map(v => Math.round(v * 2)).join(',');
+  let p = rotFit.get(key); if (p) return p;
+  const th = ROT_DEG * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th), cx = dx + dw / 2, cy = dy + dh / 2;
+  // lo que se ve del vídeo dentro de su hueco
+  const V = { x: Math.max(dx, cR.x), y: Math.max(dy, cR.y) }; V.w = Math.min(dx + dw, cR.x + cR.w) - V.x; V.h = Math.min(dy + dh, cR.y + cR.h) - V.y;
+  if (V.w <= 2 || V.h <= 2) { p = { th, s: 1, C: V, cx, cy }; rotFit.set(key, p); return p; }
+  const need = C => { let m = 0; for (const [px, py] of [[C.x, C.y], [C.x + C.w, C.y], [C.x, C.y + C.h], [C.x + C.w, C.y + C.h]]) { const x = px - cx, y = py - cy; m = Math.max(m, Math.abs(x * c + y * sn) * 2 / dw, Math.abs(-x * sn + y * c) * 2 / dh); } return m; };   // zoom que hace falta para tapar C
+  // bordes del vídeo que quedan a la vista dentro del hueco (detrás hay fondo): esos se pueden recortar rectos en vez de meter zoom
+  const eT = dy > cR.y + 1, eB = dy + dh < cR.y + cR.h - 1, eL = dx > cR.x + 1, eR = dx + dw < cR.x + cR.w - 1;
+  const sFull = Math.max(1, need(V));
+  let best = { s: sFull, C: V, cost: 2 * (sFull - 1) };
+  if (eT || eB || eL || eR) for (let i = 0; i <= 100; i++) {
+    const s = 1 + (sFull - 1) * i / 100;
+    let x0 = V.x, x1 = V.x + V.w, y0 = V.y, y1 = V.y + V.h;
+    for (let k = 0; k < 3; k++) {   // cada borde se mete hacia dentro solo lo que hace falta para quedar recto
+      if (eT) y0 = Math.max(V.y, cy + ((x1 - cx) * sn - s * dh / 2) / c);
+      if (eB) y1 = Math.min(V.y + V.h, cy + ((x0 - cx) * sn + s * dh / 2) / c);
+      if (eL) x0 = Math.max(V.x, cx + (-s * dw / 2 - (y0 - cy) * sn) / c);
+      if (eR) x1 = Math.min(V.x + V.w, cx + (s * dw / 2 - (y1 - cy) * sn) / c);
+    }
+    const C = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }; if (C.w < V.w * 0.5 || C.h < V.h * 0.5 || need(C) > s + 1e-7) continue;
+    const cost = 2 * (s - 1) + (V.h - C.h) / V.h + (V.w - C.w) / V.w;   // el zoom quita imagen por los cuatro lados: cuenta doble
+    if (cost < best.cost - 1e-7) best = { s, C, cost };
+  }
+  p = { th, s: best.s * 1.0008, C: best.C, cx, cy };   // (una pizca de margen para que no asome ni una línea)
+  if (rotFit.size > 300) rotFit.clear(); rotFit.set(key, p); return p;
+}
+function rotDraw(src, sr, dx, dy, dw, dh, cR) {
+  const p = rotPlan(dx, dy, dw, dh, cR);
+  ctx.save(); ctx.beginPath(); ctx.rect(p.C.x, p.C.y, p.C.w, p.C.h); ctx.clip();
+  ctx.translate(p.cx, p.cy); ctx.rotate(p.th); ctx.scale(p.s, p.s);
+  if (sr) ctx.drawImage(src, sr.x, sr.y, sr.w, sr.h, -dw / 2, -dh / 2, dw, dh); else ctx.drawImage(src, -dw / 2, -dh / 2, dw, dh);
+  ctx.restore();
+}
 function drawCam(R, src, vw, vh, ready, cr) {
   cr = cr || crops;
   ctx.save();
@@ -7342,7 +7385,8 @@ function drawCam(R, src, vw, vh, ready, cr) {
     const fx = cr.camFx == null ? 0.5 : cr.camFx;
     const dx = Math.min(R.x, Math.max(R.x + R.w - dw, R.x + R.w / 2 - fx * dw));
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(src, vw * k.x, vh * k.y, sw, sh, dx, R.y + R.h - dh, dw, dh);
+    if (antiRot()) rotDraw(src, { x: vw * k.x, y: vh * k.y, w: sw, h: sh }, dx, R.y + R.h - dh, dw, dh, R);
+    else ctx.drawImage(src, vw * k.x, vh * k.y, sw, sh, dx, R.y + R.h - dh, dw, dh);
   } else {
     ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = '600 36px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('Aquí irá la cámara del streamer', R.x + R.w / 2, R.y + R.h / 2);
@@ -7458,7 +7502,8 @@ function draw0(t, forExport, src, T) {
     // Reacción con contenido entero (tweet, web, YouTube): fondo difuminado del propio contenido
     if (L.react && L.contain) { const c0 = L.crop || L.src; blurInto(src, c0.x, c0.y, c0.w, c0.h, L.vr, 2); }
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-    if (L.src) ctx.drawImage(src, L.src.x, L.src.y, L.src.w, L.src.h, dx, dy, dw, dh);
+    if (antiRot()) rotDraw(src, L.src || null, dx, dy, dw, dh, L.split || L.react ? L.vr : { x: 0, y: 0, w: W, h: H });
+    else if (L.src) ctx.drawImage(src, L.src.x, L.src.y, L.src.w, L.src.h, dx, dy, dw, dh);
     else ctx.drawImage(src, dx, dy, dw, dh);
   } else if (!loaded) {
     const g = ctx.createLinearGradient(0, dy, W, dy + dh);
@@ -9289,6 +9334,8 @@ function setAutoOff(on) {
   for (const id of ['seAutoT', 'seAutoF', 'seAutoE', 'seAutoS', 'seAutoX', 'seAutoO']) { const el = $(id); if (el) el.disabled = on; }
   const c = $('seOffAll'); if (c) c.checked = on;
 }
+setTimeout(() => { const c = $('seRot'); if (!c) return; c.checked = antiRot();
+  c.onchange = () => { ezPref('antiRot', c.checked ? '1' : '0'); try { draw(vid.currentTime || 0, false); } catch {} toast(c.checked ? 'Vídeo girado 1°: queda así en este clip y en los siguientes' : 'Giro quitado'); }; }, 0);
 setTimeout(() => { const c = $('seOffAll'); if (!c) return; c.onchange = () => { setAutoOff(c.checked); toast(c.checked ? 'Todo lo automático, desactivado: la IA solo actúa si pulsas «Editar con IA»' : 'La IA vuelve a preparar los clips sola'); }; setAutoOff(autoOff()); }, 0);
 /* pantalla dividida: controles */
 function setLayout(v, user) {
