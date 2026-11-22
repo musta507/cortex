@@ -44,6 +44,14 @@
 .lv-modes button{width:auto;padding:6px 14px;border:0;border-radius:0;background:transparent;color:#A1A1AA;font-weight:600;cursor:pointer}
 .lv-modes button.on{background:#fff;color:#111}
 .lc-b{width:auto;padding:0 14px}
+.lh-pop{position:fixed;z-index:44;width:360px;max-width:calc(100vw - 24px);max-height:62vh;overflow-y:auto;background:#121216;border:1px solid rgba(255,255,255,.14);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.6);padding:6px}
+.lh-pop[hidden]{display:none}
+.lh-e{padding:16px 12px;font-size:13px;color:#A1A1AA}
+.lh-d{padding:8px 10px 4px;font-size:11px;font-weight:700;color:#A1A1AA}
+.lh-r{display:block;width:100%;text-align:left;background:transparent;border:0;border-radius:10px;padding:8px 10px;cursor:pointer;color:inherit}
+.lh-r:hover{background:rgba(255,255,255,.07)}
+.lh-r b{display:block;font-size:13px;font-weight:700}
+.lh-r span{display:block;font-size:12px;color:#A1A1AA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lc-b.on{background:#fff;color:#111}
 .lv-chat{position:fixed;top:0;right:0;bottom:0;width:320px;z-index:40;background:#0C0C0F;border-left:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column}
 .lv-chat[hidden]{display:none}
@@ -1979,7 +1987,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
     </div>
     <div class="home" id="livePage" hidden>
       <div class="home-in">
-        <div class="lv-head"><button class="ib" id="lvBackHome" style="width:auto;padding:0 10px;font-size:14px">← Clientes</button><h2 class="home-h" style="margin:0">📡 En directo</h2><span class="lv-modes" role="tablist"><button id="lvModeTr" title="Clipear leyendo lo que se dice">📝 Transcripción</button><button id="lvModeSt" title="Clipear viendo el directo en grande">📺 Pantalla</button></span><button id="lvChatB" class="lc-b" title="Ver el chat del directo en una columna (con ella cerrada no gasta nada)">💬 Chat</button><button id="lvPrepH" style="margin-left:auto;width:auto;padding:0 14px" title="Abre el editor vacío (lo que pongas se usa en el próximo clip que saques o subas)">✂️ Abrir el editor</button><button id="lvUpB" style="width:auto;padding:0 14px" title="Edita un vídeo que no es del directo (de tu ordenador) en el mismo panel · también puedes arrastrarlo aquí">➕ Subir un vídeo</button><input type="file" id="lvUpF" accept="video/*,.mp4,.mov,.webm,.mkv,.m4v" hidden><button id="lvData" style="width:auto;padding:0 14px" title="Descarga un archivo con todo lo exportado, abierto y descartado">📥 Datos de clips</button><button class="primary" id="lvMiniShow" style="width:auto;padding:0 14px">📺 Ver el directo</button></div>
+        <div class="lv-head"><button class="ib" id="lvBackHome" style="width:auto;padding:0 10px;font-size:14px">← Clientes</button><h2 class="home-h" style="margin:0">📡 En directo</h2><span class="lv-modes" role="tablist"><button id="lvModeTr" title="Clipear leyendo lo que se dice">📝 Transcripción</button><button id="lvModeSt" title="Clipear viendo el directo en grande">📺 Pantalla</button></span><button id="lvHistB" class="lc-b" title="Los clips que has sacado: pulsa uno para abrirlo otra vez">🕘 Historial</button><button id="lvChatB" class="lc-b" title="Ver el chat del directo en una columna (con ella cerrada no gasta nada)">💬 Chat</button><button id="lvPrepH" style="margin-left:auto;width:auto;padding:0 14px" title="Abre el editor vacío (lo que pongas se usa en el próximo clip que saques o subas)">✂️ Abrir el editor</button><button id="lvUpB" style="width:auto;padding:0 14px" title="Edita un vídeo que no es del directo (de tu ordenador) en el mismo panel · también puedes arrastrarlo aquí">➕ Subir un vídeo</button><input type="file" id="lvUpF" accept="video/*,.mp4,.mov,.webm,.mkv,.m4v" hidden><button id="lvData" style="width:auto;padding:0 14px" title="Descarga un archivo con todo lo exportado, abierto y descartado">📥 Datos de clips</button><button class="primary" id="lvMiniShow" style="width:auto;padding:0 14px">📺 Ver el directo</button></div>
         <div class="lv-status" id="lvStatus"></div>
         <div class="lv-crit" id="lvCrit"></div>
         <div class="lv-auto" id="lvAuto"><button id="auBtn" title="Cada clip que suban los otros clippers se saca del directo con el mismo inicio y final, se monta con el fondo difuminado y se exporta solo">🤖 Modo automático: apagado</button><span class="au-cfg"><label>Formato <select id="auFmt"></select></label><label>Fondo <select id="auBg"><option value="tpl">El de la plantilla</option><option value="black">Negro</option><option value="blur1">Difuminado suave</option><option value="blur2">Difuminado medio</option><option value="blur3">Difuminado fuerte</option><option value="blur4">Muy difuminado</option></select></label><label>Título <select id="auTT"></select></label><label class="check"><input type="checkbox" id="auSubs">Subtítulos</label><button id="auTplEd" title="Abre la página de Plantillas para cambiar el diseño de ese formato">✏️ Editar la plantilla</button></span><span class="hint" id="auS">Saca, monta con fondo difuminado y exporta solo cada clip que suben los otros clippers. No tienes que tocar nada.</span></div>
@@ -1991,6 +1999,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
           <div class="st-btns st-mk"><button id="stMark" title="Pon una marca en lo que estás viendo ahora (tecla M)">📍 Marcar inicio</button><button class="primary st-b2" id="stMarkCut" hidden>✂️ Sacar desde la marca</button><button id="stMarkX" hidden title="Quitar la marca">✕</button><span class="hint" id="stMarkT">Cuando empiece algo bueno, marca el inicio (tecla M) y sácalo cuando acabe.</span></div>
           <div class="st-btns"><span class="hint">✂️ Sacar los últimos</span><button class="primary st-b" data-n="20">20 s</button><button class="primary st-b" data-n="30">30 s</button><button class="primary st-b" data-n="50">50 s</button><button class="st-b" data-n="90">1 min 30</button><span class="hint" id="stS"></span></div>
         </div>
+        <div class="lh-pop" id="lhPop" hidden role="dialog" aria-label="Historial de clips"></div>
         <aside class="lv-chat" id="lvChat" hidden aria-label="Chat del directo">
           <div class="lc-h"><strong>💬 Chat</strong><button id="lcX" title="Cerrar el chat">✕</button></div>
           <div class="lc-ch" id="lcCh"></div>
@@ -18165,6 +18174,39 @@ const groupX = g => Math.max(0, ...g.items.filter(x => x.src === 'chat').map(cha
 const fmtX = x => '×' + (x >= 10 ? Math.round(x) : (Math.round(x * 10) / 10)).toLocaleString('es-ES');
 /* criterios de selección: se puede apagar cada uno (o todos) y quedarte solo con lo que sacas tú del directo */
 const CRITS = [['clipper', '📱 Otros clippers'], ['ia', '🤖 IA que escucha'], ['chat', '💬 Chat'], ['kick', '🟢 Clips de Kick']];
+/* ---------- historial de clips (botón de arriba): los clips que has sacado, del más nuevo al más antiguo ---------- */
+function lhOpen() {
+  const pop = $('lhPop'), btn = $('lvHistB'), r = btn.getBoundingClientRect();
+  pop.style.top = (r.bottom + 8) + 'px'; pop.style.left = Math.max(12, Math.min(innerWidth - 372, r.left)) + 'px';
+  const items = [];
+  for (const S of Object.values(liveSessions)) for (const m of S.moments || []) if (m.src === 'agente' && !liveHidden.has(m.id)) items.push({ S, m });
+  items.sort((x, y) => (y.m.at || y.m.t1) - (x.m.at || x.m.t1));
+  pop.innerHTML = '';
+  if (!items.length) { const e = document.createElement('div'); e.className = 'lh-e'; e.textContent = 'Todavía no has sacado ningún clip. Los que saques aparecerán aquí para volver a abrirlos.'; pop.append(e); }
+  let day = '';
+  for (const { S, m } of items.slice(0, 80)) {
+    const at = new Date((m.at || m.t1) * 1000), d = at.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+    if (d !== day) { day = d; const h = document.createElement('div'); h.className = 'lh-d'; h.textContent = at.toDateString() === new Date().toDateString() ? 'Hoy' : d; pop.append(h); }
+    const b = document.createElement('button'); b.className = 'lh-r'; b.type = 'button';
+    const t = document.createElement('b'); t.textContent = `✂️ ${Math.round(m.t1 - m.t0)} s · ${at.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · ${S.status.slug || ''}`;
+    const i = document.createElement('span'); i.textContent = `${m.info || m.req || 'Clip'} · minuto ${clockOf(m.t0 - S.status.started)} del directo`;
+    b.append(t, i);
+    b.onclick = () => {
+      pop.hidden = true; $('lvHistB').classList.remove('on');
+      if (!$('stEd').hidden && stPend !== 'prep') { toast('Termina o cierra (✕) el clip que tienes abierto antes de abrir otro'); return; }
+      try { if (stOn() && S.on && S === lvTrSess()) stCut(m); else liveEdit(S, mergeMoments([m])[0], null); } catch (e) { toast('No se pudo abrir el clip: ' + (e.message || e)); }
+    };
+    pop.append(b);
+  }
+  pop.hidden = false;
+}
+setTimeout(() => {
+  if (!$('lvHistB')) return;
+  const close = () => { $('lhPop').hidden = true; $('lvHistB').classList.remove('on'); };
+  $('lvHistB').onclick = e => { e.stopPropagation(); if ($('lhPop').hidden) lhOpen(); else close(); };
+  document.addEventListener('click', e => { if (!$('lhPop').hidden && !$('lhPop').contains(e.target)) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('lhPop').hidden) close(); });
+}, 0);
 /* ---------- chat del directo en una columna (varios canales a la vez) ----------
    Solo lee con la columna abierta, solo los mensajes nuevos de cada archivo, y en pantalla nunca hay más de 100. */
 const LC = { st: {}, busy: false, sig: '', chSig: '' };
