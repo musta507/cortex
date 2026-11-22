@@ -16564,7 +16564,7 @@ setInterval(lvMiniCheck, 700);
 // si la ventanita se queda atrás (tras un parón), salta al directo
 // la ventanita va por detrás de la transcripción lo justo para que cada palabra ya esté escrita cuando se oye
 // En «Pantalla» no se enseña el texto: el vídeo va lo más pegado posible al directo (3 s; si da parones, sube solo hasta 6)
-let lvLow = 3, lvWaits = [];
+let lvLow = Math.min(7, Math.max(3, +ezPref('liveLow') || 3)), lvWaits = [];   // lo aprendido se queda guardado: no vuelve a dar los mismos cortes cada vez
 function lvMiniTarget() {
   if (stOn()) return lvLow;
   let d = 1.5; try { const S = lvTrSess(), T = S && lvTr[S.name]; if (T && T.delay != null && lvTrOn()) d = T.delay; } catch {}
@@ -16582,12 +16582,16 @@ setInterval(() => {
     const v = $('lvMiniV'); if (!lvHls || !v || v.hidden) return;
     const st = stOn(), want = lvMiniTarget(), c = lvHls.config;
     if (c.liveSyncDuration !== want) c.liveSyncDuration = want;
-    c.maxLiveSyncPlaybackRate = st ? 1.25 : 1;   // en Pantalla recupera solo los segundos perdidos, acelerando un poco
-    if (!st && v.playbackRate !== 1) v.playbackRate = 1;
+    c.maxLiveSyncPlaybackRate = 1;   // nunca se acelera para recuperar: esos cambios de velocidad se notaban como microcortes
+    if (v.playbackRate !== 1) v.playbackRate = 1;
     const lat = lvHls.latency; if (lat == null || !isFinite(lat) || v.paused || v.readyState < 2) return;
     try { if (stRw.on) return; } catch {}   // rebobinando: no se toca
     if (st) {
-      if (!v.dataset.lw) { v.dataset.lw = '1'; v.addEventListener('waiting', () => { if (!stOn()) return; const n = Date.now(); lvWaits = lvWaits.filter(t => n - t < 60000); lvWaits.push(n); if (lvWaits.length >= 3 && lvLow < 6) { lvLow++; lvWaits = []; } }); }
+      if (!v.dataset.lw) { v.dataset.lw = '1'; v.addEventListener('waiting', () => {
+        // se ha quedado sin vídeo un instante: al segundo corte en 40 s se deja un segundo más de margen (hasta 7) y se echa atrás ese segundo para tenerlo de verdad
+        if (!stOn()) return; try { if (stRw.on) return; } catch {} const n = Date.now(); lvWaits = lvWaits.filter(t => n - t < 40000); lvWaits.push(n);
+        if (lvWaits.length >= 2 && lvLow < 7) { lvLow++; lvWaits = []; ezPref('liveLow', String(lvLow)); try { lvHls.config.liveSyncDuration = lvLow; const b = v.buffered; if (b.length) v.currentTime = Math.max(b.start(0) + 0.2, v.currentTime - 1); } catch {} }
+      }); }
       if (lat > want + 5) { const lp = lvHls.liveSyncPosition; if (lp && isFinite(lp)) v.currentTime = lp; }   // muy atrasado (tras un parón largo): salto al directo
     } else if (!lvSync && lat < want - 2.5) {   // al volver a «Transcripción»: se echa atrás una vez para que el texto llegue a tiempo
       const b = v.buffered; if (b.length) v.currentTime = Math.max(b.start(0) + 0.3, v.currentTime - (want - lat));
