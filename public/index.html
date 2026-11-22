@@ -16561,7 +16561,7 @@ function stTick() {
   }
   // aviso de momento detectado (el más reciente que aún no has abierto)
   const now = Date.now() / 1000, det = ms.filter(m => m.src !== 'agente' && !stSeen.has(m.id) && now - (m.at || m.t1) < 75).sort((x, y) => (y.at || y.t1) - (x.at || x.t1))[0];
-  stDetM = det || null; $('stDet').hidden = !det;
+  stDetM = det || null; $('stDet').hidden = true;   // aviso quitado a petición de Mustapha: los momentos se ven en la línea de tiempo
   if (det) $('stDetT').textContent = `🔥 Momento detectado · ${det.src === 'chat' ? 'el chat se ha disparado ' + fmtX(chatX(det)) : (det.info || det.src)} · ${Math.round(det.t1 - det.t0)} s`;
   if (!stBusy && /terminó|ningún directo/.test($('stS').textContent)) $('stS').textContent = '';
 }
