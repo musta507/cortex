@@ -43,6 +43,25 @@
 .lv-modes{display:inline-flex;margin-left:14px;border:1px solid rgba(255,255,255,.14);border-radius:10px;overflow:hidden}
 .lv-modes button{width:auto;padding:6px 14px;border:0;border-radius:0;background:transparent;color:#A1A1AA;font-weight:600;cursor:pointer}
 .lv-modes button.on{background:#fff;color:#111}
+.lc-b{width:auto;padding:0 14px}
+.lc-b.on{background:#fff;color:#111}
+.lv-chat{position:fixed;top:0;right:0;bottom:0;width:320px;z-index:40;background:#0C0C0F;border-left:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column}
+.lv-chat[hidden]{display:none}
+.lc-h{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
+.lc-h strong{flex:1}
+.lc-h button{width:auto;padding:4px 10px}
+.lc-ch{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px}
+.lc-ch:empty{display:none}
+.lc-ch button{width:auto;padding:3px 10px;border-radius:999px;font-size:12px;opacity:.45}
+.lc-ch button.on{opacity:1}
+.lc-list{flex:1;min-height:0;overflow-y:auto;padding:4px 12px 12px;font-size:13px;line-height:1.38;overflow-wrap:anywhere}
+.lc-m{padding:2px 0}
+.lc-m b{font-weight:700}
+.lc-m i{font-style:normal;font-size:11px;color:#A1A1AA;margin-right:5px}
+.lc-note{padding:12px;font-size:13px;color:#A1A1AA}
+.lc-note button{width:auto;margin-top:8px;padding:6px 12px}
+.lc-new{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);width:auto;padding:5px 12px;font-size:12px;background:#fff;color:#111;border-radius:999px}
+#livePage.chat-on{padding-right:320px;box-sizing:border-box}
 #livePage.stage .lv-fmt,#livePage.stage .lv-agent,#livePage.stage .lv-tr,#livePage.stage .lv-list,#livePage.stage .lv-missw,#livePage.stage #lvTrPop,#livePage.stage #lvMiniShow,#livePage.stage #lvMiniMin,#livePage.stage #lvMiniBig,#livePage.stage #lvMiniX{display:none!important}
 #livePage.stage .lv-head,#livePage.stage .lv-status{margin-right:0!important}
 #livePage.stage .lv-mini{position:relative;top:auto;right:auto;z-index:1;width:min(100%,calc((100vh - 470px)*16/9));min-width:480px;margin:10px auto 0}
@@ -1954,7 +1973,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
     </div>
     <div class="home" id="livePage" hidden>
       <div class="home-in">
-        <div class="lv-head"><button class="ib" id="lvBackHome" style="width:auto;padding:0 10px;font-size:14px">← Clientes</button><h2 class="home-h" style="margin:0">📡 En directo</h2><span class="lv-modes" role="tablist"><button id="lvModeTr" title="Clipear leyendo lo que se dice">📝 Transcripción</button><button id="lvModeSt" title="Clipear viendo el directo en grande">📺 Pantalla</button></span><button id="lvPrepH" style="margin-left:auto;width:auto;padding:0 14px" title="Abre el editor vacío (lo que pongas se usa en el próximo clip que saques o subas)">✂️ Abrir el editor</button><button id="lvUpB" style="width:auto;padding:0 14px" title="Edita un vídeo que no es del directo (de tu ordenador) en el mismo panel · también puedes arrastrarlo aquí">➕ Subir un vídeo</button><input type="file" id="lvUpF" accept="video/*,.mp4,.mov,.webm,.mkv,.m4v" hidden><button id="lvData" style="width:auto;padding:0 14px" title="Descarga un archivo con todo lo exportado, abierto y descartado">📥 Datos de clips</button><button class="primary" id="lvMiniShow" style="width:auto;padding:0 14px">📺 Ver el directo</button></div>
+        <div class="lv-head"><button class="ib" id="lvBackHome" style="width:auto;padding:0 10px;font-size:14px">← Clientes</button><h2 class="home-h" style="margin:0">📡 En directo</h2><span class="lv-modes" role="tablist"><button id="lvModeTr" title="Clipear leyendo lo que se dice">📝 Transcripción</button><button id="lvModeSt" title="Clipear viendo el directo en grande">📺 Pantalla</button></span><button id="lvChatB" class="lc-b" title="Ver el chat del directo en una columna (con ella cerrada no gasta nada)">💬 Chat</button><button id="lvPrepH" style="margin-left:auto;width:auto;padding:0 14px" title="Abre el editor vacío (lo que pongas se usa en el próximo clip que saques o subas)">✂️ Abrir el editor</button><button id="lvUpB" style="width:auto;padding:0 14px" title="Edita un vídeo que no es del directo (de tu ordenador) en el mismo panel · también puedes arrastrarlo aquí">➕ Subir un vídeo</button><input type="file" id="lvUpF" accept="video/*,.mp4,.mov,.webm,.mkv,.m4v" hidden><button id="lvData" style="width:auto;padding:0 14px" title="Descarga un archivo con todo lo exportado, abierto y descartado">📥 Datos de clips</button><button class="primary" id="lvMiniShow" style="width:auto;padding:0 14px">📺 Ver el directo</button></div>
         <div class="lv-status" id="lvStatus"></div>
         <div class="lv-crit" id="lvCrit"></div>
         <div class="lv-auto" id="lvAuto"><button id="auBtn" title="Cada clip que suban los otros clippers se saca del directo con el mismo inicio y final, se monta con el fondo difuminado y se exporta solo">🤖 Modo automático: apagado</button><span class="au-cfg"><label>Formato <select id="auFmt"></select></label><label>Fondo <select id="auBg"><option value="tpl">El de la plantilla</option><option value="black">Negro</option><option value="blur1">Difuminado suave</option><option value="blur2">Difuminado medio</option><option value="blur3">Difuminado fuerte</option><option value="blur4">Muy difuminado</option></select></label><label>Título <select id="auTT"></select></label><label class="check"><input type="checkbox" id="auSubs">Subtítulos</label><button id="auTplEd" title="Abre la página de Plantillas para cambiar el diseño de ese formato">✏️ Editar la plantilla</button></span><span class="hint" id="auS">Saca, monta con fondo difuminado y exporta solo cada clip que suben los otros clippers. No tienes que tocar nada.</span></div>
@@ -1966,6 +1985,13 @@ body.se-rzing{cursor:ew-resize;user-select:none}
           <div class="st-btns st-mk"><button id="stMark" title="Pon una marca en lo que estás viendo ahora (tecla M)">📍 Marcar inicio</button><button class="primary st-b2" id="stMarkCut" hidden>✂️ Sacar desde la marca</button><button id="stMarkX" hidden title="Quitar la marca">✕</button><span class="hint" id="stMarkT">Cuando empiece algo bueno, marca el inicio (tecla M) y sácalo cuando acabe.</span></div>
           <div class="st-btns"><span class="hint">✂️ Sacar los últimos</span><button class="primary st-b" data-n="20">20 s</button><button class="primary st-b" data-n="30">30 s</button><button class="primary st-b" data-n="50">50 s</button><button class="st-b" data-n="90">1 min 30</button><span class="hint" id="stS"></span></div>
         </div>
+        <aside class="lv-chat" id="lvChat" hidden aria-label="Chat del directo">
+          <div class="lc-h"><strong>💬 Chat</strong><button id="lcX" title="Cerrar el chat">✕</button></div>
+          <div class="lc-ch" id="lcCh"></div>
+          <div class="lc-note" id="lcNote" hidden></div>
+          <div class="lc-list" id="lcList"></div>
+          <button class="lc-new" id="lcNew" hidden>⬇ Mensajes nuevos</button>
+        </aside>
         <aside class="st-ed" id="stEd" hidden aria-label="Editar el clip sin salir del directo">
           <div class="se-h"><strong id="seT">✂️ Tu clip</strong><button class="se-redo" id="seRedo" hidden title="Para la exportación que esté en marcha y la empieza otra vez desde cero">🔁 Volver a exportar</button><button class="primary se-exptop" id="seExp" title="Exportar (Ctrl+E): se guarda solo en tu carpeta de Descargas"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar</button><button id="seEmpty" class="se-emp" title="Vaciar el editor (el panel sigue abierto; el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button><button id="seX" title="Cerrar (el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
           <div class="se-body">
@@ -16392,7 +16418,10 @@ function lvMiniCheck() {
 setInterval(lvMiniCheck, 700);
 // si la ventanita se queda atrás (tras un parón), salta al directo
 // la ventanita va por detrás de la transcripción lo justo para que cada palabra ya esté escrita cuando se oye
+// En «Pantalla» no se enseña el texto: el vídeo va lo más pegado posible al directo (3 s; si da parones, sube solo hasta 6)
+let lvLow = 3, lvWaits = [];
 function lvMiniTarget() {
+  if (stOn()) return lvLow;
   let d = 1.5; try { const S = lvTrSess(), T = S && lvTr[S.name]; if (T && T.delay != null && lvTrOn()) d = T.delay; } catch {}
   return Math.min(22, Math.max(7, 2.2 + 2 * d + 2.5));   // trozo de Kick (~2 s) + dos vueltas de la IA de voz + margen
 }
@@ -16403,6 +16432,23 @@ setInterval(() => {
     const lp = lvHls.liveSyncPosition; if (!lp) return;
   } catch {}
 }, 5000);
+setInterval(() => {
+  try {
+    const v = $('lvMiniV'); if (!lvHls || !v || v.hidden) return;
+    const st = stOn(), want = lvMiniTarget(), c = lvHls.config;
+    if (c.liveSyncDuration !== want) c.liveSyncDuration = want;
+    c.maxLiveSyncPlaybackRate = st ? 1.25 : 1;   // en Pantalla recupera solo los segundos perdidos, acelerando un poco
+    if (!st && v.playbackRate !== 1) v.playbackRate = 1;
+    const lat = lvHls.latency; if (lat == null || !isFinite(lat) || v.paused || v.readyState < 2) return;
+    try { if (stRw.on) return; } catch {}   // rebobinando: no se toca
+    if (st) {
+      if (!v.dataset.lw) { v.dataset.lw = '1'; v.addEventListener('waiting', () => { if (!stOn()) return; const n = Date.now(); lvWaits = lvWaits.filter(t => n - t < 60000); lvWaits.push(n); if (lvWaits.length >= 3 && lvLow < 6) { lvLow++; lvWaits = []; } }); }
+      if (lat > want + 5) { const lp = lvHls.liveSyncPosition; if (lp && isFinite(lp)) v.currentTime = lp; }   // muy atrasado (tras un parón largo): salto al directo
+    } else if (!lvSync && lat < want - 2.5) {   // al volver a «Transcripción»: se echa atrás una vez para que el texto llegue a tiempo
+      const b = v.buffered; if (b.length) v.currentTime = Math.max(b.start(0) + 0.3, v.currentTime - (want - lat));
+    }
+  } catch {}
+}, 2000);
 
 /* ---------- clipear en directo viendo la pantalla ----------
    El directo en grande, una línea de tiempo que avanza y botones «sacar los últimos N s»: al pulsar se abre el editor
@@ -18008,6 +18054,87 @@ const groupX = g => Math.max(0, ...g.items.filter(x => x.src === 'chat').map(cha
 const fmtX = x => '×' + (x >= 10 ? Math.round(x) : (Math.round(x * 10) / 10)).toLocaleString('es-ES');
 /* criterios de selección: se puede apagar cada uno (o todos) y quedarte solo con lo que sacas tú del directo */
 const CRITS = [['clipper', '📱 Otros clippers'], ['ia', '🤖 IA que escucha'], ['chat', '💬 Chat'], ['kick', '🟢 Clips de Kick']];
+/* ---------- chat del directo en una columna (varios canales a la vez) ----------
+   Solo lee con la columna abierta, solo los mensajes nuevos de cada archivo, y en pantalla nunca hay más de 100. */
+const LC = { st: {}, busy: false, sig: '', chSig: '' };
+const lcOpen = () => ezPref('chatOpen') === '1';
+const lcHidden = () => { try { return new Set(JSON.parse(ezPref('chatHide') || '[]')); } catch { return new Set(); } };
+async function lcRead(S) {
+  const st = LC.st[S.name] = LC.st[S.name] || { off: -1, skip: false, msgs: [] };
+  let f; try { f = await fileAt(S.h, 'chat.jsonl'); } catch { return 0; }
+  if (st.off < 0 || f.size < st.off || f.size - st.off > 200000) { st.off = Math.max(0, f.size - 30000); st.skip = st.off > 0; }
+  if (f.size <= st.off) return 0;
+  const buf = new Uint8Array(await f.slice(st.off, f.size).arrayBuffer());
+  const end = buf.lastIndexOf(10); if (end < 0) return 0;   // aún no hay una línea entera
+  let start = 0; if (st.skip) { start = buf.indexOf(10) + 1; st.skip = false; }
+  st.off += end + 1; if (start >= end) return 0;
+  let n = 0;
+  for (const l of new TextDecoder().decode(buf.subarray(start, end)).split('\n')) {
+    try { const j = JSON.parse(l); if (j && j.m != null) { st.msgs.push({ t: +j.t || 0, u: String(j.u || ''), m: String(j.m).replace(/\[emote:\d+:([^\]]+)\]/g, ':$1:'), c: String(S.status.slug || '') }); n++; } } catch {}
+  }
+  if (st.msgs.length > 150) st.msgs.splice(0, st.msgs.length - 150);
+  return n;
+}
+const lcHue = u => { let h = 0; for (let i = 0; i < u.length; i++) h = (h * 31 + u.charCodeAt(i)) % 360; return h; };
+function lcDraw(SS, hide) {
+  const ch = $('lcCh'), note = $('lcNote'), list = $('lcList');
+  const chSig = SS.map(s => s.status.slug + (hide.has(s.status.slug) ? '-' : '+')).join('|');
+  if (chSig !== LC.chSig) {
+    LC.chSig = chSig; ch.innerHTML = '';
+    if (SS.length > 1) for (const s of SS) {
+      const b = document.createElement('button'), slug = s.status.slug; b.textContent = slug; b.className = hide.has(slug) ? '' : 'on'; b.title = 'Ver u ocultar el chat de ' + slug;
+      b.onclick = () => { const h = lcHidden(); h.has(slug) ? h.delete(slug) : h.add(slug); ezPref('chatHide', JSON.stringify([...h])); LC.sig = ''; lcTick(); };
+      ch.append(b);
+    }
+  }
+  let msg = '', btn = false;
+  if (!SS.length) msg = 'Ahora mismo no hay ningún directo grabándose. El chat aparece aquí en cuanto empiece uno.';
+  else if (critOff().has('chat')) { msg = 'El chat está apagado: el grabador no lo está leyendo.'; btn = true; }
+  else { const bad = SS.filter(s => s.status.error === 'chat').map(s => s.status.slug); if (bad.length) msg = '⚠️ El grabador no consigue leer el chat de ' + bad.join(', ') + '.'; }
+  if (note.dataset.m !== msg + btn) {
+    note.dataset.m = msg + btn; note.hidden = !msg; note.textContent = msg;
+    if (btn) { const b = document.createElement('button'); b.className = 'primary'; b.textContent = 'Encender el chat'; b.style.display = 'block';
+      b.onclick = () => { const o = critOff(); o.delete('chat'); ezPref('critOff', JSON.stringify([...o])); try { critUI(); liveRender(); stTick(); } catch {} writeLiveConfig(); lcTick(); toast('Chat encendido: los mensajes empiezan a llegar en unos segundos'); }; note.append(b); }
+  }
+  const multi = SS.filter(s => !hide.has(s.status.slug)).length > 1;
+  let all = []; for (const s of SS) if (!hide.has(s.status.slug) && LC.st[s.name]) all = all.concat(LC.st[s.name].msgs);
+  all.sort((a, b) => a.t - b.t); if (all.length > 100) all = all.slice(-100);
+  const sig = all.length + '|' + (all.length ? all[all.length - 1].t + all[all.length - 1].u : '') + '|' + multi + chSig;
+  if (sig === LC.sig) return;
+  const stuck = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+  if (!stuck && LC.sig) { $('lcNew').hidden = false; return; }   // estás leyendo más arriba: no se mueve nada hasta que vuelvas abajo
+  LC.sig = sig; $('lcNew').hidden = true;
+  const fr = document.createDocumentFragment();
+  for (const m of all) {
+    const d = document.createElement('div'); d.className = 'lc-m';
+    if (multi) { const i = document.createElement('i'); i.textContent = m.c; d.append(i); }
+    const b = document.createElement('b'); b.textContent = m.u + ': '; b.style.color = `hsl(${lcHue(m.u)} 70% 68%)`;
+    d.append(b, document.createTextNode(m.m)); fr.append(d);
+  }
+  list.replaceChildren(fr); list.scrollTop = list.scrollHeight;
+}
+async function lcTick() {
+  if (LC.busy) return; LC.busy = true;
+  try {
+    const box = $('lvChat'); if (!box || box.hidden || $('livePage').hidden || document.hidden) return;
+    const SS = Object.values(liveSessions).filter(s => s.on && s.status).sort((a, b) => String(a.status.slug).localeCompare(String(b.status.slug))), hide = lcHidden();
+    if (!critOff().has('chat')) for (const S of SS) if (!hide.has(S.status.slug)) await lcRead(S);
+    lcDraw(SS, hide);
+  } catch (e) { console.warn('chat', e); } finally { LC.busy = false; }
+}
+function lcUI() {
+  const on = lcOpen(), box = $('lvChat'); if (!box) return;
+  box.hidden = !on; $('livePage').classList.toggle('chat-on', on); $('lvChatB').classList.toggle('on', on);
+  if (on) { LC.sig = ''; lcTick(); }
+}
+setTimeout(() => {
+  if (!$('lvChatB')) return;
+  $('lvChatB').onclick = () => { ezPref('chatOpen', lcOpen() ? '0' : '1'); lcUI(); };
+  $('lcX').onclick = () => { ezPref('chatOpen', '0'); lcUI(); };
+  $('lcNew').onclick = () => { const l = $('lcList'); l.scrollTop = l.scrollHeight; LC.sig = ''; lcTick(); };
+  $('lcList').addEventListener('scroll', () => { const l = $('lcList'); if (!$('lcNew').hidden && l.scrollHeight - l.scrollTop - l.clientHeight < 60) { LC.sig = ''; lcTick(); } });
+  lcUI(); setInterval(lcTick, 1500);
+}, 0);
 function critOff() { try { return new Set(JSON.parse(ezPref('critOff') || '[]')); } catch { return new Set(); } }
 function critUI() {
   const box = $('lvCrit'); if (!box) return; const off = critOff(); box.innerHTML = '<span>Detectar clips con:</span>';
