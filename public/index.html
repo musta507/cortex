@@ -46,6 +46,20 @@
 .lc-b{width:auto;padding:0 14px}
 .lh-pop{position:fixed;z-index:44;width:360px;max-width:calc(100vw - 24px);max-height:62vh;overflow-y:auto;background:#121216;border:1px solid rgba(255,255,255,.14);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.6);padding:6px}
 .lh-pop[hidden]{display:none}
+.rx-bk{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.rx-bk[hidden]{display:none}
+.rx-pop{width:520px;max-width:100%;max-height:82vh;display:flex;flex-direction:column;background:#121216;border:1px solid rgba(255,255,255,.14);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.7)}
+.rx-add{display:flex;gap:8px;padding:0 12px 10px}
+.rx-add input{flex:1;min-width:0}
+.rx-add button{width:auto;white-space:nowrap}
+.rx-list{flex:1;min-height:60px;overflow-y:auto;padding:0 8px 10px}
+.rx-g{padding:10px 6px 4px;font-size:12px;font-weight:700;color:#A1A1AA}
+.rx-r{display:flex;align-items:center;gap:8px;padding:6px;border-radius:10px}
+.rx-r:hover{background:rgba(255,255,255,.06)}
+.rx-r video{width:64px;height:40px;object-fit:cover;border-radius:6px;background:#000;flex:none}
+.rx-r span{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rx-r small{color:#A1A1AA;font-size:11px;flex:none}
+.rx-r button{width:auto;padding:4px 10px;font-size:12px;flex:none}
 .lh-e{padding:16px 12px;font-size:13px;color:#A1A1AA}
 .lh-d{padding:8px 10px 4px;font-size:11px;font-weight:700;color:#A1A1AA}
 .lh-r{display:block;width:100%;text-align:left;background:transparent;border:0;border-radius:10px;padding:8px 10px;cursor:pointer;color:inherit}
@@ -2000,6 +2014,12 @@ body.se-rzing{cursor:ew-resize;user-select:none}
           <div class="st-btns st-mk"><button id="stMark" title="Pon una marca en lo que estás viendo ahora (tecla M)">📍 Marcar inicio</button><button class="primary st-b2" id="stMarkCut" hidden>✂️ Sacar desde la marca</button><button id="stMarkX" hidden title="Quitar la marca">✕</button><span class="hint" id="stMarkT">Cuando empiece algo bueno, marca el inicio (tecla M) y sácalo cuando acabe.</span></div>
           <div class="st-btns"><span class="hint">✂️ Sacar los últimos</span><button class="primary st-b" data-n="20">20 s</button><button class="primary st-b" data-n="30">30 s</button><button class="primary st-b" data-n="50">50 s</button><button class="st-b" data-n="90">1 min 30</button><span class="hint" id="stS"></span></div>
         </div>
+        <div class="rx-bk" id="rxBk" hidden><div class="rx-pop" role="dialog" aria-label="Biblioteca de reacciones">
+          <div class="lc-h"><strong>🎭 Biblioteca de reacciones</strong><button id="rxX" title="Cerrar">✕</button></div>
+          <p class="hint" style="margin:8px 12px">Guarda aquí recortes de cámara ordenados por streamer. Mete solo los de streamers que te hayan dado permiso para usarlos, o reacciones tuyas.</p>
+          <div class="rx-add"><input id="rxWho" list="rxWhoL" placeholder="Nombre del streamer" maxlength="40"><datalist id="rxWhoL"></datalist><button id="rxAdd" class="primary">＋ Añadir recortes</button><input type="file" id="rxFileIn" accept="video/*" multiple hidden></div>
+          <div class="rx-list" id="rxList"></div>
+        </div></div>
         <div class="lh-pop" id="lhPop" hidden role="dialog" aria-label="Historial de clips"></div>
         <aside class="lv-chat" id="lvChat" hidden aria-label="Chat del directo">
           <div class="lc-h"><strong>💬 Chat</strong><button id="lcX" title="Cerrar el chat">✕</button></div>
@@ -2033,6 +2053,8 @@ body.se-rzing{cursor:ew-resize;user-select:none}
                 <div class="se-tplsv"><button id="seFmtSave" class="se-def" title="Guarda en esta plantilla todo tal y como lo ves ahora: tamaño y posición del vídeo, zoom, recortes, dónde va el título y los subtítulos y dónde va el logo (con su tamaño). La próxima vez que elijas esta plantilla saldrá así y solo tendrás que poner el título.">💾 Guardar cómo está en esta plantilla</button><button id="seFmtReset" class="se-def" hidden title="Deja esta plantilla como venía al principio">↩ Original</button></div></div>
               <label class="toggle se-subt"><input type="checkbox" id="seSubsOn"><span></span>Subtítulos en este clip <em class="hint">(apágalo y los siguientes clips también saldrán sin subtítulos)</em></label>
               <div class="se-l">Más<div class="se-more"><button type="button" id="seSubSt" title="Letra, tamaño, color, contorno y fondo de los subtítulos">💬 Estilo de subtítulos</button><button type="button" id="seTxtAdd" title="Añade un texto encima del vídeo">T Añadir texto</button><button type="button" id="seLogoT" title="Poner o cambiar el logo de este creador">🖼️ Logo</button><button type="button" id="seMoreM" title="Todas las opciones: lo mismo que el clic derecho en el vídeo">⋯ Más opciones</button></div><span class="hint">Clic derecho en el vídeo para ver todas las opciones de cada cosa.</span></div>
+              <div class="se-l">Vídeo de abajo <span class="hint">(para «Pantalla dividida»: un vídeo en vez de la imagen)</span>
+                <div class="se-tplsv"><button id="seRx" class="se-def" title="Tus recortes guardados por streamer: elige uno y se pone abajo, en bucle y sin sonido">🎭 Biblioteca de reacciones</button><button id="seRxUp" class="se-def" title="Poner abajo un vídeo de tu ordenador sin guardarlo en la biblioteca">📁 Subir un vídeo</button></div></div>
               <div class="rev-flags se-flags" id="seFlags" aria-label="Palabras malas"></div>
               <div class="se-l">Plantilla de título <span class="hint">(la que elijas queda por defecto)</span><select id="seTT" hidden></select><div class="se-tt" id="seTTG" role="listbox" aria-label="Plantillas de título"></div></div>
               <div hidden><span id="seTrimT"></span><button id="seAiTrim"></button><input type="range" id="seA" step="0.1"><input type="range" id="seB" step="0.1"></div>
@@ -2567,7 +2589,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
           <label class="f" id="ratioWrap" hidden><span id="ratioLbl">Espacio para el vídeo</span> <span class="val" id="ratioV">55%</span><input type="range" id="ratio" min="25" max="85" value="55"></label>
           <div class="group" id="splitOpts" hidden>
             <label class="drop small" for="imgFile">
-              <input type="file" id="imgFile" accept="image/*">
+              <input type="file" id="imgFile" accept="image/*,video/*">
               <strong id="imgTitle">Subir imagen</strong>
               <span class="hint">Doble clic sobre ella en la vista previa para recortarla.</span>
             </label>
@@ -7427,7 +7449,8 @@ function drawImageIn(R, s) {
     const dw = c.w * sc, dh = c.h * sc;
     const cx = R.x + R.w / 2 + imgOff.x, cy = R.y + R.h / 2 + imgOff.y;
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, c.x, c.y, c.w, c.h, cx - dw / 2, cy - dh / 2, dw, dh);
+    const im = img === rxVid && rxFrame ? rxFrame : img;   // al exportar, el fotograma exacto del segundo vídeo
+    if (im !== rxVid || rxVid.readyState >= 2) ctx.drawImage(im, c.x, c.y, c.w, c.h, cx - dw / 2, cy - dh / 2, dw, dh);
   } else {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     if (clipMeta.imgPrompt) {   // el agente dice qué imagen hace falta
@@ -7729,7 +7752,7 @@ function loop() {
   const pxT = jumping ? (mtSeekBusy && PX.want != null ? PX.want : vid.currentTime || 0) : 0, pxC = jumping ? pxFrame(pxT) : null;
   if (pxC || (!exporting && !(loaded && vid.readyState < 2 && !cropMode))) {   // mientras busca, se queda el último fotograma
     if (pxC) draw(pxT, false, pxC);   // el vídeo de verdad aún está saltando: se ve ya el fotograma exacto de la copia ligera
-    else { advancePlayback(); draw(vid.currentTime || 0, false); }
+    else { advancePlayback(); rxSync(); draw(vid.currentTime || 0, false); }
     if (logoAuto.due && performance.now() > logoAuto.due && !drag) computeLogoAvoid();
     scTick();
     if (vid.duration) {
@@ -8769,9 +8792,10 @@ async function exportFast(onProg, onStatus) {
   const muxer = await makeMuxer(fps, venc, aenc);
   PF.prep = performance.now() - pt;
 
-  let vErr = null, dErr = null, ve = null, dec = null, shut = false;
+  let vErr = null, dErr = null, ve = null, dec = null, shut = false, rx = null;
   const q = []; let poke = () => {};
   try {
+  rx = await rxOpen();
   ve = new VideoEncoder({ output: vOut(muxer), error: e => vErr = e });
   ve.configure(venc.cfg);
   dec = new VideoDecoder({ output: f => { if (shut) { try { f.close(); } catch {} return; } q.push(f); poke(); }, error: e => { dErr = e; poke(); } });
@@ -8802,6 +8826,7 @@ async function exportFast(onProg, onStatus) {
         if (T + fdur * 0.25 < nextT || T > dur + 0.05) { f.close(); continue; }
         nextT = Math.max(nextT + fdur, T + fdur * 0.5);
         const p0 = performance.now();
+        if (rx) rxFrame = await rx.get(T);
         draw(t, true, f, T); f.close();
         const p1 = performance.now();
         const vf = new VideoFrame(cv, { timestamp: Math.round(T * 1e6), duration: Math.round(fdur * 1e6) });
@@ -8833,7 +8858,7 @@ async function exportFast(onProg, onStatus) {
   if (EXS.frozen()) throw Object.assign(new Error('la imagen salió congelada'), { dec: true });   // se repite leyendo el vídeo sin la tarjeta gráfica y, si sigue igual, con otro método
   muxer.finalize(); try { mp4Check(muxer.target.buffer, muxer); } catch (e) { throw encErr(e); }
   return { blob: new Blob([muxer.target.buffer], { type: 'video/mp4' }), ext: 'mp4', fps, codec: venc.mux, mode: venc.hw ? 'rápida con tarjeta gráfica' : 'rápida', dur };
-  } finally { shut = true; poke(); for (const f of q) { try { f.close(); } catch {} } q.length = 0; expShut(ve); expShut(dec); }   // siempre se sueltan el compresor y el lector (si no, la exportación siguiente se quedaba sin ellos)
+  } finally { shut = true; poke(); for (const f of q) { try { f.close(); } catch {} } q.length = 0; expShut(ve); expShut(dec); rxFrame = null; if (rx) rx.close(); }   // siempre se sueltan el compresor y el lector (si no, la exportación siguiente se quedaba sin ellos)
 }
 
 let demuxFps = 0;
@@ -8873,6 +8898,7 @@ async function exportPlay(onProg, onStatus) {
   const fdur = 1 / fps, total = Math.max(1, Math.round(dur * fps));
   let oi = 0, outBase = 0, dropped = 0;
   const emit = (frame, t, T) => {   // un fotograma del vídeo final
+    if (img === rxVid && rxVid.duration) { const w = T % rxVid.duration; if (Math.abs(rxVid.currentTime - w) > 0.15) rxVid.currentTime = w; if (rxVid.paused) rxVid.play().catch(() => {}); }
     draw(t, true, frame, T);
     const vf = new VideoFrame(cv, { timestamp: Math.round(T * 1e6), duration: Math.round(fdur * 1e6) });
     EXS.tick(oi); ve.encode(vf, encOpts(venc, oi % (fps * 2) === 0)); vf.close(); oi++;
@@ -8968,7 +8994,7 @@ async function exportSeek(onProg, onStatus) {
   for (let i = 0; i < n; i++) {
     const T = i * fdur, L = locate(T);
     const t = Math.min(L.t + fdur * 0.5, segs.length ? segs[L.i].e - 1e-3 : tv.duration - 1e-3);   // mitad del fotograma: siempre el correcto
-    await seekTo(t);
+    await seekTo(t); await rxSeekTo(T);
     draw(t, true, tv, T);
     const vf = new VideoFrame(cv, { timestamp: Math.round(T * 1e6), duration: Math.round(fdur * 1e6) });
     EXS.tick(i); ve.encode(vf, encOpts(venc, i % (fps * 2) === 0)); vf.close();
@@ -9452,8 +9478,8 @@ function setImgPos(v) { imgPos = v; setSeg([$('ipBottom'), $('ipTop')], v === 't
 [$('lyNormal'), $('lySplit'), $('lyReact')].forEach(b => b.onclick = () => setLayout(b.dataset.ly, true));
 [$('ipBottom'), $('ipTop')].forEach(b => b.onclick = () => { setImgPos(b.dataset.ip); pushHistory(); });
 async function setImageFile(f) {
-  if (!f || !/^image\//.test(f.type)) return false;
-  if (await loadImageBlob(f, f.name || 'imagen pegada', false)) { kv.set('image:' + curProj, f).catch(() => {}); pushHistory(); toast('Imagen puesta'); return true; }
+  if (!f || !/^(image|video)\//.test(f.type)) return false;
+  if (await loadImageBlob(f, f.name || 'imagen pegada', false)) { kv.set('image:' + curProj, f).catch(() => {}); pushHistory(); toast(/^video/.test(f.type) ? 'Vídeo puesto' : 'Imagen puesta'); return true; }
   return false;
 }
 $('imgFile').addEventListener('change', async e => {
@@ -9962,11 +9988,76 @@ function autosave(snap) {
   saveTimer = setTimeout(async () => { if (!curProj) return; try { await kv.set('proj:' + curProj, { snap, time: Date.now() }); } catch {} upsertProject(); }, 400);
 }
 let restoredClipName = null;
+/* ---------- vídeo en el hueco de la imagen (formato dividido con dos vídeos) ----------
+   Va en bucle y sin sonido, sincronizado con el clip. Para exportar se lee fotograma a fotograma con su propio lector. */
+const rxVid = document.createElement('video'); rxVid.muted = true; rxVid.loop = true; rxVid.playsInline = true; rxVid.preload = 'auto';
+Object.defineProperty(rxVid, 'naturalWidth', { get: () => rxVid.videoWidth }); Object.defineProperty(rxVid, 'naturalHeight', { get: () => rxVid.videoHeight });
+let rxBlob = null, rxFile = null, rxFrame = null, rxUrl = '';
+function rxClear() { rxBlob = null; rxFile = null; rxFrame = null; try { rxVid.pause(); rxVid.removeAttribute('src'); rxVid.load(); } catch {} if (rxUrl) { URL.revokeObjectURL(rxUrl); rxUrl = ''; } }
+function loadRxBlob(blob, name, keepCrop) {
+  return new Promise(res => {
+    if (img === rxVid) img = null; rxClear();
+    let done = false; const end = ok => { if (done) return; done = true; clearTimeout(t); rxVid.onloadeddata = rxVid.onerror = null;
+      if (!ok) { rxClear(); $('imgTitle').textContent = 'Ese vídeo no se puede abrir'; return res(false); }
+      rxBlob = blob; img = rxVid; if (!keepCrop) { crop = null; imgOff.x = imgOff.y = 0; setRange('imgZoom', 100); }
+      $('imgTitle').textContent = (name || 'vídeo') + ` (vídeo ${rxVid.videoWidth}×${rxVid.videoHeight})`;
+      ['cropBtn', 'cropReset', 'imgCenter'].forEach(id => $(id).disabled = false);
+      $('s7').classList.toggle('done', layoutMode === 'split'); res(true); };
+    const t = setTimeout(() => end(false), 12000);
+    rxVid.onloadeddata = () => end(rxVid.videoWidth > 0); rxVid.onerror = () => end(false);
+    rxUrl = URL.createObjectURL(blob); rxVid.src = rxUrl;
+  });
+}
+function rxSync() {   // en la vista previa: el vídeo de abajo sigue al clip (y vuelve a empezar si es más corto)
+  if (img !== rxVid || exporting || !rxVid.duration) return;
+  const D = rxVid.duration, want = curT() % D;
+  if (vid.paused) { if (!rxVid.paused) rxVid.pause(); if (Math.abs(rxVid.currentTime - want) > 0.04 && !rxVid.seeking) rxVid.currentTime = want; }
+  else { if (rxVid.playbackRate !== vid.playbackRate) rxVid.playbackRate = vid.playbackRate; if (rxVid.paused) rxVid.play().catch(() => {});
+    let d = rxVid.currentTime - want; if (Math.abs(d) > D / 2) d -= Math.sign(d) * D; if (Math.abs(d) > 0.3 && !rxVid.seeking) rxVid.currentTime = want; }
+}
+const rxSeekTo = async T => { if (img !== rxVid || !rxVid.duration) return; const w = T % rxVid.duration; if (Math.abs(rxVid.currentTime - w) > 0.02) { rxVid.currentTime = w; await Promise.race([new Promise(r => rxVid.addEventListener('seeked', r, { once: true })), sleep(250)]); } };
+async function rxOpen() {   // lector del segundo vídeo para exportar rápido; si no se puede, se va saltando por el vídeo (más lento)
+  if (img !== rxVid || !rxBlob) return null;
+  rxVid.pause();
+  const slow = { get: async T => { await rxSeekTo(T); return null; }, close() {} };
+  let dec = null; const q = []; let cur = null, shut = false;
+  try {
+    const f = rxFile || (rxFile = rxBlob instanceof File ? rxBlob : new File([rxBlob], 'segundo.mp4', { type: rxBlob.type }));
+    const M = await expWait(movieIndex(f), 30000, 'leer el segundo vídeo'), S = M.vs;
+    if (!S.length || !M.vcfg || f.size > 400e6 || !(await VideoDecoder.isConfigSupported(M.vcfg)).supported) return slow;
+    const data = await loadSampleData(f, S), t0 = Math.min(...S.slice(0, 90).map(s => s.cts / s.timescale));
+    const D = Math.max(...S.slice(-90).map(s => (s.cts + s.duration) / s.timescale)) - t0;
+    let err = null, i = 0, loopN = 0, flushing = false, poke = () => {};
+    dec = new VideoDecoder({ output: fr => { if (shut) { try { fr.close(); } catch {} return; } q.push(fr); poke(); }, error: e => { err = e; poke(); } });
+    dec.configure(M.vcfg);
+    const feed = () => {
+      while (!flushing && dec.decodeQueueSize < 10 && q.length < 10) {
+        if (i >= S.length) { flushing = true; dec.flush().then(() => { i = 0; loopN++; flushing = false; poke(); }, e => { err = e; poke(); }); break; }   // se acabó: vuelve a empezar
+        const s = S[i]; dec.decode(new EncodedVideoChunk({ type: s.is_sync ? 'key' : 'delta', timestamp: Math.round((s.cts / s.timescale - t0 + loopN * D) * 1e6), duration: Math.round(s.duration * 1e6 / s.timescale), data: data[i] })); i++;
+      }
+    };
+    return {
+      async get(T) {
+        const w0 = performance.now();
+        for (;;) {
+          if (err) throw err;
+          while (q.length && q[0].timestamp / 1e6 <= T + 1e-3) { if (cur) cur.close(); cur = q.shift(); }
+          if (cur && q.length) return cur;   // ya hay uno posterior: «cur» es el que toca
+          feed();
+          if (performance.now() - w0 > 8000) throw expStall('leer el segundo vídeo');
+          await new Promise(r => { poke = r; setTimeout(r, 4); });
+        }
+      },
+      close() { shut = true; try { if (cur) cur.close(); } catch {} for (const fr of q) { try { fr.close(); } catch {} } q.length = 0; expShut(dec); }
+    };
+  } catch (e) { console.warn('segundo vídeo: uso el modo lento', e); shut = true; for (const fr of q) { try { fr.close(); } catch {} } expShut(dec); return slow; }
+}
 async function loadImageBlob(blob, name, keepCrop) {
+  if (blob && /^video\//.test(blob.type || '')) return loadRxBlob(blob, name, keepCrop);
   return new Promise(res => {
     const im = new Image();
     im.onload = () => {
-      img = im; if (!keepCrop) { crop = null; imgOff.x = imgOff.y = 0; setRange('imgZoom', 100); }
+      rxClear(); img = im; if (!keepCrop) { crop = null; imgOff.x = imgOff.y = 0; setRange('imgZoom', 100); }
       $('imgTitle').textContent = (name || 'imagen') + ` (${im.naturalWidth}×${im.naturalHeight})`;
       ['cropBtn', 'cropReset', 'imgCenter'].forEach(id => $(id).disabled = false);
       $('s7').classList.toggle('done', layoutMode === 'split');
@@ -11049,7 +11140,7 @@ function resetEditor() {
   captions = []; allWords = []; renderCapList();
   segs = []; texts = []; zones = []; pseg = 0; mutes = []; clipMeta = {};
   const lk = trk.logo.lock; trk = TRK0(); trk.logo.lock = lk; tsel.clear(); selected = null; hover = null;
-  img = null; crop = null; imgOff.x = imgOff.y = 0; $('imgTitle').textContent = IMG0; ['cropBtn', 'cropReset', 'imgCenter'].forEach(id => $(id).disabled = true);
+  rxClear(); img = null; crop = null; imgOff.x = imgOff.y = 0; $('imgTitle').textContent = IMG0; ['cropBtn', 'cropReset', 'imgCenter'].forEach(id => $(id).disabled = true);
   $('title').value = DEFAULT_TITLE; titleHL.clear(); renderChips(); $('streamer').value = '';
   setStatus($('aiTitleStatus'), ''); setStatus($('camStatus'), ''); setStatus($('eStatus'), ''); $('result').innerHTML = '';
   thumbs = []; thumbsFor = null; camDetectedFor = null; restoredClipName = null; logoAuto.dy = 0; logoAuto.manual = false; lastSubBox = null;
@@ -18283,6 +18374,57 @@ const groupX = g => Math.max(0, ...g.items.filter(x => x.src === 'chat').map(cha
 const fmtX = x => '×' + (x >= 10 ? Math.round(x) : (Math.round(x * 10) / 10)).toLocaleString('es-ES');
 /* criterios de selección: se puede apagar cada uno (o todos) y quedarte solo con lo que sacas tú del directo */
 const CRITS = [['clipper', '📱 Otros clippers'], ['ia', '🤖 IA que escucha'], ['chat', '💬 Chat'], ['kick', '🟢 Clips de Kick']];
+/* ---------- biblioteca de reacciones: recortes de vídeo guardados por streamer (en este ordenador) ---------- */
+const RX = { lib: null, urls: [] };
+async function rxLib() { if (!RX.lib) { try { RX.lib = (await kv.get('rxLib')) || []; } catch { RX.lib = []; } } return RX.lib; }
+async function rxUse(blob, name) {
+  if (!loaded) { toast('Abre primero un clip'); return false; }
+  if (layoutMode !== 'split') { const p = PRESETS.find(x => x.name === 'Pantalla dividida'); if (p) await applyPreset(p); }
+  const f = blob instanceof File ? blob : new File([blob], name || 'reaccion.mp4', { type: blob.type || 'video/mp4' });
+  if (!(await loadImageBlob(f, f.name, false))) { toast('Ese vídeo no se puede abrir'); return false; }
+  kv.set('image:' + curProj, f).catch(() => {}); pushHistory(); toast('Vídeo puesto abajo (en bucle y sin sonido)'); return true;
+}
+async function rxRender() {
+  const lib = await rxLib(), box = $('rxList'); RX.urls.forEach(u => URL.revokeObjectURL(u)); RX.urls = []; box.innerHTML = '';
+  $('rxWhoL').innerHTML = ''; for (const w of [...new Set(lib.map(x => x.who))].sort()) { const o = document.createElement('option'); o.value = w; $('rxWhoL').append(o); }
+  if (!lib.length) { const e = document.createElement('div'); e.className = 'lh-e'; e.textContent = 'Aún no hay recortes. Escribe el nombre del streamer y pulsa «＋ Añadir recortes».'; box.append(e); return; }
+  let who = null;
+  for (const it of [...lib].sort((a, b) => a.who.localeCompare(b.who) || a.name.localeCompare(b.name))) {
+    if (it.who !== who) { who = it.who; const g = document.createElement('div'); g.className = 'rx-g'; g.textContent = who; box.append(g); }
+    const r = document.createElement('div'); r.className = 'rx-r';
+    const v = document.createElement('video'); v.muted = true; v.preload = 'metadata'; v.playsInline = true;
+    kv.get('rxClip:' + it.id).then(b => { if (b && r.isConnected) { const u = URL.createObjectURL(b); RX.urls.push(u); v.src = u + '#t=0.5'; } }).catch(() => {});
+    r.onmouseenter = () => v.play().catch(() => {}); r.onmouseleave = () => v.pause();
+    const n = document.createElement('span'); n.textContent = it.name; n.title = it.name;
+    const s = document.createElement('small'); s.textContent = (it.size / 1048576).toFixed(1) + ' MB';
+    const use = document.createElement('button'); use.className = 'primary'; use.textContent = 'Usar';
+    use.onclick = async () => { const b = await kv.get('rxClip:' + it.id).catch(() => null); if (!b) { toast('No encuentro ese recorte'); return; } if (await rxUse(b, it.name)) $('rxBk').hidden = true; };
+    const del = document.createElement('button'); del.textContent = '🗑'; del.title = 'Borrar de la biblioteca';
+    del.onclick = async () => { if (del.dataset.sure !== '1') { del.dataset.sure = '1'; del.textContent = '¿Borrar?'; setTimeout(() => { del.dataset.sure = ''; del.textContent = '🗑'; }, 3000); return; }
+      RX.lib = lib.filter(x => x.id !== it.id); await kv.set('rxLib', RX.lib).catch(() => {}); kv.del('rxClip:' + it.id).catch(() => {}); rxRender(); };
+    r.append(v, n, s, use, del); box.append(r);
+  }
+}
+setTimeout(() => {
+  if (!$('seRx')) return;
+  document.body.append($('rxBk'));   // fuera de la página del directo: tiene que verse también desde el editor
+  $('seRx').onclick = () => { $('rxBk').hidden = false; rxRender(); };
+  $('seRxUp').onclick = () => { if (!loaded) { toast('Abre primero un clip'); return; } const i = document.createElement('input'); i.type = 'file'; i.accept = 'video/*'; i.onchange = () => { if (i.files[0]) rxUse(i.files[0], i.files[0].name); }; i.click(); };
+  $('rxX').onclick = () => { $('rxBk').hidden = true; };
+  $('rxBk').addEventListener('pointerdown', e => { if (e.target === $('rxBk')) $('rxBk').hidden = true; });
+  $('rxWho').addEventListener('keydown', e => e.stopPropagation());
+  $('rxAdd').onclick = () => { if (!$('rxWho').value.trim()) { toast('Escribe primero el nombre del streamer'); $('rxWho').focus(); return; } $('rxFileIn').click(); };
+  $('rxFileIn').onchange = async e => {
+    const who = $('rxWho').value.trim(), files = [...e.target.files]; e.target.value = ''; const lib = await rxLib(); let n = 0;
+    for (const f of files) {
+      if (!/^video\//.test(f.type)) continue;
+      if (f.size > 300e6) { toast('«' + f.name + '» pesa demasiado (máximo 300 MB): recórtalo antes'); continue; }
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      try { await kv.set('rxClip:' + id, f); lib.push({ id, who, name: f.name.replace(/\.[a-z0-9]+$/i, ''), size: f.size, at: Date.now() }); n++; } catch (err) { toast('No se pudo guardar «' + f.name + '»'); }
+    }
+    await kv.set('rxLib', lib).catch(() => {}); rxRender(); if (n) toast(n + (n > 1 ? ' recortes guardados' : ' recorte guardado') + ' en ' + who);
+  };
+}, 0);
 /* ---------- historial de clips (botón de arriba): los clips que has sacado, del más nuevo al más antiguo ---------- */
 function lhOpen() {
   const pop = $('lhPop'), btn = $('lvHistB'), r = btn.getBoundingClientRect();
