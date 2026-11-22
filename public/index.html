@@ -8537,6 +8537,13 @@ function demux(ab) {
 let encNoHw = false;   // si la tarjeta gráfica falla al comprimir, no se vuelve a intentar con ella
 let decNoHw = false, aacBad = false;   // lo mismo al leer el vídeo y al comprimir el audio
 /* vigilante de la exportación: ningún paso puede esperar para siempre. Si un paso se para, da error y se prueba el método siguiente */
+// vigía de imagen congelada: cada 15 fotogramas mira una miniatura de lo que se exporta; si en 4 s o más no cambia nada, el método se da por malo
+let EXS = { tick() {}, frozen: () => false };
+function expStill() {
+  const c = document.createElement('canvas'); c.width = c.height = 24; const x = c.getContext('2d', { willReadFrequently: true }), seen = new Set(); let n = 0;
+  return { tick(i) { if (i % 15) return; try { x.drawImage(cv, 0, 0, 24, 24); const d = x.getImageData(0, 0, 24, 24).data; let h = 0; for (let k = 0; k < d.length; k += 4) h = (h * 31 + ((d[k] >> 3) << 10) + ((d[k + 1] >> 3) << 5) + (d[k + 2] >> 3)) | 0; seen.add(h); n++; } catch {} },
+    frozen: () => n >= 8 && seen.size <= 1 };
+}
 let expGen = 0, expBeat = 0, expStage = '', expAbort = null;
 const expTick = s => { expBeat = performance.now(); if (s) expStage = s; };
 const expStall = (what, extra) => Object.assign(new Error('se quedó parada al ' + what), { stall: true }, extra || {});
@@ -8683,7 +8690,7 @@ const tick = () => new Promise(r => { tickQ.push(r); tickCh.port2.postMessage(0)
 async function exportFast(onProg, onStatus) {
   if (!('VideoEncoder' in window) || !('VideoDecoder' in window)) throw new Error('sin WebCodecs');
   onStatus('Preparando la exportación…');
-  const G = expGen;
+  const G = expGen; EXS = expStill();
   const M = await expWait(movieIndex(file), 60000, 'leer el archivo');
   const samples = M.vs, vt = M.vt; let config = M.vcfg;
   if (!samples.length || !config) throw new Error('sin fotogramas');
@@ -8737,7 +8744,7 @@ async function exportFast(onProg, onStatus) {
         nextT = Math.max(nextT + fdur, T + fdur * 0.5);
         draw(t, true, f, T); f.close();
         const vf = new VideoFrame(cv, { timestamp: Math.round(T * 1e6), duration: Math.round(fdur * 1e6) });
-        ve.encode(vf, encOpts(venc, idx % (fps * 2) === 0)); vf.close(); idx++;
+        EXS.tick(idx); ve.encode(vf, encOpts(venc, idx % (fps * 2) === 0)); vf.close(); idx++;
         await encDrain(ve, 10, 'comprimir el vídeo');
         if (vErr) throw vErr;
         if (idx % 8 === 0) { onProg(Math.min(1, T / dur)); await tick(); }
@@ -8755,6 +8762,7 @@ async function exportFast(onProg, onStatus) {
   if (vErr) throw vErr;
   await expWait(ve.flush(), 15000, 'terminar de comprimir el vídeo');
   if (vErr) throw vErr;
+  if (EXS.frozen()) throw Object.assign(new Error('la imagen salió congelada'), { dec: true });   // se repite leyendo el vídeo sin la tarjeta gráfica y, si sigue igual, con otro método
   muxer.finalize(); mp4Check(muxer.target.buffer, muxer);
   return { blob: new Blob([muxer.target.buffer], { type: 'video/mp4' }), ext: 'mp4', fps, codec: venc.mux, mode: venc.hw ? 'rápida con tarjeta gráfica' : 'rápida', dur };
   } finally { shut = true; poke(); for (const f of q) { try { f.close(); } catch {} } q.length = 0; expShut(ve); expShut(dec); }   // siempre se sueltan el compresor y el lector (si no, la exportación siguiente se quedaba sin ellos)
@@ -8777,7 +8785,7 @@ const snapFps = f => [24, 25, 30, 48, 50, 60].reduce((a, b) => Math.abs(b - f) <
 async function exportPlay(onProg, onStatus) {
   if (!('VideoEncoder' in window) || !('requestVideoFrameCallback' in HTMLVideoElement.prototype)) throw new Error('sin WebCodecs');
   onStatus('Preparando la exportación…');
-  const G = expGen;
+  const G = expGen; EXS = expStill();
   const tv = await openTv();
   let ve = null;
   try {
@@ -8799,7 +8807,7 @@ async function exportPlay(onProg, onStatus) {
   const emit = (frame, t, T) => {   // un fotograma del vídeo final
     draw(t, true, frame, T);
     const vf = new VideoFrame(cv, { timestamp: Math.round(T * 1e6), duration: Math.round(fdur * 1e6) });
-    ve.encode(vf, encOpts(venc, oi % (fps * 2) === 0)); vf.close(); oi++;
+    EXS.tick(oi); ve.encode(vf, encOpts(venc, oi % (fps * 2) === 0)); vf.close(); oi++;
   };
   onStatus(`Exportando a ${fps} fps…`);
   for (const g of SG) {
@@ -8848,6 +8856,7 @@ async function exportPlay(onProg, onStatus) {
   }
   tv.pause();
   if (oi < total * 0.9) throw new Error('faltan fotogramas');
+  if (EXS.frozen()) throw new Error('la imagen salió congelada');
   if (vErr) throw vErr;
   await expWait(ve.flush(), 15000, 'terminar de comprimir el vídeo');
   if (vErr) throw vErr;
@@ -8861,7 +8870,7 @@ async function exportPlay(onProg, onStatus) {
 async function exportSeek(onProg, onStatus) {
   if (!('VideoEncoder' in window)) throw new Error('sin WebCodecs');
   onStatus('Preparando la exportación precisa…');
-  const G = expGen;
+  const G = expGen; EXS = expStill();
   const tv = document.createElement('video'); tv.muted = true; tv.preload = 'auto'; tv.src = vid.src;
   let ve = null;
   try {
@@ -8894,7 +8903,7 @@ async function exportSeek(onProg, onStatus) {
     await seekTo(t);
     draw(t, true, tv, T);
     const vf = new VideoFrame(cv, { timestamp: Math.round(T * 1e6), duration: Math.round(fdur * 1e6) });
-    ve.encode(vf, encOpts(venc, i % (fps * 2) === 0)); vf.close();
+    EXS.tick(i); ve.encode(vf, encOpts(venc, i % (fps * 2) === 0)); vf.close();
     await encDrain(ve, 4, 'comprimir el vídeo');
     if (vErr) throw vErr;
     expChk(G);
@@ -8903,7 +8912,7 @@ async function exportSeek(onProg, onStatus) {
   await expWait(ve.flush(), 15000, 'terminar de comprimir el vídeo');
   if (vErr) throw vErr;
   muxer.finalize(); mp4Check(muxer.target.buffer, muxer);
-  return { blob: new Blob([muxer.target.buffer], { type: 'video/mp4' }), ext: 'mp4', fps, codec: venc.mux, mode: 'precisa' };
+  return { blob: new Blob([muxer.target.buffer], { type: 'video/mp4' }), ext: 'mp4', fps, codec: venc.mux, mode: 'precisa' + (EXS.frozen() ? ' · ⚠ LA IMAGEN PARECE CONGELADA: revisa el vídeo antes de subirlo' : '') };
   } finally { try { tv.removeAttribute('src'); tv.load(); } catch {} expShut(ve); }
 }
 
