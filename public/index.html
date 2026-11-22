@@ -206,6 +206,12 @@
 .st-m:hover{outline:2px solid #fff}
 .st-zone{position:absolute;top:0;bottom:0;right:0;background:rgba(255,255,255,.14);border-left:2px solid #fff;pointer-events:none}
 .st-zone[hidden]{display:none}
+.st-graph{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;overflow:visible}
+.st-graph path{fill:none;stroke:#38BDF8;stroke-width:2.5;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+.st-graph path.a{stroke:none;fill:rgba(56,189,248,.13)}
+.st-graph path.b{stroke:rgba(255,255,255,.22);stroke-width:1;stroke-dasharray:4 5}
+.st-graphl{position:absolute;inset:0;pointer-events:none;z-index:4}
+.st-graphl span{position:absolute;transform:translate(-50%,-100%);font-size:11px;font-weight:800;color:#7DD3FC;text-shadow:0 1px 3px #000,0 0 6px #000;white-space:nowrap;font-variant-numeric:tabular-nums}
 .st-now{position:absolute;right:4px;bottom:2px;font-size:10px;color:#F87171;pointer-events:none}
 .st-btns{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;justify-content:center}
 .st-btns .st-b{width:auto;padding:12px 26px;font-size:17px;font-weight:800;border-radius:12px}
@@ -1563,7 +1569,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
 #livePage.stage .lv-stage{margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 10px}
 #livePage.stage .lv-stage[hidden]{display:none}
 #livePage.stage .lv-stage .st-det{flex:0 0 100%;order:0}
-#livePage.stage .lv-stage .st-tl{flex:0 0 100%;order:1;height:46px}
+#livePage.stage .lv-stage .st-tl{flex:0 0 100%;order:1;height:62px}
 #livePage.stage .lv-stage .st-rw{order:2;margin:0}
 #livePage.stage .lv-stage .st-btns{order:4;margin:0;flex-wrap:nowrap;gap:6px}
 #livePage.stage .lv-stage .st-btns.st-mk{order:3}
@@ -1982,7 +1988,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
         <div class="lv-stage" id="lvStage" hidden>
           <div class="st-det" id="stDet" hidden><span id="stDetT"></span><button class="primary" id="stDetGo">✂️ Sacar este</button></div>
           <div class="st-rw" id="stRw"><button id="stRwB30" title="Volver 30 segundos atrás en el directo (tecla J)">⏪ 30 s</button><button id="stRwB10" title="Volver 10 segundos atrás (tecla ←)">⏪ 10 s</button><button id="stRwPP" title="Pausar o seguir (lo rebobinado)" hidden>⏸</button><button id="stRwF10" title="Avanzar 10 segundos (tecla →)" hidden>10 s ⏩</button><button class="primary" id="stRwLive" hidden>🔴 Volver al directo</button><span class="hint" id="stRwT">Rebobina para sacar un clip de algo que ya pasó · o pulsa en la línea de tiempo</span></div>
-          <div class="st-tl" id="stTl" title="Los últimos 2 minutos de lo que estás viendo. Los bloques de color son momentos detectados: pulsa uno para sacarlo."><div class="st-zone" id="stZone" hidden></div><div class="st-items" id="stItems"></div><div class="st-now">▼ lo que ves ahora</div><div class="st-flag2" id="stFlag" hidden title="Arrastra para ajustar dónde empieza el clip"><img id="stFlagI" alt=""><b id="stFlagT">📍 inicio</b></div></div>
+          <div class="st-tl" id="stTl" title="Los últimos 2 minutos de lo que estás viendo. Los bloques de color son momentos detectados: pulsa uno para sacarlo."><div class="st-zone" id="stZone" hidden></div><div class="st-items" id="stItems"></div><svg class="st-graph" id="stGraph" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true"><path id="stGraphB" class="b"/><path id="stGraphA" class="a"/><path id="stGraphP"/></svg><div class="st-graphl" id="stGraphL"></div><div class="st-now">▼ lo que ves ahora</div><div class="st-flag2" id="stFlag" hidden title="Arrastra para ajustar dónde empieza el clip"><img id="stFlagI" alt=""><b id="stFlagT">📍 inicio</b></div></div>
           <div class="st-btns st-mk"><button id="stMark" title="Pon una marca en lo que estás viendo ahora (tecla M)">📍 Marcar inicio</button><button class="primary st-b2" id="stMarkCut" hidden>✂️ Sacar desde la marca</button><button id="stMarkX" hidden title="Quitar la marca">✕</button><span class="hint" id="stMarkT">Cuando empiece algo bueno, marca el inicio (tecla M) y sácalo cuando acabe.</span></div>
           <div class="st-btns"><span class="hint">✂️ Sacar los últimos</span><button class="primary st-b" data-n="20">20 s</button><button class="primary st-b" data-n="30">30 s</button><button class="primary st-b" data-n="50">50 s</button><button class="st-b" data-n="90">1 min 30</button><span class="hint" id="stS"></span></div>
         </div>
@@ -16489,6 +16495,49 @@ function stFlagUI(ref) {
   $('stFlagT').textContent = '📍 hace ' + Math.max(0, Math.round(ref - stMarkAt)) + ' s';
 }
 const stSeen = new Set();
+/* ---------- gráfica del chat en la línea de tiempo: cuánto se mueve respecto a lo normal (×1) ----------
+   Solo cuenta las horas de los mensajes (no guarda textos), solo lo nuevo de cada vez, y solo en «Pantalla». */
+const CG = { st: {}, busy: false };
+async function cgRead(S) {
+  const st = CG.st[S.name] = CG.st[S.name] || { off: -1, skip: false, bins: new Map() };
+  let f; try { f = await fileAt(S.h, 'chat.jsonl'); } catch { return; }
+  if (st.off < 0 || f.size < st.off || f.size - st.off > 3e6) { st.off = Math.max(0, f.size - 500000); st.skip = st.off > 0; if (f.size < st.off) st.bins.clear(); }
+  if (f.size <= st.off) return;
+  const buf = new Uint8Array(await f.slice(st.off, f.size).arrayBuffer());
+  const end = buf.lastIndexOf(10); if (end < 0) return;
+  let start = 0; if (st.skip) { start = buf.indexOf(10) + 1; st.skip = false; }
+  st.off += end + 1; if (start >= end) return;
+  const re = /"t": ?([\d.]+)/g, txt = new TextDecoder().decode(buf.subarray(start, end)); let x;
+  while ((x = re.exec(txt))) { const b = Math.floor(+x[1] / 5); st.bins.set(b, (st.bins.get(b) || 0) + 1); }
+  const old = Math.floor(Date.now() / 5000) - 200; for (const k of st.bins.keys()) if (k < old) st.bins.delete(k);   // se guardan unos 16 minutos
+}
+setInterval(async () => {
+  if (CG.busy || !stOn() || $('livePage').hidden || document.hidden || critOff().has('chat')) return;
+  const S = lvTrSess(); if (!S || !S.on) return;
+  CG.busy = true; try { await cgRead(S); } catch (e) { console.warn('gráfica del chat', e); } finally { CG.busy = false; }
+}, 2000);
+function stGraphDraw(S, a, ref) {
+  const P = $('stGraphP'), A = $('stGraphA'), B = $('stGraphB'), L = $('stGraphL'); if (!P) return;
+  const st = S && CG.st[S.name], clear = () => { P.setAttribute('d', ''); A.setAttribute('d', ''); B.setAttribute('d', ''); if (L.childElementCount) L.innerHTML = ''; };
+  if (!st || !st.bins.size || critOff().has('chat')) return clear();
+  // lo normal: la mediana de los tramos de 5 s con mensajes (igual que el grabador)
+  const nowB = Math.floor(Date.now() / 5000), nz = [...st.bins.entries()].filter(([k, n]) => k < nowB && n > 0).map(e => e[1]).sort((x, y) => x - y);
+  if (nz.length < 6) return clear();
+  const base = Math.max(1, nz[nz.length >> 1]), pts = [];
+  for (let b = Math.floor(a / 5) - 1; b < nowB && b * 5 < ref + 5; b++) pts.push([b * 5 + 2.5, (st.bins.get(b) || 0) / base]);
+  if (pts.length < 2) return clear();
+  for (let i = 0; i < pts.length; i++) pts[i][2] = ((pts[i - 1] || pts[i])[1] + 2 * pts[i][1] + (pts[i + 1] || pts[i])[1]) / 4;   // un poco suavizada
+  const top = Math.max(3, ...pts.map(p => p[2])), X = t => (t - a) / ST_W * 1000, Y = v => 94 - Math.min(1, v / top) * 62;
+  let d = ''; pts.forEach((p, i) => { d += (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[2]).toFixed(1); });
+  P.setAttribute('d', d); A.setAttribute('d', d + `L${X(pts[pts.length - 1][0]).toFixed(1)} 100L${X(pts[0][0]).toFixed(1)} 100Z`);
+  B.setAttribute('d', `M0 ${Y(1).toFixed(1)}L1000 ${Y(1).toFixed(1)}`);
+  // etiquetas en los picos (×2 o más), separadas entre sí
+  const pk = []; for (let i = 1; i < pts.length - 1; i++) if (pts[i][1] >= 1.8 && pts[i][2] >= pts[i - 1][2] && pts[i][2] > pts[i + 1][2] && pts[i][0] > a + 4 && pts[i][0] < ref - 2) pk.push(pts[i]);
+  pk.sort((x, y) => y[1] - x[1]); const keep = []; for (const p of pk) if (keep.length < 5 && !keep.some(k => Math.abs(k[0] - p[0]) < 12)) keep.push(p);
+  let h = '';
+  for (const p of keep) h += `<span style="left:${Math.min(97, Math.max(3, X(p[0]) / 10)).toFixed(2)}%;top:${Math.max(30, Y(p[2]) - 3).toFixed(1)}%">${fmtX(p[1])}</span>`;
+  if (L.innerHTML !== h) L.innerHTML = h;
+}
 function stTick() {
   if (!stOn() || $('livePage').hidden) return;
   const S = lvTrSess(), box = $('stItems'); if (!box) return;
@@ -16500,6 +16549,7 @@ function stTick() {
   if (stMarkAt != null) { const l = Math.max(0, px(stMarkAt)); h += `<span class="st-fzone" style="left:${l.toFixed(2)}%"></span>`; }
   stFlagUI(ref);
   box.innerHTML = h;
+  try { stGraphDraw(S, a, ref); } catch (e) { console.warn('gráfica del chat', e); }
   { const on = stMarkAt != null, d = on ? ref - stMarkAt : 0; $('stMarkCut').hidden = $('stMarkX').hidden = !on; $('stMark').textContent = on ? '📍 Mover la marca aquí' : '📍 Marcar inicio';
     if (on) { $('stMarkCut').textContent = `✂️ Sacar desde la marca (${Math.round(d)} s)`; $('stMarkT').textContent = d > 180 ? 'La marca es de hace más de 3 min: el clip saldrá largo.' : ''; } else $('stMarkT').textContent = 'Cuando empiece algo bueno, marca el inicio (tecla M) y sácalo cuando acabe.'; }
   const cOff = critOff(), ms = (S.moments || []).filter(m => m.t1 > a && m.t0 < ref + 5 && !liveHidden.has(m.id) && !cOff.has(m.src));
