@@ -109,7 +109,8 @@
 .se-ai{justify-content:flex-start}
 .se-ai #seAi{flex:0 0 auto!important;padding:8px 14px!important;font-size:13px!important;border-radius:10px!important}
 .se-ai #seAiMore{height:auto}
-.se-off{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted, #A1A1AA);cursor:pointer;margin-bottom:6px}.se-off input{width:16px;height:16px;margin:0}.se-off:has(input:checked){color:#FCA5A5}.se-rot:has(input:checked){color:#86EFAC}.se-rotw{display:flex;align-items:center;gap:8px;margin-bottom:6px}.se-rotw .se-off{margin:0}.se-rotw input[type=number]{width:64px;padding:4px 6px;font-size:13px}
+.se-off{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted, #A1A1AA);cursor:pointer;margin-bottom:6px}.se-off input{width:16px;height:16px;margin:0}.se-off:has(input:checked){color:#FCA5A5}.se-rot:has(input:checked){color:#86EFAC}.se-tplsv{display:flex;gap:6px;flex-wrap:wrap}.se-tplsv button{width:auto}
+.se-rotw{display:flex;align-items:center;gap:8px;margin-bottom:6px}.se-rotw .se-off{margin:0}.se-rotw input[type=number]{width:64px;padding:4px 6px;font-size:13px}
 .se-ai{position:relative;display:flex;gap:6px}
 .se-ai #seAi{flex:1;padding:12px;font-size:15px;font-weight:800}
 .se-ai #seAiMore{width:auto;padding:8px 12px}
@@ -2028,7 +2029,8 @@ body.se-rzing{cursor:ew-resize;user-select:none}
               <p class="hint" id="seS"></p>
               <label class="se-l">Título<textarea id="seTitle" rows="3" placeholder="Título del clip (Enter: línea nueva · Ctrl+Enter: listo)"></textarea></label>
               <div class="se-hl" id="seHlW"><span>Destacar en color <em>toca una palabra</em></span><div class="chips" id="seChips"></div></div>
-              <div class="se-l">Formato<div class="se-fmts" id="seFmts"></div><button id="seFmtDef" class="se-def" title="Los próximos clips se abrirán ya con este formato">⭐ Usar siempre este formato</button></div>
+              <div class="se-l">Formato<div class="se-fmts" id="seFmts"></div><button id="seFmtDef" class="se-def" title="Los próximos clips se abrirán ya con este formato">⭐ Usar siempre este formato</button>
+                <div class="se-tplsv"><button id="seFmtSave" class="se-def" title="Guarda en esta plantilla todo tal y como lo ves ahora: tamaño y posición del vídeo, zoom, recortes, dónde va el título y los subtítulos y dónde va el logo (con su tamaño). La próxima vez que elijas esta plantilla saldrá así y solo tendrás que poner el título.">💾 Guardar cómo está en esta plantilla</button><button id="seFmtReset" class="se-def" hidden title="Deja esta plantilla como venía al principio">↩ Original</button></div></div>
               <label class="toggle se-subt"><input type="checkbox" id="seSubsOn"><span></span>Subtítulos en este clip <em class="hint">(apágalo y los siguientes clips también saldrán sin subtítulos)</em></label>
               <div class="se-l">Más<div class="se-more"><button type="button" id="seSubSt" title="Letra, tamaño, color, contorno y fondo de los subtítulos">💬 Estilo de subtítulos</button><button type="button" id="seTxtAdd" title="Añade un texto encima del vídeo">T Añadir texto</button><button type="button" id="seLogoT" title="Poner o cambiar el logo de este creador">🖼️ Logo</button><button type="button" id="seMoreM" title="Todas las opciones: lo mismo que el clic derecho en el vídeo">⋯ Más opciones</button></div><span class="hint">Clic derecho en el vídeo para ver todas las opciones de cada cosa.</span></div>
               <div class="rev-flags se-flags" id="seFlags" aria-label="Palabras malas"></div>
@@ -10859,15 +10861,18 @@ function effectivePreset0(p) {
 }
 function cleanForPreset(st) {
   const m = JSON.parse(JSON.stringify(st));
+  delete m.fixed; delete m.logo;   // (lo del panel se guarda aparte y se aplica después)
   delete m.music; delete m.logoPos; delete m.c.logoSize; delete m.c.logoOp; delete m.c.quality; delete m.c.fps;
   return m;
 }
 async function applyPreset(p) {
   const m = cleanForPreset(effectivePreset(p));
   await applyStyle(m);
-  if (p.fill && layoutMode === 'single' && !presetOverrides[p.name]) setRange('zoom', fillZoom());
-  if (layoutMode === 'react') { camDetectedFor = null; autoDetectCam(false); }
-  activePreset = p.name; renderPresets();
+  const ov = presetOverrides[p.name], fixed = !!(ov && ov.fixed);   // «fixed»: guardada desde el panel con todo colocado (vídeo, cámara y logo)
+  if (p.fill && layoutMode === 'single' && !ov) setRange('zoom', fillZoom());
+  if (layoutMode === 'react' && !fixed) { camDetectedFor = null; autoDetectCam(false); }
+  if (fixed && ov.logo && !trk.logo.lock) { const g = ov.logo; logoPos.x = g.x; logoPos.y = g.y; $('logoSize').value = g.size; $('logoOp').value = g.op; $('logoRot').value = g.rot || 0; try { ['logoSize', 'logoOp'].forEach(id => $(id).dispatchEvent(new Event('input'))); } catch {} }
+  activePreset = p.name; renderPresets(); try { stTplUI(); } catch {}
   if (!autoHLOn()) { titleHL.clear(); renderChips(); }   // esta plantilla va sin palabras destacadas
   if (loaded && titleIsDefault()) aiTitle(true);   // título automático con IA
   if (loaded && p.name === 'Podcast') faceTrack(true); else if (clipMeta.track) clipMeta.track.on = false;
@@ -18084,6 +18089,23 @@ setTimeout(() => {
   $('seTT').onchange = async () => { const n = $('seTT').value; if (!loaded) return; if (n) { await ttPick(n); stCenter(); } else { titleDef = null; await saveTypeStore(); toast('Título del formato: se verá al cambiar de formato'); } };
   const trim = which => { if (!loaded || exporting) return; let a = +$('seA').value, b = +$('seB').value; if (b - a < 2) { if (which === 'a') a = b - 2; else b = a + 2; } ezA = a; ezB = b; ezApplyTrim(); stEdTrimUI(); if (which === 'b') { try { seekOut(Math.max(0, b - a - 2)); } catch {} } };
   for (const [id, k] of [['seAutoT', 'stAutoT'], ['seAutoF', 'stAutoF'], ['seAutoS', 'stAutoS'], ['seAutoX', 'stAutoX'], ['seAutoE', 'stAutoE']]) $(id).onchange = () => { ezPref(k, $(id).checked ? '1' : '0'); stEdAutoUI(); };
+  // guardar en la plantilla todo como está colocado ahora (vídeo, zoom, recortes, textos y logo)
+  window.stTplUI = () => { const r = $('seFmtReset'); if (r) r.hidden = !(activePreset && presetOverrides[activePreset]); const s = $('seFmtSave'); if (s && activePreset) s.textContent = '💾 Guardar cómo está en «' + fmtLbl(activePreset) + '»'; };
+  $('seFmtSave').onclick = async () => {
+    if (!loaded) { toast('Abre primero un clip'); return; }
+    if (!activePreset) { toast('Elige primero un formato'); return; }
+    const m = cleanForPreset(getStyle()); m.fixed = true; m.logo = { x: logoPos.x, y: logoPos.y, size: $('logoSize').value, op: $('logoOp').value, rot: $('logoRot').value };
+    presetOverrides[activePreset] = m;
+    const ok = await savePresetStore(); try { renderPresets(); } catch {} stTplUI();
+    toast(ok ? '💾 Guardado: «' + fmtLbl(activePreset) + '» saldrá siempre así. Solo tendrás que poner el título.' : 'No se pudo guardar la plantilla');
+  };
+  $('seFmtReset').onclick = async () => {
+    if (!activePreset || !presetOverrides[activePreset]) return;
+    const nm = activePreset; delete presetOverrides[nm]; await savePresetStore();
+    const p = PRESETS.find(x => x.name === nm); if (p && loaded) await applyPreset(p);
+    stTplUI(); toast('«' + fmtLbl(nm) + '» vuelve a como venía');
+  };
+  setInterval(() => { try { if (!$('stEd').hidden) stTplUI(); } catch {} }, 1500);
   $('seFmtDef').onclick = () => { const cur = ($('seFmts').querySelector('.on') || {}).dataset; if (!cur || !cur.id) { toast('Elige primero un formato'); return; } ezPref('stFmtDef', cur.id); ezPref('stAutoF', '0'); stEdAutoUI(); toast('Los próximos clips se abrirán con ese formato'); };
   $('seA').onchange = () => trim('a'); $('seB').onchange = () => trim('b');
   $('seA').oninput = $('seB').oninput = () => { $('seTrimT').textContent = `· dura ${Math.max(2, +$('seB').value - +$('seA').value).toFixed(1).replace('.', ',')} s`; };
