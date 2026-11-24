@@ -7,5 +7,6 @@ RUN apt-get update \
 WORKDIR /app
 COPY package.json server.js cuentas.js ./
 COPY public ./public
+COPY app-files ./app-files
 ENV NODE_ENV=production
 CMD ["node", "server.js"]

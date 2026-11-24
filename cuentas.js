@@ -34,7 +34,7 @@ function findByPass(pass) {
 function addUser(name, pass) {
   name = String(name || '').trim().slice(0, 40); pass = String(pass || '').trim();
   if (name.length < 2) return 'Pon un nombre.';
-  if (pass.length < 4) return 'La contraseña tiene que tener al menos 4 caracteres.';
+  if (pass.length < 8) return 'La contraseña tiene que tener al menos 8 caracteres.';
   if (db.users.some(u => u.active !== false && u.name.toLowerCase() === name.toLowerCase())) return 'Ya hay un clipper con ese nombre.';
   if (findByPass(pass)) return 'Esa contraseña ya la tiene otro clipper: cada uno necesita la suya.';
   const old = db.users.find(u => u.name.toLowerCase() === name.toLowerCase());
@@ -45,7 +45,7 @@ function addUser(name, pass) {
 }
 function setPass(name, pass) {
   const u = userOf(name); if (!u) return 'No existe.';
-  pass = String(pass || '').trim(); if (pass.length < 4) return 'La contraseña tiene que tener al menos 4 caracteres.';
+  pass = String(pass || '').trim(); if (pass.length < 8) return 'La contraseña tiene que tener al menos 8 caracteres.';
   const other = findByPass(pass); if (other && other !== u) return 'Esa contraseña ya la tiene otro clipper.';
   u.salt = crypto.randomBytes(12).toString('hex'); u.hash = hash(pass, u.salt); u.ver = (u.ver || 0) + 1; save(); return '';
 }
@@ -71,7 +71,9 @@ function sessionUser(req) {
   const c = readCookie(req, 'cx'); if (!c || c.kind !== 'u') return null;
   const u = userOf(c.name); return u && (u.ver || 0) === c.ver ? u : null;
 }
-const isAdmin = req => { const c = readCookie(req, 'cxa'); return !!(c && c.kind === 'a'); };
+// la sesión del panel lleva la «versión» de su contraseña: si la contraseña cambia, las sesiones abiertas dejan de valer
+const adminVer = env => parseInt(crypto.createHash('sha256').update(String(env || '') + '|' + JSON.stringify(adminStored || {})).digest('hex').slice(0, 8), 16);
+const isAdmin = (req, env) => { const c = readCookie(req, 'cxa'); return !!(c && c.kind === 'a' && c.ver === adminVer(env)); };
 function cookieHeader(req, cname, value, days) {
   const secure = String(req.headers['x-forwarded-proto'] || '').includes('https') ? '; Secure' : '';
   return `${cname}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.round(days * 86400)}${secure}`;
@@ -153,4 +155,4 @@ function adminOk(pass, env) {
 }
 function adminCreate(pass) { const salt = crypto.randomBytes(12).toString('hex'); adminStored = { salt, hash: hash(pass, salt), at: Date.now() }; fs.writeFileSync(adminFile, JSON.stringify(adminStored)); }
 
-module.exports = { addSuggestion, suggestions, suggestionSet, suggestionImg, adminSet, adminOk, adminCreate, DATA, FILES, findByPass, addUser, setPass, removeUser, userOf, makeCookie, readCookie, sessionUser, isAdmin, cookieHeader, addClip, clipOf, videoPath, videoDone, stats, projects };
+module.exports = { adminVer, addSuggestion, suggestions, suggestionSet, suggestionImg, adminSet, adminOk, adminCreate, DATA, FILES, findByPass, addUser, setPass, removeUser, userOf, makeCookie, readCookie, sessionUser, isAdmin, cookieHeader, addClip, clipOf, videoPath, videoDone, stats, projects };

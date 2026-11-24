@@ -1,0 +1,59 @@
+<script type="text/plain" id="grabBat">
+@echo off
+chcp 65001 >nul
+title Grabador de Clipzi
+cd /d "%~dp0"
+set "PY="
+py -3 --version >nul 2>&1 && set "PY=py -3"
+if not defined PY (python --version >nul 2>&1 && set "PY=python")
+if not defined PY goto nopython
+
+if not exist ".instalado" (
+  echo.
+  echo  Instalando lo necesario. Solo pasa la primera vez y tarda un par de minutos...
+  echo.
+  %PY% -m pip install --upgrade pip
+  %PY% -m pip install --upgrade streamlink yt-dlp curl_cffi imageio-ffmpeg websockets numpy
+  if errorlevel 1 goto pipfail
+  echo ok> ".instalado"
+) else (
+  rem cada vez: poner al dia lo que lee Kick y TikTok (cambian a menudo)
+  %PY% -m pip install --upgrade --quiet streamlink curl_cffi >nul 2>&1
+  rem yt-dlp en su versión más reciente (TikTok cambia muy a menudo)
+  %PY% -m pip install --upgrade --pre --quiet "yt-dlp[default,curl-cffi]" >nul 2>&1
+)
+rem IA de voz (para aislar la voz): se instala una sola vez
+%PY% -c "import onnxruntime" >nul 2>&1 || (echo  Instalando la IA de voz, solo esta vez... & %PY% -m pip install --quiet onnxruntime-directml >nul 2>&1 || %PY% -m pip install --quiet onnxruntime >nul 2>&1)
+
+if /i "%~1"=="prueba" goto prueba
+%PY% clipzi_grabador.py
+pause
+exit /b
+
+:prueba
+if "%~2"=="" (
+  echo Arrastra un video encima de este archivo para probar sin directo.
+  pause
+  exit /b
+)
+%PY% clipzi_grabador.py --prueba "%~2"
+pause
+exit /b
+
+:nopython
+echo.
+echo  Falta Python en este ordenador.
+echo  1. Se va a abrir la pagina de descarga: pulsa el boton amarillo "Download Python".
+echo  2. Al instalar, MARCA la casilla "Add python.exe to PATH".
+echo  3. Cuando acabe, vuelve a abrir este archivo.
+echo.
+start https://www.python.org/downloads/
+pause
+exit /b
+
+:pipfail
+echo.
+echo  No se pudo instalar lo necesario. Revisa tu conexion a internet y vuelve a abrir este archivo.
+pause
+exit /b
+</script>

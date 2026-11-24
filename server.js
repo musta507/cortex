@@ -1,7 +1,7 @@
 // Cortex · versión de prueba en la web.
 // Sirve la página (solo a quien tiene contraseña), hace de puente con Gemini (la clave vive solo aquí, variable GEMINI_KEY),
 // descarga vídeos por enlace y guarda los clips que exporta cada clipper para verlos en /panel.
-const http = require('http'), fs = require('fs'), path = require('path'), zlib = require('zlib'), os = require('os'), { spawn } = require('child_process');
+const http = require('http'), fs = require('fs'), path = require('path'), zlib = require('zlib'), os = require('os'), crypto = require('crypto'), { spawn } = require('child_process');
 
 const K = require('./cuentas');
 const KEY = (process.env.GEMINI_KEY || '').trim();
@@ -11,6 +11,13 @@ const PORT = process.env.PORT || 3000;
 const PER_IP = +process.env.LIMITE_POR_PERSONA || 150;   // peticiones a la IA por persona y día
 const TOTAL = +process.env.LIMITE_TOTAL || 5000;          // peticiones a la IA de todos, por día
 const MAX_BODY = 32 * 1024 * 1024;
+// techo de gasto de la IA (además del número de peticiones): megas que se mandan a Gemini y minutos de audio a ElevenLabs
+const IA_MB_PER = +process.env.MB_IA_POR_PERSONA || 400;       // megas a Gemini por persona y día
+const IA_MB_TOTAL = +process.env.MB_IA_TOTAL || 3000;          // megas a Gemini de todos, por día
+const VOZ_MIN_PER = +process.env.MIN_VOZ_POR_PERSONA || 60;    // minutos de subtítulos por persona y día
+const VOZ_MIN_TOTAL = +process.env.MIN_VOZ_TOTAL || 600;       // minutos de subtítulos de todos, por día
+// solo modelos «flash» (los baratos); los «pro» y demás cuestan varias veces más
+const MODEL_OK = m => /^gemini-[\d.]+-flash(-lite)?(-preview)?(-[\w]+)?$/.test(m) && !/pro|ultra|thinking/i.test(m);
 const DL_PER_IP = +process.env.DESCARGAS_POR_PERSONA || 40;   // enlaces por persona y día
 const DL_AT_ONCE = +process.env.DESCARGAS_A_LA_VEZ || 3;      // descargas a la vez en el servidor
 const DL_MAX_MIN = +process.env.MINUTOS_MAX || 15;            // duración máxima del vídeo del enlace
@@ -19,7 +26,25 @@ const TMP = path.join(os.tmpdir(), 'cortex-dl'); fs.mkdirSync(TMP, { recursive: 
 
 const page = fs.readFileSync(path.join(__dirname, 'public', 'index.html'));
 const pageGz = zlib.gzipSync(page, { level: 9 });
+const pageTag = '"' + crypto.createHash('sha256').update(page).digest('base64url').slice(0, 22) + '"';   // huella de la página: el navegador la guarda y solo la vuelve a bajar si cambia
+// protecciones normales de cualquier web: que no se pueda meter dentro de otra página, ni adivinar tipos de archivo
+const SAFE = { 'X-Frame-Options': 'DENY', 'Content-Security-Policy': "frame-ancestors 'none'", 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin' };
+const hsts = req => String(req.headers['x-forwarded-proto'] || '').includes('https') ? { 'Strict-Transport-Security': 'max-age=15552000' } : {};
 const panelPage = fs.readFileSync(path.join(__dirname, 'public', 'panel.html'));
+// ---------- actualizaciones de la app de escritorio: la app baja de aquí el Cortex del PC y el grabador cuando hay versión nueva ----------
+const APP_TOKEN = (process.env.CORTEX_APP_TOKEN || 'cortex-app-7f3c91d2a8').trim();
+const appFiles = (() => {
+  const dir = path.join(__dirname, 'app-files'), o = {};
+  try {
+    const h = fs.readFileSync(path.join(dir, 'Clipzi.html')), g = fs.readFileSync(path.join(dir, 'clipzi_grabador.py'));
+    const sha = b => crypto.createHash('sha256').update(b).digest('hex');
+    o['Clipzi.html'] = h; o['clipzi_grabador.py'] = g;
+    o['version.json'] = Buffer.from(JSON.stringify({
+      html: { build: +((/<meta name="cortex-build" content="(\d+)"/.exec(h.toString('utf8')) || [])[1] || 0), sha256: sha(h), size: h.length },
+      grabador: { version: +((/GRABADOR_VERSION = (\d+)/.exec(g.toString('utf8')) || [])[1] || 0), sha256: sha(g), size: g.length } }));
+  } catch (e) { console.warn('sin archivos de la app para actualizar:', e.message); }
+  return o;
+})();
 const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function loginPage(o) {
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(o.title)}</title>
@@ -44,16 +69,47 @@ const USER_LOGIN = msg => loginPage({ title: 'Entrar · Cortex', action: '/entra
 const ADMIN_LOGIN = msg => K.adminSet(ADMIN) ? loginPage({ title: 'Panel · Cortex', action: '/panel/entrar', h: 'Panel', sub: 'Contraseña de administrador.', msg })
   : loginPage({ title: 'Panel · Cortex', action: '/panel/crear', h: 'Crea la contraseña del panel', sub: 'Es la primera vez que entras: elige tu contraseña de administrador (mínimo 6 caracteres). Solo tú podrás entrar al panel con ella.', msg,
       note: K.DATA.startsWith('/app') ? '⚠ Aún no hay volumen en Railway: si la web se actualiza, esta contraseña y los clippers se borrarán. Añade un volumen en /data.' : '' });
-const tries = new Map();
-function tooMany(ip) { const now = Date.now(), t = (tries.get(ip) || []).filter(x => now - x < 15 * 60000); tries.set(ip, t); return t.length >= 20; }
-const html = (res, code, body, extra) => { res.writeHead(code, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', ...(extra || {}) }); res.end(body); };
+// intentos de contraseña fallidos: 20 por persona cada 15 min y, además, 300 entre todos (por si alguien prueba desde muchas direcciones)
+const tries = new Map(); let failsAll = [];
+function tooMany(ip) {
+  const now = Date.now(), t = (tries.get(ip) || []).filter(x => now - x < 15 * 60000); tries.set(ip, t);
+  failsAll = failsAll.filter(x => now - x < 15 * 60000);
+  if (tries.size > 5000) for (const [k, v] of tries) if (!v.length) tries.delete(k);
+  return t.length >= 20 || failsAll.length >= 300;
+}
+const failed = ip => { (tries.get(ip) || tries.set(ip, []).get(ip)).push(Date.now()); failsAll.push(Date.now()); };
+const html = (res, code, body, extra) => { res.writeHead(code, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', ...SAFE, ...(extra || {}) }); res.end(body); };
 const go = (res, to, extra) => { res.writeHead(303, { Location: to, ...(extra || {}) }); res.end(); };
 async function readBody(req, max) { const ch = []; let n = 0; for await (const c of req) { n += c.length; if (n > max) throw new Error('grande'); ch.push(c); } return Buffer.concat(ch).toString('utf8'); }
 const formPass = b => new URLSearchParams(b).get('pass') || '';
 
 const iaErrs = []; const iaErr = (m, txt) => { iaErrs.push({ at: Date.now(), modelo: m, error: String(txt).replace(/AIza[\w-]{20,}|sk_[\w]{16,}/g, '…').slice(0, 300) }); if (iaErrs.length > 20) iaErrs.shift(); };
-let day = '', total = 0, perIp = new Map(), dlIp = new Map();
-function rollDay() { const d = new Date().toISOString().slice(0, 10); if (d !== day) { day = d; total = 0; perIp = new Map(); dlIp = new Map(); } }
+let day = '', total = 0, perIp = new Map(), dlIp = new Map(), mbIa = new Map(), mbIaAll = 0, minVoz = new Map(), minVozAll = 0;
+function rollDay() { const d = new Date().toISOString().slice(0, 10); if (d !== day) { day = d; total = 0; perIp = new Map(); dlIp = new Map(); mbIa = new Map(); mbIaAll = 0; minVoz = new Map(); minVozAll = 0; } }
+function iaBytes(who, bytes) {   // megas mandados a Gemini: se apuntan y se comprueban antes de la siguiente
+  rollDay(); const mb = bytes / 1048576; mbIa.set(who, (mbIa.get(who) || 0) + mb); mbIaAll += mb;
+}
+function iaBytesLeft(who) {
+  rollDay();
+  if (mbIaAll >= IA_MB_TOTAL) return 'Cortex ha llegado al límite de uso de la IA de hoy. Vuelve mañana.';
+  if ((mbIa.get(who) || 0) >= IA_MB_PER) return 'Has llegado al límite de IA de hoy (vídeo analizado). Vuelve mañana.';
+  return '';
+}
+function vozMinutes(buf) {   // duración de un WAV mirando su cabecera (si no se entiende, se calcula como 16 kHz, mono, 16 bits)
+  try {
+    if (buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WAVE') {
+      const ch = buf.readUInt16LE(22) || 1, rate = buf.readUInt32LE(24) || 16000, bits = buf.readUInt16LE(34) || 16;
+      return Math.max(0, buf.length - 44) / (rate * ch * bits / 8) / 60;
+    }
+  } catch {}
+  return buf.length / 32000 / 60;
+}
+function vozLeft(who, mins) {
+  rollDay();
+  if (minVozAll + mins > VOZ_MIN_TOTAL) return 'Cortex ha llegado al límite de subtítulos de hoy. Vuelve mañana.';
+  if ((minVoz.get(who) || 0) + mins > VOZ_MIN_PER) return `Has llegado al límite de subtítulos de hoy (${VOZ_MIN_PER} min). Vuelve mañana.`;
+  return '';
+}
 function quota(ip) {
   rollDay();
   const n = perIp.get(ip) || 0;
@@ -110,7 +166,14 @@ setInterval(() => { const now = Date.now(); for (const [id, j] of jobs) if (now 
 if (!process.env.YTDLP) { const u = spawn('python3', ['-m', 'pip', 'install', '-q', '-U', '--break-system-packages', 'yt-dlp'], { stdio: 'ignore' }); u.on('error', () => {}); }
 
 const json = (res, code, obj) => { const b = JSON.stringify(obj); res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(b); };
-const ipOf = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+// la dirección de quien entra: en Railway la pone su propia entrada (X-Real-IP); si no está, la ÚLTIMA de la lista (la primera la puede inventar cualquiera)
+// (solo se hace caso a esas cabeceras si la petición llega a través de un proxy de la red interna; si no, cualquiera podría inventarlas)
+const viaProxy = a => /^(::ffff:)?(10\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)|^f[cd]/i.test(a);
+const ipOf = req => {
+  const sock = String(req.socket.remoteAddress || ''); if (!viaProxy(sock)) return sock;
+  const r = String(req.headers['x-real-ip'] || '').trim(); if (r) return r;
+  const f = String(req.headers['x-forwarded-for'] || '').split(',').map(x => x.trim()).filter(Boolean); return f.length ? f[f.length - 1] : sock;
+};
 // solo se atienden peticiones hechas desde la propia página (no desde otras webs)
 function sameSite(req) {
   const host = req.headers.host || '', from = req.headers.origin || req.headers.referer || '';
@@ -124,7 +187,7 @@ http.createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/entrar') {
       const ip = ipOf(req); if (tooMany(ip)) return html(res, 429, USER_LOGIN('Demasiados intentos. Espera unos minutos.'));
       const u = K.findByPass(formPass(await readBody(req, 2000)));
-      if (!u) { tries.get(ip).push(Date.now()); return html(res, 401, USER_LOGIN('Esa contraseña no es correcta.')); }
+      if (!u) { failed(ip); return html(res, 401, USER_LOGIN('Esa contraseña no es correcta.')); }
       return go(res, '/', { 'Set-Cookie': K.cookieHeader(req, 'cx', K.makeCookie('u', u.name, 60, u.ver), 60) });
     }
     if (url.pathname === '/salir') return go(res, '/', { 'Set-Cookie': K.cookieHeader(req, 'cx', '', 0) });
@@ -133,23 +196,23 @@ http.createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/panel/entrar') {
       const ip = ipOf(req); if (tooMany(ip)) return html(res, 429, ADMIN_LOGIN('Demasiados intentos. Espera unos minutos.'));
       const p = formPass(await readBody(req, 2000));
-      if (!K.adminOk(p, ADMIN)) { tries.get(ip).push(Date.now()); return html(res, 401, ADMIN_LOGIN('Contraseña incorrecta.')); }
-      return go(res, '/panel', { 'Set-Cookie': K.cookieHeader(req, 'cxa', K.makeCookie('a', 'admin', 14), 14) });
+      if (!K.adminOk(p, ADMIN)) { failed(ip); return html(res, 401, ADMIN_LOGIN('Contraseña incorrecta.')); }
+      return go(res, '/panel', { 'Set-Cookie': K.cookieHeader(req, 'cxa', K.makeCookie('a', 'admin', 14, K.adminVer(ADMIN)), 14) });
     }
     if (req.method === 'POST' && url.pathname === '/panel/crear') {
       if (K.adminSet(ADMIN)) return go(res, '/panel');
       const p = formPass(await readBody(req, 2000)).trim();
       if (p.length < 6) return html(res, 400, ADMIN_LOGIN('Pon al menos 6 caracteres.'));
       K.adminCreate(p);
-      return go(res, '/panel', { 'Set-Cookie': K.cookieHeader(req, 'cxa', K.makeCookie('a', 'admin', 14), 14) });
+      return go(res, '/panel', { 'Set-Cookie': K.cookieHeader(req, 'cxa', K.makeCookie('a', 'admin', 14, K.adminVer(ADMIN)), 14) });
     }
     if (url.pathname === '/panel/salir') return go(res, '/panel', { 'Set-Cookie': K.cookieHeader(req, 'cxa', '', 0) });
-    if (req.method === 'GET' && url.pathname === '/panel') return K.isAdmin(req) ? html(res, 200, panelPage) : html(res, 200, ADMIN_LOGIN());
+    if (req.method === 'GET' && url.pathname === '/panel') return K.isAdmin(req, ADMIN) ? html(res, 200, panelPage, hsts(req)) : html(res, 200, ADMIN_LOGIN());
     if (url.pathname.startsWith('/api/admin/')) {
-      if (!K.isAdmin(req)) return json(res, 401, { error: 'Entra en el panel.' });
+      if (!K.isAdmin(req, ADMIN)) return json(res, 401, { error: 'Entra en el panel.' });
       if (req.method !== 'GET' && !sameSite(req)) return json(res, 403, { error: 'origen no permitido' });
       const p = url.pathname.slice(11);
-      if (req.method === 'GET' && p === 'resumen') return json(res, 200, { users: K.stats(), hoy: total });
+      if (req.method === 'GET' && p === 'resumen') { rollDay(); return json(res, 200, { users: K.stats(), hoy: total, ia_mb_hoy: Math.round(mbIaAll), voz_min_hoy: Math.round(minVozAll), limites: { ia_mb_persona: IA_MB_PER, ia_mb_total: IA_MB_TOTAL, voz_min_persona: VOZ_MIN_PER, voz_min_total: VOZ_MIN_TOTAL } }); }
       // probar la IA desde el panel: dice si la clave funciona y, si no, por qué
       if (req.method === 'GET' && p === 'ia') {
         if (!KEY) return json(res, 200, { ok: false, msg: 'Falta la variable GEMINI_KEY en Railway.' });
@@ -190,25 +253,37 @@ http.createServer(async (req, res) => {
       }
       return json(res, 404, { error: 'no existe' });
     }
-    if (req.method === 'GET' && url.pathname === '/healthz') return json(res, 200, { ok: true, ia: !!KEY, panel: K.adminSet(ADMIN), panel_variable: !!ADMIN, datos: K.DATA, hoy: total });
+    if (req.method === 'GET' && url.pathname === '/healthz') return json(res, 200, { ok: true });
+    if (req.method === 'GET' && url.pathname.startsWith('/app/')) {
+      const name = url.pathname.slice(5), tok = String(req.headers['x-cortex-app'] || '');
+      if (!appFiles[name] || tok.length !== APP_TOKEN.length || !crypto.timingSafeEqual(Buffer.from(tok), Buffer.from(APP_TOKEN))) return json(res, 404, { error: 'no existe' });
+      const b = appFiles[name];
+      res.writeHead(200, { 'Content-Type': name.endsWith('.json') ? 'application/json; charset=utf-8' : name.endsWith('.py') ? 'text/x-python; charset=utf-8' : 'text/html; charset=utf-8', 'Content-Length': b.length, 'Cache-Control': 'no-store', ...SAFE });
+      return res.end(b);
+    }
     // ---------- a partir de aquí, solo con sesión de clipper ----------
     const me = K.sessionUser(req);
     if (!me) { if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) return html(res, 200, USER_LOGIN()); if (url.pathname.startsWith('/api/')) return json(res, 401, { error: { message: 'Tu sesión ha caducado: vuelve a entrar.' } }); }
-    if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
+    if ((req.method === 'GET' || req.method === 'HEAD') && (url.pathname === '/' || url.pathname === '/index.html')) {
+      // si el navegador ya tiene esta misma versión, no se vuelve a mandar (antes eran ~800 KB en cada visita)
+      const head = { 'Cache-Control': 'private, no-cache', ETag: pageTag, Vary: 'Accept-Encoding, Cookie', ...SAFE, ...hsts(req) };
+      if (String(req.headers['if-none-match'] || '').split(',').map(x => x.trim().replace(/^W\//, '')).includes(pageTag)) { res.writeHead(304, head); return res.end(); }
       const gz = /\bgzip\b/.test(req.headers['accept-encoding'] || '');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff', ...(gz ? { 'Content-Encoding': 'gzip' } : {}) });
-      return res.end(gz ? pageGz : page);
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', ...head, ...(gz ? { 'Content-Encoding': 'gzip' } : {}) });
+      return res.end(req.method === 'HEAD' ? undefined : gz ? pageGz : page);
     }
     const m = url.pathname.match(/^\/api\/gemini\/([\w.-]{3,60})$/);
     if (req.method === 'POST' && m) {
       if (!KEY) return json(res, 503, { error: { message: 'La IA no está configurada en el servidor (falta GEMINI_KEY).' } });
-      if (!/^gemini-/.test(m[1])) return json(res, 400, { error: { message: 'modelo no permitido' } });
+      // un modelo caro se contesta como «no existe»: la página pasa sola al siguiente de su lista
+      if (!MODEL_OK(m[1])) return json(res, 404, { error: { code: 404, status: 'NOT_FOUND', message: 'models/' + m[1] + ' is not available here' } });
       if (!sameSite(req)) return json(res, 403, { error: { message: 'origen no permitido' } });
-      const why = quota(me.name); if (why) return json(res, 429, { error: { message: why } });
+      const why = iaBytesLeft(me.name) || quota(me.name); if (why) return json(res, 429, { error: { message: why } });
       const chunks = []; let size = 0;
       for await (const c of req) { size += c.length; if (size > MAX_BODY) { iaErr(m[1], 'petición demasiado grande (' + Math.round(size / 1048576) + ' MB)'); return json(res, 413, { error: { message: 'El clip es demasiado grande para la IA.' } }); } chunks.push(c); }
       const body = Buffer.concat(chunks);
       try { const j = JSON.parse(body.toString('utf8')); if (!j || !Array.isArray(j.contents)) throw 0; } catch { return json(res, 400, { error: { message: 'petición no válida' } }); }
+      iaBytes(me.name, body.length);
       let r;
       try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m[1]}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': KEY }, body, signal: AbortSignal.timeout(180000) }); }
       catch (e) { iaErr(m[1], 'sin respuesta: ' + (e.message || e)); return json(res, 502, { error: { message: 'No se pudo hablar con la IA. Inténtalo otra vez.' } }); }
@@ -226,14 +301,17 @@ http.createServer(async (req, res) => {
       const why = quota(me.name); if (why) return json(res, 429, { error: { message: why } });
       const chunks = []; let size = 0;
       for await (const c of req) { size += c.length; if (size > 60 * 1024 * 1024) return json(res, 413, { error: { message: 'El audio es demasiado largo.' } }); chunks.push(c); }
+      const audio = Buffer.concat(chunks), mins = vozMinutes(audio);
+      const whyV = vozLeft(me.name, mins); if (whyV) return json(res, 429, { error: { message: whyV } });
+      let charged = false; const charge = () => { if (charged) return; charged = true; minVoz.set(me.name, (minVoz.get(me.name) || 0) + mins); minVozAll += mins; };
       const lc = String(req.headers['x-lang'] || '').replace(/[^a-z]/g, '').slice(0, 3);
       let last = '';
       for (const model of ['scribe_v3', 'scribe_v2', 'scribe_v1']) {
-        const fd = new FormData(); fd.append('file', new Blob([Buffer.concat(chunks)], { type: 'audio/wav' }), 'clip.wav'); fd.append('model_id', model); fd.append('timestamps_granularity', 'word'); fd.append('tag_audio_events', 'false'); if (lc) fd.append('language_code', lc);
+        const fd = new FormData(); fd.append('file', new Blob([audio], { type: 'audio/wav' }), 'clip.wav'); fd.append('model_id', model); fd.append('timestamps_granularity', 'word'); fd.append('tag_audio_events', 'false'); if (lc) fd.append('language_code', lc);
         let r; try { r = await fetch('https://api.elevenlabs.io/v1/speech-to-text', { method: 'POST', headers: { 'xi-api-key': EL_KEY }, body: fd, signal: AbortSignal.timeout(180000) }); }
         catch (e) { iaErr('elevenlabs', 'sin respuesta: ' + (e.message || e)); return json(res, 502, { error: { message: 'No se pudo hablar con el servicio de subtítulos.' } }); }
         const txt = await r.text();
-        if (r.ok) { res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); return res.end(txt); }
+        if (r.ok) { charge(); res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); return res.end(txt); }
         last = r.status + ' ' + txt.slice(0, 300); iaErr('elevenlabs ' + model, last);
         if (r.status === 401 || r.status === 403) { console.error('ELEVENLABS_KEY rechazada:', txt.slice(0, 200)); return json(res, 503, { error: { message: 'Los subtítulos en la nube no están disponibles ahora mismo.' } }); }
         if (r.status === 429 || r.status >= 500) break;   // si este modelo no está disponible, se prueba el anterior

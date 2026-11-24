@@ -1,0 +1,107 @@
+// Cortex del PC (app-files/Clipzi.html), sin internet: lo que más se ha roto o lo que más importa.
+const { chromium } = require('playwright');
+const fs = require('fs'), path = require('path');
+const { TMP, PC, tone, reac, check, result, openWithClip } = require('./comun');
+
+const exportBlob = p => p.evaluate(async () => {
+  const o = await doExport(); if (!o) return { err: $('eStatus').textContent };
+  const u = new Uint8Array(await o.blob.arrayBuffer()); let s = ''; for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768));
+  return { b64: btoa(s), mode: o.mode, size: o.blob.size };
+});
+
+(async () => {
+  console.log('Página (versión del PC)');
+  const b = await chromium.launch();
+  try {
+    // carga
+    {
+      const ctx = await b.newContext(); const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+      await ctx.route(/^https?:/, r => r.abort());
+      await p.goto(PC); await p.waitForTimeout(1500);
+      check('carga sin errores y sin internet', !errs.length, errs[0]);
+      const fonts = await p.evaluate(async () => { const o = []; for (const f of ['Figtree', 'Inter', 'Montserrat', 'Anton', 'Poppins', 'Bebas Neue', 'Archivo', 'TikTok Sans', 'Cortex Sans']) { const l = await document.fonts.load('700 20px "' + f + '"'); if (!l.length) o.push(f); } return o; });
+      check('todas las letras van dentro (sin Google Fonts)', !fonts.length, fonts.join(', '));
+      check('lleva su número de versión', await p.evaluate(() => +document.querySelector('meta[name=cortex-build]').content > 0));
+      await ctx.close();
+    }
+    // vista previa: no trabaja en reposo y se pinta cuando algo cambia
+    {
+      const p = await openWithClip(b); await p.evaluate(() => vid.pause()); await p.waitForTimeout(800);
+      const n = await p.evaluate(async () => { let n = 0; const d0 = draw; draw = function (...a) { n++; return d0.apply(this, a); }; await new Promise(r => setTimeout(r, 2000)); draw = d0; return n; });
+      check('en pausa casi no repinta (antes 60 veces por segundo)', n <= 8, n + ' veces en 2 s');
+      const px = () => p.evaluate(() => { const d = ctx.getImageData(0, 0, W, H).data; let h = 0; for (let i = 0; i < d.length; i += 4099) h = (h * 31 + d[i]) | 0; return h; });
+      const a = await px(); await p.evaluate(() => { $('title').value = 'CAMBIO DESDE EL PROGRAMA'; }); await p.waitForTimeout(700);
+      check('un cambio hecho por el programa se ve', a !== await px());
+      await p.evaluate(() => { vid.currentTime = 4; }); await p.waitForTimeout(700);
+      check('un salto en el vídeo se ve', await p.evaluate(() => $('time').textContent.startsWith('00:04')));
+      check('sin errores en el editor', !p.errs.length, p.errs[0]);
+      await p.context().close();
+    }
+    // exportar: normal y con el compresor atascado
+    {
+      const p = await openWithClip(b);
+      const r = await exportBlob(p);
+      check('exporta un clip', !!r.b64 && r.size > 100000, r.mode || r.err);
+      fs.writeFileSync(path.join(TMP, 'export.mp4'), Buffer.from(r.b64 || '', 'base64'));
+      await p.context().close();
+      const p2 = await openWithClip(b, { init: () => { let n = 0; const of = VideoEncoder.prototype.flush; VideoEncoder.prototype.flush = function () { return ++n === 1 ? new Promise(() => {}) : of.call(this); }; } });
+      const t = Date.now(); const r2 = await exportBlob(p2);
+      check('si el compresor se atasca, termina con otro intento', !!r2.b64, ((Date.now() - t) / 1000).toFixed(0) + ' s, ' + (r2.mode || r2.err));
+      await p2.context().close();
+    }
+    // palabras malas: silencio corto en el centro de la palabra
+    {
+      const p = await openWithClip(b);
+      await p.evaluate(async () => { setAutoOff(true); await stQuickOpen(true); });
+      await p.evaluate(() => { allWords = [{ text: 'hola', start: 1, end: 1.3 }, { text: 'mierda', start: 2.0, end: 2.4 }]; clipMeta.wordMode = 'word'; $('seAdv').open = true; renderFlags(); });
+      await p.click('#seFlags .fl-scan'); await p.waitForFunction(() => clipMeta.flagsDone && !flagsMsg, null, { timeout: 30000 });
+      await p.evaluate(() => { for (const f of clipMeta.flags) { f.on = true; flagMuteSync(f); } });
+      const m = await p.evaluate(() => mutes.map(x => [x.s, x.e]));
+      check('encuentra la palabra y la silencia solo por el centro', m.length === 1 && m[0][0] > 2.0 && m[0][1] < 2.4 && m[0][1] - m[0][0] < 0.3, m);
+      await p.context().close();
+    }
+    // plantilla guardada con todo colocado
+    {
+      const p = await openWithClip(b);
+      await p.evaluate(async () => { setAutoOff(true); await stQuickOpen(true); await applyPreset(PRESETS.find(x => x.name === 'Título y subtítulos')); });
+      await p.evaluate(() => { setRange('zoom', +$('zoom').value + 25); logoPos.x = 200; logoPos.y = 1500; });
+      const snap = () => p.evaluate(() => JSON.stringify([$('zoom').value, Math.round(logoPos.x), Math.round(logoPos.y)]));
+      const mine = await snap(); await p.click('#seFmtSave'); await p.waitForTimeout(400);
+      await p.evaluate(async () => { await applyPreset(PRESETS.find(x => x.name === 'Podcast')); logoPos.x = 900; await applyPreset(PRESETS.find(x => x.name === 'Título y subtítulos')); });
+      check('la plantilla guardada vuelve igual (zoom y logo)', mine === await snap());
+      await p.context().close();
+    }
+    // girar el vídeo: el recorte tapa las esquinas en los dos sentidos
+    {
+      const p = await openWithClip(b);
+      const ok = await p.evaluate(() => { ezPref('antiRot', '1'); const res = []; for (const g of ['1', '3', '-3']) { ezPref('antiRotDeg', g); draw(2, false); const L = lastLayout, v = L.video, pl = rotPlan(v.x, v.y, v.w, v.h, { x: 0, y: 0, w: W, h: H }); const c = Math.cos(pl.th), sn = Math.sin(pl.th); let ok = true; for (const [x, y] of [[pl.C.x, pl.C.y], [pl.C.x + pl.C.w, pl.C.y], [pl.C.x, pl.C.y + pl.C.h], [pl.C.x + pl.C.w, pl.C.y + pl.C.h]]) { const X = x - pl.cx, Y = y - pl.cy; if (Math.abs(X * c + Y * sn) > pl.s * v.w / 2 + 0.01 || Math.abs(-X * sn + Y * c) > pl.s * v.h / 2 + 0.01) ok = false; } res.push(ok); } ezPref('antiRot', '0'); return res; });
+      check('girar 1°, 3° y −3° no deja ver esquinas', ok.every(Boolean), ok);
+      await p.context().close();
+    }
+    // vídeo de abajo (biblioteca de reacciones)
+    {
+      const p = await openWithClip(b);
+      await p.evaluate(async () => { setAutoOff(true); await stQuickOpen(true); });
+      const ok = await p.evaluate(async (b64) => { const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return rxUse(new File([u], 'reaccion.mp4', { type: 'video/mp4' }), 'reaccion'); }, fs.readFileSync(reac()).toString('base64')).catch(e => 'ERROR ' + e.message);
+      check('pone un vídeo abajo en Pantalla dividida', ok === true && await p.evaluate(() => layoutMode === 'split' && img === rxVid), ok);
+      const r = await exportBlob(p);
+      check('exporta con el vídeo de abajo', !!r.b64, r.mode || r.err);
+      await p.context().close();
+    }
+    // directo: columna del chat con dos canales
+    {
+      const ctx = await b.newContext({ viewport: { width: 1500, height: 860 } }); const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+      await ctx.route(/^https?:/, r => r.abort()); await p.goto(PC); await p.waitForTimeout(1200);
+      await p.evaluate(() => { $('home').hidden = true; $('livePage').hidden = false; ezPref('critOff', '[]'); ezPref('chatHide', '[]');
+        window.__f = { a: '', b: '' }; const mk = k => ({ getFileHandle: async n => { if (n !== 'chat.jsonl') throw new Error('no'); return { getFile: async () => new File([window.__f[k]], 'chat.jsonl') }; }, getDirectoryHandle: async () => { throw new Error('no'); } });
+        const now = Date.now() / 1000; liveSessions = { w: { name: 'w', h: mk('a'), on: true, segs: [], status: { slug: 'westcol', started: now - 600, updated: now } }, x: { name: 'x', h: mk('b'), on: true, segs: [], status: { slug: 'otro', started: now - 500, updated: now } } };
+        for (let i = 0; i < 260; i++) window.__f[i % 3 ? 'a' : 'b'] += JSON.stringify({ t: now - 260 + i, u: 'u' + (i % 9), m: i === 259 ? 'hola [emote:1:KEKW]' : 'mensaje ' + i }) + '\n'; });
+      await p.click('#lvChatB'); await p.waitForTimeout(2200);
+      const c = await p.evaluate(() => ({ filas: $('lcList').children.length, chips: $('lcCh').children.length, emote: !!$('lcList').lastChild.querySelector('img,.lc-e') || /KEKW/.test($('lcList').lastChild.textContent) }));
+      check('el chat de dos canales sale en una columna (máximo 100)', c.filas === 100 && c.chips === 2 && c.emote, c);
+      check('sin errores en el directo', !errs.length, errs[0]);
+      await ctx.close();
+    }
+  } finally { await b.close(); }
+  const r = result(); console.log(`  ${r.oks} bien, ${r.fails} mal`); process.exit(r.fails ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1); });

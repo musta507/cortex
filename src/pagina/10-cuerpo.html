@@ -1,0 +1,962 @@
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="brand" id="brandHome" title="Volver al inicio" style="cursor:pointer">Cor<span>tex</span></h1>
+    <strong class="crumb" id="crumb" hidden></strong>
+@@solo-pc
+    <p class="tag">Horizontal → vertical 9:16 con título y subtítulos automáticos</p>
+@@fin
+@@solo-web
+    <p class="tag">Versión de prueba</p>
+@@fin
+    <div class="hdr-actions">
+      <button id="liveBack" class="primary" hidden title="Volver a la lista de momentos del directo">← Volver al directo</button>
+      <button id="revBack" class="primary" hidden title="Volver a revisar los clips del agente">← Volver a la revisión</button>
+      <button id="homeBtn" title="Volver a los clips del cliente (se guarda solo)"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z"/></svg>Inicio</button>
+      <button id="ttBtn" class="fmt-btn" hidden title="Diseños de título: elige uno y se usará en todos los clips de este creador"><svg viewBox="0 0 24 24"><path d="M4 7V5h16v2M9 19h6M12 5v14"/></svg>Plantilla de título<svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button id="tplBtn" class="fmt-btn" hidden title="Aplicar otra plantilla de este creador"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Cambiar plantilla<svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button id="fmtBtn" class="fmt-btn" hidden title="Si la IA eligió mal el formato, cámbialo aquí"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Cambiar formato<svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button id="undo" class="ico" disabled title="Deshacer (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 010 10h-2"/></svg></button>
+      <button id="redo" class="ico" disabled title="Rehacer (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M15 7l5 5-5 5M20 12H9a5 5 0 000 10h2"/></svg></button>
+      <button id="resetPos" title="Devuelve título y subtítulos a su sitio">Recolocar textos</button>
+      <span class="sep"></span>
+      <select id="quality" aria-label="Calidad">
+        <option value="fast" selected>⚡ Rápida (30 fps)</option>
+        <option value="20000000">⚖️ Normal: más calidad</option>
+        <option value="35000000">💎 Máxima (más lenta)</option>
+      </select>
+      <select id="fps" aria-label="Fotogramas por segundo">
+        <option value="auto">FPS del original</option>
+        <option value="30">30 fps</option>
+      </select>
+      <button class="primary" id="export" disabled><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar vídeo <span id="fmt" hidden></span></button>
+      <button id="ccBtn" title="Crea un proyecto de CapCut con este clip ya montado: cortes, encuadre, título, subtítulos, logo y música"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 9l3 3-3 3M13 15h3"/></svg>CapCut</button>
+      <button id="modeBtn" class="modebtn" hidden title="Abre el editor completo con todas las herramientas"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Editor avanzado</button>
+    </div>
+  </header>
+
+  <div class="app" id="app">
+    <section class="revpanel" id="revPanel">
+      <div class="rev-top">
+        <div><strong id="revTitle"></strong><span class="hint" id="revCount"></span></div>
+        <div class="presets"><button id="revExport" class="primary">⤓ Exportar aprobados</button><button id="revExit">Salir</button></div>
+      </div>
+      <div class="rev-actions">
+        <button id="revPrev" title="Clip anterior (RePág)">← Anterior</button>
+        <button id="revNo" class="rno" title="Descartar (X)">✕ Descartar</button>
+        <button id="revOk" class="rok" title="Aprobar (A)">✓ Aprobar</button>
+        <button id="revNextB" title="Clip siguiente (AvPág)">Siguiente →</button>
+        <button id="revEdit" class="redit" title="Editar este clip con todas las herramientas">✏️ Editar</button>
+      </div>
+      <div id="revInfo"></div>
+      <div class="field"><span class="lbl">Título <em>toca una palabra para ponerla en rojo</em></span><textarea id="revTitleIn" rows="2"></textarea><div class="chips" id="revChips"></div></div>
+      <div class="field"><span class="lbl">Formato</span><div class="presets" id="revFmts"></div></div>
+      <p class="hint">Ajusta con el ratón en la vista previa: arrastra el título, la imagen o el vídeo; la rueda cambia el tamaño; doble clic para recortar la cámara, el contenido o la imagen.</p>
+      <div class="rev-flags" id="revFlags"></div>
+      <div class="revlist" id="revList"></div>
+    </section>
+    <nav class="rail" id="rail" aria-label="Paneles">
+      <button data-tab="media" class="on"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg><span>Medios</span></button>
+      <button data-tab="subs"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 15h4M13 15h4M7 11h10"/></svg><span>Subtítulos</span></button>
+      <button data-tab="text"><svg viewBox="0 0 24 24"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg><span>Texto</span></button>
+      <button data-tab="audio"><svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg><span>Audio</span></button>
+      <button data-tab="tpl"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span>Plantillas</span></button>
+    </nav>
+    <div class="lpanel" id="lpanel">
+      <div id="resumeSlot"></div>
+      <div class="tabp" data-tab="media"></div>
+      <div class="tabp" data-tab="subs" hidden></div>
+      <div class="tabp" data-tab="text" hidden></div>
+      <div class="tabp" data-tab="audio" hidden></div>
+      <div class="tabp" data-tab="tpl" hidden></div>
+    </div>
+    <main class="center">
+      <div class="ez-stage" id="ezStage" hidden>
+        <div class="ez-card ez-drop" id="ezInsert">
+          <div class="ez-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M12 9v6M9 12h6"/></svg></div>
+          <strong class="ez-big">Inserta tu clip</strong>
+          <span class="hint">Arrástralo aquí o pulsa el botón. Después eliges cuánto dura y la IA lo edita sola.</span>
+          <button class="primary ez-cta" id="ezPick">Insertar clip</button>
+          <input type="file" id="ezFile" accept="video/*" hidden>
+          <div class="ez-link" id="ezLinkRow"><span class="hint">…o pega el enlace del clip (Kick, Twitch, YouTube, TikTok…)</span><div class="r"><input type="url" id="ezLinkUrl" placeholder="https://kick.com/…/clips/…"><button class="primary" id="ezLinkGo">Usar enlace</button></div><span class="hint" id="ezLinkInfo"></span></div>
+          <button class="ez-alt" id="ezRepBtn">🧬 Replicar un clip viral <span>— le das el vídeo en crudo y el clip que petó, y copia su edición</span></button>
+        </div>
+        <div class="ez-card ez-rep" id="ezRep" hidden>
+          <div class="ez-h"><strong>🧬 Replicar un clip viral</strong><span class="hint">Cortex escucha el clip viral, encuentra en el vídeo en crudo cada trozo que usa y en qué orden, y copia la edición desde el original: cortes, formato, título, subtítulos y palabras silenciadas. Sin marca de agua y en buena calidad.</span></div>
+          <div class="rep-row" id="repRawZone">
+            <span class="rep-n">1</span>
+            <div class="rep-b"><strong>Vídeo en crudo</strong><span class="hint" id="repRawInfo"></span>
+              <div class="rep-ctl"><button id="repRawPick">Elegir archivo…</button><input type="url" id="repRawUrl" placeholder="…o pega un enlace (YouTube, Kick, Twitch)"><button id="repRawGo">Descargar</button></div>
+            </div>
+          </div>
+          <div class="rep-row" id="repVirZone">
+            <span class="rep-n">2</span>
+            <div class="rep-b"><strong>Clips virales</strong><span class="hint" id="repVirInfo"></span>
+              <div class="rep-ctl"><button id="repVirPick">Elegir archivos…</button><input type="url" id="repVirUrl" placeholder="…o pega el enlace de TikTok"><button id="repVirGo">Descargar</button></div>
+              <div class="rep-list" id="repVirList"></div>
+            </div>
+          </div>
+          <p class="hint">También puedes arrastrar los archivos a cada recuadro. Los enlaces los descarga el Grabador Clipzi de tu PC (tiene que estar abierto).</p>
+          <div class="ez-row ez-end"><button id="repBack">← Volver</button><span class="ez-gap"></span><button class="primary ez-cta" id="repGo" disabled>🧬 Replicar</button></div>
+          <input type="file" id="repRawFile" accept="video/*" hidden><input type="file" id="repVirFile" accept="video/*" multiple hidden>
+        </div>
+        <div class="ez-card ez-trim" id="ezTrim" hidden>
+          <div class="ez-h"><strong id="ezTrimT">Recorta la duración</strong><span class="hint">Arrastra los extremos de la barra para elegir dónde empieza y dónde acaba. Espacio reproduce.</span></div>
+          <div class="ez-tv"><video id="ezVid" playsinline preload="auto"></video><canvas class="ez-scrub" id="ezScrub" hidden></canvas></div>
+          <div class="ez-bar" id="ezBar">
+            <div class="ez-in" id="ezBarIn"><div class="ez-thumbs" id="ezThumbs"></div><div class="ez-dim l" id="ezDimL"></div><div class="ez-dim r" id="ezDimR"></div></div>
+            <div class="ez-lay"><div class="ez-sel" id="ezSel"><i class="ez-h-l" data-h="a"><em id="ezTipA"></em></i><i class="ez-h-r" data-h="b"><em id="ezTipB"></em></i></div><div class="ez-ph" id="ezPh"></div></div>
+          </div>
+          <div class="ez-row"><button id="ezPlay" class="ez-round" aria-label="Reproducir">▶</button><span class="ez-times" id="ezTimes"></span><button id="ezAll">Usar el clip entero</button></div>
+          <label class="f ez-key" id="ezKeyWrap" hidden>Clave de Gemini (para que la IA elija el formato y escriba el título)<input type="password" id="ezKey" placeholder="Pégala aquí: se guarda solo en este ordenador" autocomplete="off"></label>
+          <div class="ez-opts" id="ezOpts">
+            <div class="ez-opt">
+              <div class="ez-opt-h"><span class="lbl">Título</span><label class="check"><input type="checkbox" id="ezTitleAuto" checked>Automático (lo escribe la IA)</label></div>
+              <div class="ez-tin"><textarea id="ezTitleIn" rows="3" placeholder="Escribe el título del clip" aria-label="Título del clip"></textarea><button type="button" class="emobtn" id="emojiEzTitle" title="Añadir emojis">😀</button></div>
+            </div>
+            <div class="ez-opt">
+              <div class="ez-opt-h"><span class="lbl">Formato</span><label class="check"><input type="checkbox" id="ezFmtAuto" checked>Automático (lo elige la IA)</label></div>
+              <div class="ez-fmts" id="ezFmtPick" role="radiogroup" aria-label="Formato"></div><label class="check"><input type="checkbox" class="scn-chk">Cambiar de formato en cada escena (cuando el clip cambia de plano)</label>
+            </div>
+          </div>
+          <details class="ez-tpls" id="ezTpls"><summary>🎨 Plantillas para este clip <span class="hint">solo cambian este clip</span></summary>
+            <div class="ez-tpl-g">
+              <div><span>Plantilla de formato</span><div class="ez-pk" id="ezTplF"></div></div>
+              <div><span>Plantilla de título</span><div class="ez-pk" id="ezTplT"></div></div>
+              <div><span>Subtítulos</span><div class="ez-pk" id="ezTplS"></div></div>
+            </div>
+          </details>
+          <div class="ez-row ez-end"><button id="ezBack">Cambiar de clip</button><span class="ez-gap"></span><button id="ezManual">Editar yo, sin IA</button><button class="primary ez-cta" id="ezGo">✨ Editar con IA</button></div>
+        </div>
+      </div>
+      <div class="phone" id="phone"><canvas id="cv" width="1080" height="1920"></canvas>
+        <div class="ezbusy" id="ezBusy" hidden><div class="ezbusy-card"><div class="orb" aria-hidden="true"></div><strong id="ezBusyT">La IA está editando tu clip</strong><ul class="ez-steps" id="ezSteps"></ul><span class="hint" id="ezBusyS"></span></div></div>
+        <div class="aiov" id="aiov" hidden data-state="work">
+          <div class="aiov-card">
+            <div class="orb" aria-hidden="true"></div>
+            <strong id="aiovT">Analizando el clip con IA</strong>
+            <span id="aiovS"></span>
+            <span class="aiov-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <div class="presets" id="aiovActions" hidden><button class="primary" id="aiovManual">Marcar la cámara a mano</button><button id="aiovClose">Cerrar</button></div>
+          </div>
+        </div></div>
+      <div class="presets" id="cropBar" hidden>
+        <button class="primary" id="cropApply">Aplicar recorte</button>
+        <button id="cropCancel">Cancelar</button>
+        <span class="hint"><span id="cropHint">Arrastra las esquinas o el marco</span> · Enter aplica · Esc cancela</span>
+      </div>
+      <div class="transport">
+        <span class="t" id="time">00:00 / 00:00</span>
+        <button id="play" disabled aria-label="Reproducir">▶</button>
+        <div class="sc-bar" id="scBar" hidden aria-label="Escenas del clip"></div>
+        <input type="range" id="seek" min="0" max="1000" value="0" disabled aria-label="Posición">
+      </div>
+      <aside class="ez-flags" id="ezFlags" aria-label="Palabras delicadas"></aside>
+      <aside class="ez-side" id="ezSide" aria-label="Réplica y variantes"></aside>
+      <aside class="st-panel" id="stPanel" hidden aria-label="Estilo del texto"></aside>
+      <div class="ez-foot" id="ezFoot">
+        <span class="hint">🖱️ <b>Clic derecho</b> sobre cualquier cosa para ver sus opciones · arrastra para mover · rueda para el tamaño · doble clic en un texto para cambiarlo</span>
+      </div>
+      <div class="exportinfo">
+        <div class="bar" id="eBarW" hidden><i id="eBar"></i></div>
+        <p class="status" id="eStatus"></p>
+        <div id="result"></div>
+      </div>
+    </main>
+    <aside class="insp" id="insp">
+      <div class="itabs" role="tablist">
+        <button data-itab="video" class="on">Vídeo</button>
+        <button data-itab="title">Título</button>
+        <button data-itab="style">Subtítulos</button>
+        <button data-itab="logo">Logo</button>
+      </div>
+      <div class="itabp" data-itab="video"></div>
+      <div class="itabp" data-itab="title" hidden></div>
+      <div class="itabp" data-itab="style" hidden></div>
+      <div class="itabp" data-itab="logo" hidden></div>
+    </aside>
+    <section class="tl" id="tl" aria-label="Línea de tiempo">
+      <div class="tl-bar">
+        <div class="tl-tools">
+          <button class="ib" id="tbSplit" title="Dividir en el cabezal (Ctrl+B)"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><circle cx="6" cy="7" r="2.5"/><circle cx="6" cy="17" r="2.5"/><path d="M8 8.5l10 7M8 15.5l10-7"/></svg></button>
+          <button class="ib" id="tbDelLeft" title="Borrar lo que hay antes del cabezal (Q)"><svg viewBox="0 0 24 24"><path d="M14 4v16"/><rect x="3" y="7" width="9" height="10" rx="1.5" stroke-dasharray="2 2"/><rect x="16" y="7" width="5" height="10" rx="1.5"/></svg></button>
+          <button class="ib" id="tbDelRight" title="Borrar lo que hay después del cabezal (W)"><svg viewBox="0 0 24 24"><path d="M10 4v16"/><rect x="3" y="7" width="5" height="10" rx="1.5"/><rect x="12" y="7" width="9" height="10" rx="1.5" stroke-dasharray="2 2"/></svg></button>
+          <button class="ib" id="tbDel" title="Borrar lo seleccionado (Supr)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+          <span class="sep"></span>
+          <button class="ib" id="tbCopy" title="Copiar (Ctrl+C)"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button>
+          <button class="ib" id="tbPaste" title="Pegar en el cabezal (Ctrl+V)"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 5V3h6v2M9 12h6M9 16h4"/></svg></button>
+          <button class="ib" id="tbDup" title="Duplicar (Ctrl+D)"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="8" height="12" rx="1.5"/><rect x="13" y="6" width="8" height="12" rx="1.5"/><path d="M17 10v4M15 12h4"/></svg></button>
+          <span class="sep"></span>
+          <button class="ib on" id="tbMagnet" title="Imán: pegar a cortes y al cabezal (N)"><svg viewBox="0 0 24 24"><path d="M6 4v8a6 6 0 0 0 12 0V4h-4v8a2 2 0 0 1-4 0V4z"/><path d="M6 8h4M14 8h4"/></svg></button>
+        </div>
+        <span class="tl-time" id="tlTime">00:00.00 / 00:00.00</span>
+        <div class="tlzoom">
+          <button class="ib" id="tbKeys" title="Atajos de teclado (?)"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h1M10 10h1M14 10h1M18 10h0M7 14h10"/></svg></button>
+          <button class="ib" id="tlZoomOut" title="Alejar (Ctrl + −)">−</button>
+          <input type="range" id="tlZoom" min="1" max="60" step="0.1" value="1" aria-label="Zoom de la línea de tiempo">
+          <button class="ib" id="tlZoomIn" title="Acercar (Ctrl + +)">+</button>
+          <button class="ib" id="tlFit" title="Ver el clip entero"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        </div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-labels" id="tlLabels"></div>
+        <div class="tl-scroll" id="tlScroll">
+          <div class="tl-inner" id="tlInner">
+            <div class="ruler" id="ruler"></div>
+            <div class="tlt" id="trText"></div>
+            <div class="tlt" id="trTitle"></div>
+            <div class="tlt" id="trCaps"></div>
+            <div class="tlt tall" id="trVideo"></div>
+            <div class="tlt" id="trAudio"></div>
+            <div class="tlt" id="trLogo"></div>
+            <div class="snapline" id="snapline" hidden></div>
+            <div class="playhead" id="playhead"><i></i></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="keys" id="keysModal" hidden>
+      <div class="keys-card" role="dialog" aria-label="Atajos de teclado">
+        <div class="keys-h"><strong>Atajos de teclado</strong><button class="ib" id="keysClose" title="Cerrar (Esc)">✕</button></div>
+        <div class="keys-grid" id="keysGrid"></div>
+      </div>
+    </div>
+    <div class="toast" id="toast" hidden></div>
+    <div class="ctxm" id="ctxMenu" hidden role="menu"></div>
+    <div class="ezpop" id="ezPop" hidden></div>
+    <input type="file" id="agFile" accept="video/*" hidden>
+    <div class="emojipop" id="emojiPop" hidden><div class="emotabs" id="emojiTabs"></div><div class="emogrid" id="emojiGrid"></div></div>
+    <div class="tpl-bar" id="tplBar" hidden><span>🎨 Editando la plantilla <b id="tplBarName"></b> de <b id="tplBarWho"></b> · pulsa el título, los subtítulos o el vídeo para cambiarlos</span><button class="primary" id="tplBarSave">💾 Guardar plantilla</button><button id="tplBarCancel">Cancelar</button></div>
+    <div class="pv-modal" id="pvModal" hidden>
+      <div class="pv-card" role="dialog" aria-label="Vista previa del momento">
+        <div class="pv-head"><strong id="pvTitle">Vista previa</strong><span class="hint" id="pvPos"></span><button class="ib" id="pvClose" aria-label="Cerrar">✕</button></div>
+        <div class="pv-body">
+          <div class="pv-vid"><video id="pvVid" playsinline controls></video><div class="pv-load" id="pvLoad">⏳ Preparando el clip…</div></div>
+          <div class="pv-side">
+            <div class="pv-sel" id="pvSel" hidden><div class="pv-st" id="pvSelT"></div><div class="pv-tr" id="pvTr"><i class="pv-rg" id="pvRg"></i><i class="pv-ph" id="pvPh"></i></div><div class="pv-sb"><button id="pvFromA">⏮ Ver desde el inicio del clip</button><span class="hint">Lo gris es margen por si quieres alargarlo al editar</span></div></div>
+            <div class="pv-info" id="pvInfo"></div>
+            <div class="pv-act"><button class="primary" id="pvEdit">✨ Editar este clip</button><button id="pvDrop">🗑 Descartar</button></div>
+            <div class="pv-nav"><button id="pvPrev">← Anterior</button><button id="pvNext">Siguiente →</button></div>
+            <p class="hint">Espacio: reproducir · ← →: otro momento · Enter: editar · Esc: cerrar</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="home" id="livePage" hidden>
+      <div class="home-in">
+        <div class="lv-head"><button class="ib" id="lvBackHome" style="width:auto;padding:0 10px;font-size:14px">← Clientes</button><h2 class="home-h" style="margin:0">📡 En directo</h2><span class="lv-modes" role="tablist"><button id="lvModeTr" title="Clipear leyendo lo que se dice">📝 Transcripción</button><button id="lvModeSt" title="Clipear viendo el directo en grande">📺 Pantalla</button></span><button id="lvHistB" class="lc-b" title="Los clips que has sacado: pulsa uno para abrirlo otra vez">🕘 Historial</button><button id="lvChatB" class="lc-b" title="Ver el chat del directo en una columna (con ella cerrada no gasta nada)">💬 Chat</button><button id="lvPrepH" style="margin-left:auto;width:auto;padding:0 14px" title="Abre el editor vacío (lo que pongas se usa en el próximo clip que saques o subas)">✂️ Abrir el editor</button><button id="lvUpB" style="width:auto;padding:0 14px" title="Edita un vídeo que no es del directo (de tu ordenador) en el mismo panel · también puedes arrastrarlo aquí">➕ Subir un vídeo</button><input type="file" id="lvUpF" accept="video/*,.mp4,.mov,.webm,.mkv,.m4v" hidden><button id="lvData" style="width:auto;padding:0 14px" title="Descarga un archivo con todo lo exportado, abierto y descartado">📥 Datos de clips</button><button class="primary" id="lvMiniShow" style="width:auto;padding:0 14px">📺 Ver el directo</button></div>
+        <div class="lv-status" id="lvStatus"></div>
+        <div class="lv-crit" id="lvCrit"></div>
+        <div class="lv-auto" id="lvAuto"><button id="auBtn" title="Cada clip que suban los otros clippers se saca del directo con el mismo inicio y final, se monta con el fondo difuminado y se exporta solo">🤖 Modo automático: apagado</button><span class="au-cfg"><label>Formato <select id="auFmt"></select></label><label>Fondo <select id="auBg"><option value="tpl">El de la plantilla</option><option value="black">Negro</option><option value="blur1">Difuminado suave</option><option value="blur2">Difuminado medio</option><option value="blur3">Difuminado fuerte</option><option value="blur4">Muy difuminado</option></select></label><label>Título <select id="auTT"></select></label><label class="check"><input type="checkbox" id="auSubs">Subtítulos</label><button id="auTplEd" title="Abre la página de Plantillas para cambiar el diseño de ese formato">✏️ Editar la plantilla</button></span><span class="hint" id="auS">Saca, monta con fondo difuminado y exporta solo cada clip que suben los otros clippers. No tienes que tocar nada.</span></div>
+        <div class="lv-mini" id="lvMini" hidden><div class="lv-mh"><span id="lvMiniT">🔴 En directo</span><button id="lvMiniSnd" title="Activar el sonido">🔇</button><a id="lvMiniOpen" class="lv-mo" target="_blank" rel="noopener" title="Abrir en Kick">↗</a><button id="lvMiniBig" title="Más grande">⤢</button><button id="lvMiniMin" title="Minimizar">–</button><button id="lvMiniX" title="Cerrar">✕</button></div><video id="lvMiniV" muted playsinline hidden></video><video id="lvRwV" playsinline></video><iframe id="lvMiniF" allow="autoplay; fullscreen" allowfullscreen title="Directo"></iframe></div>
+        <div class="lv-stage" id="lvStage" hidden>
+          <div class="st-det" id="stDet" hidden><span id="stDetT"></span><button class="primary" id="stDetGo">✂️ Sacar este</button></div>
+          <div class="st-rw" id="stRw"><button id="stRwB30" title="Volver 30 segundos atrás en el directo (tecla J)">⏪ 30 s</button><button id="stRwB10" title="Volver 10 segundos atrás (tecla ←)">⏪ 10 s</button><button id="stRwPP" title="Pausar o seguir (lo rebobinado)" hidden>⏸</button><button id="stRwF10" title="Avanzar 10 segundos (tecla →)" hidden>10 s ⏩</button><button class="primary" id="stRwLive" hidden>🔴 Volver al directo</button><span class="hint" id="stRwT">Rebobina para sacar un clip de algo que ya pasó · o pulsa en la línea de tiempo</span></div>
+          <div class="st-tl" id="stTl" title="Los últimos 2 minutos de lo que estás viendo. Los bloques de color son momentos detectados: pulsa uno para sacarlo."><div class="st-zone" id="stZone" hidden></div><svg class="st-graph" id="stGraph" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="stGraphG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7DD3FC" stop-opacity=".2"/><stop offset="1" stop-color="#7DD3FC" stop-opacity="0"/></linearGradient></defs><path id="stGraphA" class="a"/><path id="stGraphP"/></svg><div class="st-graphl" id="stGraphL"></div><div class="st-items" id="stItems"></div><div class="st-now">▼ lo que ves ahora</div><div class="st-flag2" id="stFlag" hidden title="Arrastra para ajustar dónde empieza el clip"><img id="stFlagI" alt=""><b id="stFlagT">📍 inicio</b></div></div>
+          <div class="st-btns st-mk"><button id="stMark" title="Pon una marca en lo que estás viendo ahora (tecla M)">📍 Marcar inicio</button><button class="primary st-b2" id="stMarkCut" hidden>✂️ Sacar desde la marca</button><button id="stMarkX" hidden title="Quitar la marca">✕</button><span class="hint" id="stMarkT">Cuando empiece algo bueno, marca el inicio (tecla M) y sácalo cuando acabe.</span></div>
+          <div class="st-btns"><span class="hint">✂️ Sacar los últimos</span><button class="primary st-b" data-n="20">20 s</button><button class="primary st-b" data-n="30">30 s</button><button class="primary st-b" data-n="50">50 s</button><button class="st-b" data-n="90">1 min 30</button><span class="hint" id="stS"></span></div>
+        </div>
+        <div class="rx-bk" id="rxBk" hidden><div class="rx-pop" role="dialog" aria-label="Biblioteca de reacciones">
+          <div class="lc-h"><strong>🎭 Biblioteca de reacciones</strong><button id="rxX" title="Cerrar">✕</button></div>
+          <p class="hint" style="margin:8px 12px">Guarda aquí recortes de cámara ordenados por streamer. Mete solo los de streamers que te hayan dado permiso para usarlos, o reacciones tuyas.</p>
+          <div class="rx-add"><input id="rxWho" list="rxWhoL" placeholder="Nombre del streamer" maxlength="40"><datalist id="rxWhoL"></datalist><button id="rxAdd" class="primary">＋ Añadir recortes</button><input type="file" id="rxFileIn" accept="video/*" multiple hidden></div>
+          <div class="rx-list" id="rxList"></div>
+        </div></div>
+        <div class="lh-pop" id="lhPop" hidden role="dialog" aria-label="Historial de clips"></div>
+        <aside class="lv-chat" id="lvChat" hidden aria-label="Chat del directo">
+          <div class="lc-h"><strong>💬 Chat</strong><button id="lcX" title="Cerrar el chat">✕</button></div>
+          <div class="lc-ch" id="lcCh"></div>
+          <div class="lc-note" id="lcNote" hidden></div>
+          <div class="lc-list" id="lcList"></div>
+          <button class="lc-new" id="lcNew" hidden>⬇ Mensajes nuevos</button>
+        </aside>
+        <aside class="st-ed" id="stEd" hidden aria-label="Editar el clip sin salir del directo">
+          <div class="se-h"><strong id="seT">✂️ Tu clip</strong><button class="se-redo" id="seRedo" hidden title="Para la exportación que esté en marcha y la empieza otra vez desde cero">🔁 Volver a exportar</button><button class="primary se-exptop" id="seExp" title="Exportar (Ctrl+E): se guarda solo en tu carpeta de Descargas"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>Exportar</button><button id="seEmpty" class="se-emp" title="Vaciar el editor (el panel sigue abierto; el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button><button id="seX" title="Cerrar (el clip queda guardado en Tus clips)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+          <div class="se-body">
+            <div class="se-pv"><canvas id="seCv" width="540" height="960"></canvas><span class="se-tip">Arrastra para mover · rueda del ratón para el zoom</span><div class="se-pvb"><button id="sePlay" title="Reproducir / parar">▶</button><button id="seSnd" title="Oír o no el sonido del clip (apagado: sigues oyendo el directo)">🔇</button></div></div>
+            <div class="se-ctl">
+              <div class="se-ai"><button class="primary" id="seAi">✨ Editar con IA</button><button id="seAiMore" title="Elegir qué hace la IA"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+                <div class="se-aid" id="seAiD" hidden>
+                  <strong>Al pulsar «Editar con IA», la IA hace:</strong>
+                  <label class="check"><input type="checkbox" id="seAutoT">El título</label>
+                  <label class="check"><input type="checkbox" id="seAutoF">Elegir el formato <span class="hint" id="seAutoFh"></span></label>
+                  <label class="check"><input type="checkbox" id="seAutoE">Cambiar de formato en cada escena <span class="hint">(si el clip cambia de plano)</span></label>
+                  <label class="check"><input type="checkbox" id="seAutoS">Los subtítulos</label>
+                  <label class="check"><input type="checkbox" id="seAutoX">Recortar el clip <span class="hint">(según el título)</span></label>
+                  <hr><label class="check"><input type="checkbox" id="seAutoO">Hacerlo sola nada más meter un clip</label>
+                </div>
+              </div>
+              <p class="hint" id="seS"></p>
+              <div class="se-bar" id="seBarW" hidden><i id="seBar"></i></div>
+              <div id="seRes"></div>
+              <label class="se-l">Título<textarea id="seTitle" rows="3" placeholder="Título del clip (Enter: línea nueva · Ctrl+Enter: listo)"></textarea></label>
+              <div class="se-hl" id="seHlW"><span>Destacar en color <em>toca una palabra</em></span><div class="chips" id="seChips"></div></div>
+              <div class="se-l">Formato<div class="se-fmts" id="seFmts"></div><button id="seFmtDef" class="se-def" title="Los próximos clips se abrirán ya con este formato">⭐ Usar siempre este formato</button>
+                <div class="se-tplsv"><button id="seFmtSave" class="se-def" title="Guarda en esta plantilla todo tal y como lo ves ahora: tamaño y posición del vídeo, zoom, recortes, dónde va el título y los subtítulos y dónde va el logo (con su tamaño). La próxima vez que elijas esta plantilla saldrá así y solo tendrás que poner el título.">💾 Guardar cómo está en esta plantilla</button><button id="seFmtReset" class="se-def" hidden title="Deja esta plantilla como venía al principio">↩ Original</button></div></div>
+              <div class="se-l">Plantilla de título <span class="hint">(la que elijas queda por defecto)</span><select id="seTT" hidden></select><div class="se-tt" id="seTTG" role="listbox" aria-label="Plantillas de título"></div></div>
+              <label class="toggle se-subt"><input type="checkbox" id="seSubsOn"><span></span>Subtítulos en este clip <em class="hint">(apágalo y los siguientes clips también saldrán sin subtítulos)</em></label>
+              <div class="se-l">Más<div class="se-more"><button type="button" id="seSubSt" title="Letra, tamaño, color, contorno y fondo de los subtítulos">💬 Estilo de subtítulos</button><button type="button" id="seTxtAdd" title="Añade un texto encima del vídeo">T Añadir texto</button><button type="button" id="seLogoT" title="Poner o cambiar el logo de este creador">🖼️ Logo</button><button type="button" id="seMoreM" title="Todas las opciones: lo mismo que el clic derecho en el vídeo">⋯ Más opciones</button></div><span class="hint">Clic derecho en el vídeo para ver todas las opciones de cada cosa.</span></div>
+              <div hidden><span id="seTrimT"></span><button id="seAiTrim"></button><input type="range" id="seA" step="0.1"><input type="range" id="seB" step="0.1"></div>
+              <label class="se-l se-q">Calidad del vídeo<select id="seQ" title="Las tres exportan igual de rápido, con el compresor más rápido de tu ordenador. Cambia cuánto pesa el archivo: a más calidad, más megas."><option value="fast">⚡ Rápida: buena calidad, pesa menos</option><option value="20000000">⚖️ Normal: más calidad, pesa más</option><option value="35000000">💎 Máxima: la mejor, la que más pesa</option></select></label>
+              <div class="se-btns"><button id="seFull" title="Abrir este clip en el editor completo"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Editor completo</button></div>
+              <button class="se-cc" id="seCC" title="Crea un proyecto de CapCut con este clip ya montado: cortes, encuadre, título, subtítulos, logo y música"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 9l3 3-3 3M13 15h3"/></svg>Abrir en CapCut</button>
+              <details class="se-adv" id="seAdv"><summary>Otras opciones <span class="hint">palabras malas, vídeo de abajo, girar, lo automático</span></summary>
+              <div class="rev-flags se-flags" id="seFlags" aria-label="Palabras malas"></div>
+              <div class="se-l">Vídeo de abajo <span class="hint">(para «Pantalla dividida»: un vídeo en vez de la imagen)</span>
+                <div class="se-tplsv"><button id="seRx" class="se-def" title="Tus recortes guardados por streamer: elige uno y se pone abajo, en bucle y sin sonido">🎭 Biblioteca de reacciones</button><button id="seRxUp" class="se-def" title="Poner abajo un vídeo de tu ordenador sin guardarlo en la biblioteca">📁 Subir un vídeo</button></div></div>
+              <div class="se-rotw"><label class="se-off se-rot" title="Gira el vídeo sobre su centro sin que se note: se ajusta con el zoom mínimo y, si hay fondo arriba y abajo, el borde queda recto. Queda activado para los siguientes clips."><input type="checkbox" id="seRot"><span>↻ Girar el vídeo</span></label><input type="number" id="seRotDeg" min="-10" max="10" step="0.5" value="1" title="Cuántos grados gira (se queda guardado hasta que lo cambies). En negativo gira hacia la izquierda. A más grados, más zoom hace falta."><span class="hint">grados</span></div>
+              <label class="se-off" title="Con esto activado la IA no hace nada sola: ni título, ni formato, ni subtítulos, ni recorte. Solo actúa si pulsas «Editar con IA»."><input type="checkbox" id="seOffAll"><span>🚫 Desactivar todo lo automático</span></label>
+              </details>
+            </div>
+            <div class="se-tl cc" id="seTl" tabindex="-1">
+              <div class="cc-bar">
+                <button class="cc-ic" id="tlCut" title="Dividir en la línea blanca (Ctrl+B)"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 7l-3 5 3 5M17 7l3 5-3 5"/></svg><span>Dividir</span></button>
+                <button class="cc-ic" id="tlBlade" title="Modo cuchilla: cada clic en el vídeo lo corta (B) · A para volver"><svg viewBox="0 0 24 24"><path d="M4 20L15 9M15 9l5-5c1 3 0 6-3 8l-2-3z"/><path d="M8 16l-2-2"/></svg></button>
+                <button class="cc-ic" id="tlTrimL" title="Quitar lo de antes de la línea (Q)"><svg viewBox="0 0 24 24"><path d="M5 4v16M20 12H9M13 8l-4 4 4 4"/></svg></button>
+                <button class="cc-ic" id="tlTrimR" title="Quitar lo de después de la línea (W)"><svg viewBox="0 0 24 24"><path d="M19 4v16M4 12h11M11 8l4 4-4 4"/></svg></button>
+                <button class="cc-ic" id="tlDel" title="Eliminar lo seleccionado (Supr)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg><span>Eliminar</span></button>
+                <button class="cc-ic" id="tlDup" title="Duplicar el trozo (Ctrl+D)"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7a2 2 0 002 2h3"/></svg></button>
+                <i class="cc-sep"></i>
+                <button class="cc-ic" id="tlScene" title="A partir de la línea, otra plantilla"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="8" height="14" rx="2"/><rect x="13" y="5" width="8" height="14" rx="2"/></svg><span>Plantilla desde aquí</span></button>
+                <i class="cc-sep"></i>
+                <button class="cc-ic" id="tlUndo" title="Deshacer (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 010 10h-2"/></svg></button>
+                <button class="cc-ic" id="tlRedo" title="Rehacer (Ctrl+Mayús+Z)"><svg viewBox="0 0 24 24"><path d="M15 7l5 5-5 5M20 12H9a5 5 0 000 10h2"/></svg></button>
+                <span class="cc-time" id="ccTime"></span>
+                <button class="cc-ic" id="mtHelpB" title="Atajos del teclado"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M7.5 14h9"/></svg></button>
+                <button class="cc-ic" id="tlSnap" title="Imán: al arrastrar, se pega a los cortes, a los subtítulos y a la línea (N)"><svg viewBox="0 0 24 24"><path d="M6 4v8a6 6 0 0012 0V4h-4v8a2 2 0 01-4 0V4z"/><path d="M6 8h4M14 8h4"/></svg></button>
+                <button class="cc-ic" id="mtFitB" title="Ver todo el clip (Mayús+Z)"><svg viewBox="0 0 24 24"><path d="M3 5v14M21 5v14M7 12h10M10 9l-3 3 3 3M14 9l3 3-3 3"/></svg></button>
+                <span class="cc-zoom"><button id="mtZout" title="Alejar (Ctrl −)">−</button><input type="range" id="mtZr" min="0" max="100" value="0" aria-label="Zoom de la línea de tiempo" title="Zoom (Ctrl + rueda del ratón)"><button id="mtZin" title="Acercar (Ctrl +)">+</button></span>
+              </div>
+              <div class="mt-wrap"><div class="mt-labs" id="mtLabs"></div>
+                <div class="mt-view"><canvas id="mtCv" aria-label="Línea de tiempo del clip"></canvas><input class="mt-capin" id="mtCapIn" type="text" hidden aria-label="Texto del subtítulo"></div>
+              </div>
+            </div>
+          </div>
+        </aside>
+        <div class="lv-fmt"><strong>🎞️ Formato de los clips del directo</strong><span class="hint">Se aplica al abrir cada clip. Luego puedes cambiarlo con «Cambiar formato».</span><div class="ez-fmts" id="lvFmtPick" role="radiogroup" aria-label="Formato de los clips del directo"></div><label class="check"><input type="checkbox" class="scn-chk">Cambiar de formato en cada escena (cuando el clip cambia de plano)</label></div>
+        <div class="lv-agent">
+          <strong>🧑‍💼 Pídele un clip a la IA</strong>
+          <span class="hint">Escribe qué clip quieres y cómo: de qué habla, cuánto debe durar, si con contexto o muy corto… La IA escucha lo grabado y lo saca.</span>
+          <textarea id="lvAskT" rows="2" placeholder="Ej: saca el clip en el que habla de Blessd y se enfada, que dure unos 30 s · o: el momento en que se ríe del robot, muy corto"></textarea>
+          <div class="lv-ask-row"><label>Buscar en <select id="lvAskR"><option value="30">los últimos 30 s</option><option value="60">el último minuto</option><option value="120">los últimos 2 min</option><option value="180">los últimos 3 min</option><option value="300">los últimos 5 min</option><option value="600">los últimos 10 min</option><option value="1800" selected>los últimos 30 min</option><option value="3600">la última hora</option><option value="10800">las últimas 3 horas</option><option value="0">todo el directo</option></select></label><button class="primary" id="lvAskGo">✨ Sacar el clip</button><span class="hint" id="lvAskS"></span></div>
+        </div>
+        <div class="lv-tr" id="lvTrBox">
+          <div class="lv-trh"><strong>📝 Transcripción en directo</strong><span class="hint" id="lvTrS">Subraya con el ratón lo que quieras y sácalo como clip</span>
+            <span class="lv-trtools">
+              <input type="search" id="lvTrQ" placeholder="🔎 Buscar lo que se dijo…" aria-label="Buscar en la transcripción"><span class="hint" id="lvTrQn"></span>
+              <select id="lvTrQual" aria-label="Calidad de la transcripción" title="Calidad de la IA de voz"><option value="auto">Calidad automática</option><option value="max">Máxima (tarjeta gráfica)</option><option value="small">Alta</option><option value="base">Rápida</option></select>
+              <button id="lvTrVoc" title="Nombres y palabras del canal, para que los escriba bien">🔤 Nombres</button>
+              <button id="lvTrBack" title="Escribir también lo que se dijo antes">⏪ Desde antes</button>
+              <button id="lvTrBig" title="Más grande / más pequeña">⤢</button>
+              <button id="lvTrOn">▶ Activar</button>
+            </span>
+          </div>
+          <div class="lv-trw"><div class="lv-trb" id="lvTrB"><p class="hint">Aquí se va escribiendo lo que se dice en el directo, sin parar (con la IA de voz en tu PC, gratis). Salen como subtítulos, casi al momento.</p></div><button class="lv-trend" id="lvTrEnd" hidden>⬇ Ir al directo</button></div>
+        </div>
+        <div class="lv-trpop" id="lvTrPop" hidden><span id="lvTrPopT"></span><button class="primary" id="lvTrEdit">✨ Editar ya</button><button id="lvTrClip">✂️ Sacar clip</button></div>
+        <div class="lv-list" id="lvMoments"></div>
+        <div class="lv-missw" id="lvMiss"></div>
+        <p class="hint">Deja esta página (o cualquier pantalla de Cortex) abierta para recibir los avisos. La IA solo escucha el directo mientras Cortex está abierto.</p>
+      </div>
+    </div>
+    <div class="home" id="home" hidden>
+      <aside class="hnav" id="hnav" aria-label="Menú"></aside>
+      <div class="home-in">
+        <div class="home-top"><h1 class="brand">Cor<span>tex</span></h1><span class="hint">Horizontal → vertical 9:16 con título y subtítulos automáticos</span></div>
+        <section id="homeClients">
+          <div class="hpg"><h2>Clientes</h2></div>
+          <p class="hint">Cada cliente tiene sus propias plantillas: lo que ajustes y guardes dentro de un cliente no cambia a los demás.</p>
+          <div class="cgrid" id="clientGrid"></div>
+        </section>
+        <section id="homeClient" hidden>
+          <button class="ib" id="backClients" title="Volver a los clientes" hidden>← Clientes</button>
+          <div class="hpg"><h2 id="hSecName">Inicio</h2><span class="hint" id="clientName"></span></div>
+          <div class="hsec" data-sec="inicio">
+            <div class="hbento" id="hBento"></div>
+            <div class="hpg"><h3 class="home-h" style="margin:6px 0 0">Clips recientes</h3></div>
+            <div class="recents" id="recents"></div>
+          </div>
+          <div class="hsec" data-sec="plantillas" hidden>
+          <label class="f linkf">Plantillas compartidas con <select id="linkSel"></select></label>
+          <p class="hint" id="linkHint"></p>
+          <section class="tplbox" id="tplBox">
+@@solo-pc
+            <div class="tpl-h"><strong>🎨 Plantillas de <span id="tplWho"></span></strong><span class="hint">El estilo de este creador. Se aplican solas al editar sus clips: la IA elige el formato y usa su versión.</span></div>
+@@fin
+@@solo-web
+            <div class="tpl-h"><strong>🎨 Tus plantillas<span id="tplWho" hidden></span></strong><span class="hint">Cada tipo de clip tiene su plantilla. La IA elige sola cuál usar en cada clip; tú puedes cambiar el estilo de cualquiera.</span></div>
+@@fin
+            <div class="tpl-grid" id="tplGrid"></div>
+            <div class="tpl-hid" id="tplHidden"></div>
+            <div class="tpl-act" id="tplAct"><button class="primary" id="tplNewBtn">➕ Nueva plantilla</button><button id="tplImportBtn">📥 Añadir de otro proyecto</button></div>
+            <div class="tpl-act" id="tplSugW" hidden><button class="primary" id="tplSugBtn">💡 Sugerir una plantilla</button><span class="hint">¿Echas en falta un formato o quieres uno cambiado? Cuéntanoslo y lo añadimos.</span></div>
+            <div class="tpl-new" id="tplNew" hidden><input type="text" id="tplNewName" placeholder="Nombre (por ejemplo: Primer plano amarillo)"><label class="f">Basada en <select id="tplNewBase"></select></label><button class="primary" id="tplNewGo">Crear y editar</button></div>
+            <div class="tpl-imp" id="tplImp" hidden></div>
+          </section>
+          <section class="tplbox" id="ttBox">
+            <div class="tpl-h"><strong>🔤 Plantillas de título de <span id="ttWho"></span></strong><span class="hint">Solo el diseño del título (letra, tamaño, caja y colores). Pulsa una para dejarla fija: se pondrá sola en todos los clips nuevos de este creador, sea cual sea el formato.</span></div>
+            <div class="tt-grid" id="ttGrid"></div>
+            <div class="tpl-act"><button class="primary" id="ttNewBtn">➕ Crear plantilla de título</button></div>
+            <p class="hint">Elige la letra, el tamaño, los colores, el contorno, la sombra y el fondo, y lo ves al momento. Para editar una tuya, pasa el ratón por encima y pulsa ✏️. También puedes guardar el título de un clip abierto: arriba, «Plantilla de título» → «Guardar el título actual como plantilla».</p>
+          </section>
+          <section class="tplbox" id="fnBox">
+            <div class="tpl-h"><strong>🔤 Tus fuentes</strong><span class="hint">Sube las letras que uses (.ttf, .otf o .woff). Saldrán para elegir en los títulos, los subtítulos y al crear plantillas de título. Puedes subir varias a la vez.</span></div>
+            <div class="lg-grid" id="fontGrid"></div>
+            <input type="file" id="fnFile" accept=".ttf,.otf,.woff,.woff2" multiple hidden>
+          </section>
+          <section class="tplbox" id="lgBox">
+            <div class="tpl-h"><strong>🖼️ Logos</strong><span class="hint">Todos tus logos en un sitio. Pulsa uno para ponérselo a <b id="lgWho"></b>: saldrá en todos sus clips. Puedes subir varios a la vez.</span></div>
+            <div class="lg-grid" id="lgGrid"></div>
+            <input type="file" id="lgFile" accept="image/*" multiple hidden>
+            <div class="lgx" id="lgx" hidden>
+              <div class="lgx-st"><canvas id="lgxCv" width="540" height="960"></canvas><button type="button" class="lgx-zm" id="lgxZm" title="Ver la pantalla más de cerca, centrada en el logo">🔍 200 %</button><p class="lgx-empty" id="lgxEmpty">Elige un logo arriba para ajustarlo aquí</p></div>
+              <div class="lgx-c">
+                <div class="tpl-h"><strong>Ajustar el logo</strong><span class="hint">Arrástralo en la pantalla vertical para moverlo (o usa la rueda del ratón encima para el tamaño). Prueba fondos distintos para ver si se lee bien en cualquier clip.</span></div>
+                <div class="lgx-f"><span>Fondo de prueba</span><div class="lgx-bgs" id="lgxBgs"></div></div>
+                <label class="f">Opacidad <span class="val" id="lgxOpV">85%</span><input type="range" id="lgxOp" min="5" max="100" value="85"></label>
+                <label class="f">Tamaño <span class="val" id="lgxSzV">18%</span><input type="range" id="lgxSz" min="2" max="100" value="18"></label>
+                <label class="f">Girar <span class="val" id="lgxRotV">0°</span><input type="range" id="lgxRot" min="-180" max="180" value="0"></label>
+                <div class="lgx-f"><span>Posición rápida</span><div class="lgx-pos" id="lgxPos"></div></div>
+                <label class="toggle"><input type="checkbox" id="lgxTk" checked><span></span>Ver lo que tapa TikTok (botones y descripción)</label>
+                <label class="toggle"><input type="checkbox" id="lgxLock"><span></span>Candado: fijar posición y tamaño</label>
+                <p class="hint">Se guarda para <b id="lgxWho">este creador</b> y se usa en todos sus clips.</p>
+                <button type="button" class="primary lgx-ok" id="lgxOk">✓ Listo</button>
+              </div>
+            </div>
+          </section>
+          </div>
+          <div class="hsec" data-sec="agente" hidden>
+@@solo-web
+<div class="pub" data-pub="agente">
+  <div class="pub-hero"><span class="pub-badge">Próximamente</span>
+    <h3>1 directo largo, 10 clips virales.</h3>
+    <p>Pega el enlace de un directo o de un vídeo largo. Cortex lo ve y lo escucha entero, encuentra los mejores momentos, los corta justo donde empieza y acaba lo bueno, y te los da editados con su título.</p>
+    <div class="pub-bar"><label class="pub-plat"><span class="sr">Plataforma</span><select disabled><option>Kick</option><option>Twitch</option><option>YouTube</option></select></label><span>kick.com/westcol/videos/…</span><button disabled>Conseguir clips</button></div>
+  </div>
+  <div class="pub-steps"><div><b>1</b><strong>Pegas el enlace</strong><span>De un directo de Kick, Twitch o YouTube, aunque dure 8 horas.</span></div><div><b>2</b><strong>La IA lo ve entero</strong><span>Busca lo que hace viral un clip: acción, polémica, revelaciones, invitados…</span></div><div><b>3</b><strong>Recibes los clips</strong><span>Cortados, en vertical, con título y su puntaje viral. Tú eliges cuáles subir.</span></div></div>
+  <div class="pub-ex"><span class="hint">Ejemplo con clips reales de WestCOL (visitas reales en TikTok)</span><div class="pub-clips"><div class="pub-clip"><div class="pub-th"><span class="pub-sc" style="color:#34D399;border-color:#34D39966">94/100</span><b>El robot noqueó a WestCOL y Blessd ni enterado</b></div><div class="pub-cm"><span class="pub-tag">Acción</span><span class="hint">6,8 M visitas</span></div></div><div class="pub-clip"><div class="pub-th"><span class="pub-sc" style="color:#34D399;border-color:#34D39966">92/100</span><b>Willito le dice a Báez en la cara que gracias al Barbas tiene un departamento</b></div><div class="pub-cm"><span class="pub-tag">Polémica</span><span class="hint">4,9 M visitas</span></div></div><div class="pub-clip"><div class="pub-th"><span class="pub-sc" style="color:#FBBF24;border-color:#FBBF2466">89/100</span><b>Camilo Cifuentes aclara qué fue realmente lo que hizo</b></div><div class="pub-cm"><span class="pub-tag">Revelación</span><span class="hint">2,1 M visitas</span></div></div><div class="pub-clip"><div class="pub-th"><span class="pub-sc" style="color:#FBBF24;border-color:#FBBF2466">86/100</span><b>WestCOL reacciona a la revelación de género del bebé de Karina y Kris R</b></div><div class="pub-cm"><span class="pub-tag">Familia</span><span class="hint">1,7 M visitas</span></div></div><div class="pub-clip"><div class="pub-th"><span class="pub-sc" style="color:#FBBF24;border-color:#FBBF2466">81/100</span><b>WestCOL deja sola a Luisa en el stream</b></div><div class="pub-cm"><span class="pub-tag">Pareja</span><span class="hint">1,2 M visitas</span></div></div></div></div>
+  <div class="pub-soon"><span>Próximamente</span>Estamos terminando esta función. Mientras tanto, puedes editar tus clips ya cortados en <a href="#" data-go="inicio">Inicio</a>.</div></div>
+@@fin
+          <div class="agent" id="agentBox">
+            <div class="agent-h"><strong>🤖 Agente de clips</strong><span class="hint">Le das un directo y saca los clips virales. Cuándo usa cada formato lo decides debajo de cada plantilla; aquí van las reglas generales y la conversación con el agente.</span></div>
+            <div class="field"><span class="lbl">Reglas generales de este creador</span><textarea id="agRules" rows="3" placeholder="Por ejemplo: objetivo viralidad · el casino nunca se enseña · prioriza las polémicas…"></textarea></div>
+            <details class="field" id="agManBox"><summary class="lbl">📘 Criterio sacado de los clips virales <em id="agManInfo"></em></summary>
+              <p class="hint">El agente lo sigue para elegir los momentos, dónde empezar y acabar cada clip y cómo titular. Puedes editarlo.</p>
+              <textarea id="agManual" rows="12" style="width:100%"></textarea>
+              <span class="lbl">Moldes de título</span>
+              <textarea id="agTitleGuide" rows="4" style="width:100%"></textarea>
+              <div class="presets"><button id="agManReset">↺ Poner el criterio del informe de WestCOL</button><button id="agManOff">Quitar el criterio</button></div>
+            </details>
+            <div class="agchat">
+              <span class="lbl">💬 Habla con el agente de este creador</span>
+              <div class="agmsgs" id="agMsgs"></div>
+              <div class="agin"><textarea id="agChatIn" rows="2" placeholder="Dale consejos o pregúntale. Por ejemplo: «los clips de casino no funcionan, prioriza cuando se enfada»"></textarea><button class="primary" id="agChatGo">Enviar</button></div>
+              <p class="hint">Cuando le das un consejo te propone el cambio en sus reglas y tú decides si lo aplicas. <a id="agChatClear">Borrar conversación</a></p>
+            </div>
+            <div class="agopts">
+              <label class="toggle"><input type="checkbox" id="agSubs"><span></span>Generar subtítulos</label>
+              <label class="toggle"><input type="checkbox" id="agSilence"><span></span>Quitar silencios largos</label>
+              <label class="toggle"><input type="checkbox" id="agCensor"><span></span>Silenciar malas palabras</label>
+              <select id="agCensorLvl" aria-label="Qué silenciar" style="width:auto"><option value="tiktok">Todo lo que TikTok penaliza</option><option value="bad">Solo palabrotas</option></select>
+            </div>
+            <label class="f">Más palabras a silenciar (separadas por comas)<input type="text" id="agBad" placeholder="por ejemplo: palabra1, palabra2"></label>
+            <div class="aglink-r agrange">
+              <span class="lbl" style="width:100%">⏱ Sacar clips solo de un trozo del directo <em>(opcional; vacío = todo el directo)</em></span>
+              <label class="f">Desde el minuto <input type="text" id="agFrom" placeholder="0"></label>
+              <label class="f">Hasta el minuto <input type="text" id="agTo" placeholder="el final"></label>
+            </div>
+            <p class="hint">Escribe minutos (por ejemplo 90 y 150) o horas:minutos:segundos (1:30:00). Sirve para analizar el directo de tu PC y el de un enlace.</p>
+            <div class="presets"><button class="primary" id="agRun">🎬 Analizar un directo…</button></div>
+            <div class="aglink">
+              <span class="lbl">…o pega el enlace de un vídeo (YouTube, Kick, Twitch…) y saca varios clips</span>
+              <input type="url" id="agUrl" placeholder="https://www.youtube.com/watch?v=…">
+              <div class="aglink-r">
+                <button class="primary" id="agLinkGo">🔗 Sacar clips del enlace</button>
+              </div>
+              <p class="hint">Lo descarga el Grabador Clipzi de tu PC (tiene que estar abierto). Si has puesto «desde/hasta el minuto», solo descarga ese trozo.</p>
+            </div>
+            <div class="agprog" id="agProg" hidden>
+              <strong id="agStep"></strong>
+              <div class="bar"><i id="agBar"></i></div>
+              <p class="hint" id="agLog"></p>
+              <p class="hint">No cierres esta pestaña mientras trabaja.</p>
+              <button id="agCancel">Cancelar</button>
+            </div>
+            <div class="batches" id="agBatches"></div>
+          </div>
+          </div>
+          <div class="hsec" data-sec="viral" hidden>
+@@solo-web
+<div class="pub" data-pub="viral">
+  <div class="pub-hero"><span class="pub-badge">Aprendido de WestCOL</span><h3>Lo que aprendimos de 3.714 clips virales de WestCOL.</h3>
+    <p>Analizamos todos los clips de @colclips___, el clipper que más peta de WestCOL (el streamer con más seguidores de Kick), del 30 de junio al 22 de octubre de 2026. Comparamos cada clip con los de su misma semana para ver qué hace que uno pete y otro no. Son reglas que sirven para cualquier streamer, y la IA de Cortex las sigue al titular y cortar tus clips.</p></div>
+  <div class="pub-stats"><div><b>3.714</b><span>clips analizados</span></div><div><b>1 de 4</b><span>hace el triple de lo normal</span></div><div><b>10 %</b><span>de los clips se lleva el 54 % de las visitas</span></div><div><b>29</b><span>clips pasaron el millón</span></div></div>
+  <div class="pub-grid2"><div class="pub-box"><strong>Cuánto rinde cada tipo de momento</strong><span class="hint">×1 = un clip normal de su semana · datos de WestCOL</span><div style="display:grid;gap:10px;margin-top:12px" class="pub-q2"><div class="qp"><span>Acción / sustos</span><i><b style="width:100%;background:#FB923C"></b></i><span style="color:#FB923C">×2,8</span></div><div class="qp"><span>Revelación</span><i><b style="width:54%;background:#A78BFA"></b></i><span style="color:#A78BFA">×1,5</span></div><div class="qp"><span>Polémica</span><i><b style="width:52%;background:#F87171"></b></i><span style="color:#F87171">×1,46</span></div><div class="qp"><span>Invitados</span><i><b style="width:49%;background:#60A5FA"></b></i><span style="color:#60A5FA">×1,36</span></div><div class="qp"><span>Música / baile</span><i><b style="width:38%;background:#2DD4BF"></b></i><span style="color:#2DD4BF">×1,07</span></div><div class="qp"><span>Pareja / chisme</span><i><b style="width:34%;background:#F472B6"></b></i><span style="color:#F472B6">×0,96</span></div><div class="qp"><span>Humor de relleno</span><i><b style="width:32%;background:#FACC15"></b></i><span style="color:#FACC15">×0,89</span></div><div class="qp"><span>Juego / fútbol</span><i><b style="width:30%;background:#9CA3AF"></b></i><span style="color:#9CA3AF">×0,85</span></div></div></div>
+    <div class="pub-box"><strong>Los que más petaron, por tipo</strong><span class="hint">clips reales de WestCOL</span><div class="pub-tops"><div><span class="pub-tag" style="color:#FB923C;background:#FB923C1F">Acción</span><strong>El robot noqueó a West y Blessd ni enterado</strong><span class="hint">6,8 M visitas</span></div><div><span class="pub-tag" style="color:#F87171;background:#F871711F">Polémica</span><strong>Willito le dice a Báez en la cara que gracias al Barbas tiene un departamento</strong><span class="hint">4,9 M visitas</span></div><div><span class="pub-tag" style="color:#A78BFA;background:#A78BFA1F">Revelación</span><strong>Camilo Cifuentes aclara qué fue realmente lo que hizo</strong><span class="hint">2,1 M visitas</span></div><div><span class="pub-tag" style="color:#2DD4BF;background:#2DD4BF1F">Familia</span><strong>WestCOL reacciona a la revelación de género del bebé de Karina y Kris R</strong><span class="hint">1,7 M visitas</span></div><div><span class="pub-tag" style="color:#60A5FA;background:#60A5FA1F">Invitados</span><strong>Cristiano Ronaldo apareció en la entrada de Edu Aguirre</strong><span class="hint">1,4 M visitas</span></div><div><span class="pub-tag" style="color:#F472B6;background:#F472B61F">Pareja</span><strong>WestCOL deja sola a Luisa en el stream</strong><span class="hint">1,2 M visitas</span></div></div></div></div>
+  <h4 class="pub-h4">6 reglas, con datos y ejemplos reales</h4>
+  <div class="pub-rules"><div><strong>Empieza en lo fuerte</strong><span>Empezar con una pregunta rinde ×0,84 (537 clips); empezar con una reacción o exclamación, ×1,06–1,11.</span><em>El mismo momento de MrStiven: cortado justo en la revelación (57 s) hizo ×10,7; con presentación antes (85 s), ×1,4.</em></div><div><strong>Corto y de un solo tema</strong><span>Con el mismo momento subido dos veces, la versión más corta ganó 4 de cada 6. Lo normal: 8 a 35 segundos.</span><em>DEDsafío «nueva mami»: 12 s hizo ×2,65; la versión de 44 s, ×0,23.</em></div><div><strong>Nombra a las personas</strong><span>Nombrar en el título a invitados rinde mucho más: el robot ×3,1, Blessd ×2,2, MrStiven ×1,9. Los de siempre: ×0,75–0,82.</span><em>«Willito le dice a Báez en la cara que gracias al Barbas tiene un departamento» · 4,9 M</em></div><div><strong>Di el porqué</strong><span>Un título que dice la causa («porque…», «para que…») le gana a uno que solo describe lo que se ve.</span><em>La lechuza: con «para que se calmen» en el título hizo ×5,7; con un título genérico, ×0,43.</em></div><div><strong>Que pase algo</strong><span>Choques y acción rinden ×1,79; chisme y pareja ×1,47; dinero ×1,37. Planes ×0,95, partidas ×0,77, momentos tiernos ×0,76.</span><em>«El robot noqueó a West y Blessd ni enterado» · 6,8 M visitas</em></div><div><strong>Ojo con lo de siempre</strong><span>Juego y fútbol son 1 de cada 4 clips y rinden ×0,85. El Mundial: ×0,70. Los mensajes de apoyo o ayudas: ×0,46.</span><em>Con el humor depende de quién: la Piquiña ×1,35, pero el de relleno rinde ×0,89.</em></div></div>
+  <div class="pub-soon"><span>Próximamente</span>Analiza los clips virales de TU streamer y Cortex aprenderá qué funciona con su público.</div></div>
+@@fin
+          <div class="agent" id="vlBox">
+            <div class="agent-h"><strong>📊 Aprender de clips virales</strong><span class="hint">Cortex lee las cuentas de otros clippers de este creador, ve con la IA los clips que más y menos funcionaron y saca los patrones: estructura de los títulos, ganchos, duración, temas, formato… Con eso escribe un manual para el agente.</span></div>
+            <div class="field"><span class="lbl">1 · Cuentas de clippers <em>una por línea: @ de TikTok, enlace de un canal o enlaces de vídeos sueltos</em></span><textarea id="vlAccs" rows="3" placeholder="@clipper1&#10;@clipper2"></textarea></div>
+            <div class="presets"><label class="f" style="width:auto">Vídeos por cuenta <select id="vlMax" style="width:auto"><option value="50">50</option><option value="100">100</option><option value="200">200</option><option value="400">400</option><option value="1000">1000</option><option value="100000">Todos</option></select></label><button class="primary" id="vlGo">📥 Recoger clips (gratis)</button><button id="vlStopCol" hidden>⏹ Parar y quedarme con lo recogido</button><button id="vlImp" title="Carga los vídeos que el grabador ya haya leído, aunque no terminara">📂 Cargar lo ya recogido</button></div>
+            <p class="hint" id="vlStatus"></p>
+            <div id="vlSum" class="vl-sum"></div>
+            <div id="vlStep2" hidden class="field">
+              <span class="lbl">2 · Que la IA vea los que más petaron y los que peor fueron <em>(el 20 % de cada lado)</em></span>
+              <div class="presets"><button class="primary" id="vlAn20">🔬 Analizar 20 de prueba</button><button id="vlAnAll">Analizar todos</button><button id="vlStop" hidden>Parar</button></div>
+              <p class="hint" id="vlCost"></p>
+              <div id="vlFichas" class="vl-fichas"></div>
+            </div>
+            <div id="vlStep4" hidden class="field vl-exp">
+              <span class="lbl">📄 Informe con los datos de cada vídeo <em>para analizarlo tú o con cualquier IA</em></span>
+              <div class="presets"><button class="primary" id="vlFree">🆓 Extraer transcripción y título (gratis)</button><button id="vlStop2" hidden>Parar</button><button class="primary" id="vlExport">📄 Descargar informe</button></div>
+              <p class="hint">Gratis: todo se hace en tu PC (subtítulos de TikTok o Whisper para la transcripción, y un lector de texto para el título). Tarda unos segundos por vídeo; deja el Grabador abierto. Se puede parar y seguir otro día.</p>
+              <details class="vl-more"><summary>Opción de pago: ficha completa con la IA</summary><div class="presets"><button id="vlExtAll">🎞️ Extraer datos de todos los vídeos con la IA</button></div></details>
+              <p class="hint" id="vlExportInfo"></p>
+              <p class="hint">Se descargan dos archivos: una <b>tabla (.csv)</b> que se abre en Excel o Google Sheets, y un <b>documento (.md)</b> con todo vídeo a vídeo, incluida la transcripción. Puedes subir cualquiera de los dos a ChatGPT, Claude o Gemini. También se guardan en la carpeta del grabador, en «informes».</p>
+            </div>
+            <div id="vlStep3" hidden class="field">
+              <span class="lbl">3 · Patrones y manual</span>
+              <div class="presets"><button class="primary" id="vlPat">🧠 Sacar patrones y escribir el manual</button></div>
+              <div id="vlPatterns" class="vl-pat"></div>
+              <div id="vlManual"></div>
+            </div>
+          </div>
+          </div>
+          <div class="hsec" data-sec="directo" hidden>
+@@solo-web
+<div class="pub" data-pub="directo">
+  <div class="pub-hero"><span class="pub-badge">Próximamente</span>
+    <h3>Clipea mientras el streamer está en directo.</h3>
+    <p>Elige la plataforma, busca al streamer y Cortex escucha su directo contigo. Cuando pasa algo —el chat explota, alguien grita, llega un invitado— te avisa al momento y te deja el clip listo para editar. Sin ver horas de directo.</p>
+    <div class="pub-bar"><label class="pub-plat"><span class="sr">Plataforma</span><select disabled><option>Kick</option><option>Twitch</option><option>YouTube</option></select></label><span class="pub-q"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>westcol</span><button disabled>Seguir directo</button></div>
+  </div>
+  <div class="pub-live">
+    <div class="pub-live-h"><span class="pub-av">W</span><div style="display:grid"><strong>WestCOL</strong><span class="hint">en directo en Kick · 2 h 14 min · ejemplo</span></div><span class="pub-rec"></span><span style="color:#F87171;font-size:12px;font-weight:700">EN DIRECTO</span></div>
+    <div class="pub-wave"><i style="height:18%" class=""></i><i style="height:22%" class=""></i><i style="height:15%" class=""></i><i style="height:30%" class=""></i><i style="height:26%" class=""></i><i style="height:20%" class=""></i><i style="height:35%" class=""></i><i style="height:28%" class=""></i><i style="height:24%" class=""></i><i style="height:19%" class=""></i><i style="height:88%" class="hot"></i><i style="height:62%" class=""></i><i style="height:30%" class=""></i><i style="height:25%" class=""></i><i style="height:21%" class=""></i><i style="height:27%" class=""></i><i style="height:33%" class=""></i><i style="height:29%" class=""></i><i style="height:22%" class=""></i><i style="height:18%" class=""></i><i style="height:24%" class=""></i><i style="height:95%" class="hot"></i><i style="height:70%" class=""></i><i style="height:41%" class=""></i><i style="height:28%" class=""></i><i style="height:23%" class=""></i><i style="height:26%" class=""></i><i style="height:20%" class=""></i><i style="height:31%" class=""></i><i style="height:25%" class=""></i><i style="height:22%" class=""></i><i style="height:19%" class=""></i></div>
+    <div class="pub-alerts">
+      <div><span class="dot" style="background:#F87171"></span><div><strong>El chat explotó: el robot tumba a WestCOL</strong><span class="hint">1:12:40 · 4.300 mensajes en 30 s · acción (rinde ×2,8)</span></div><button disabled>Editar clip</button></div>
+      <div><span class="dot" style="background:#FB923C"></span><div><strong>Blessd entra al directo y reta a WestCOL</strong><span class="hint">1:48:05 · invitado + reto · rinde ×2,4</span></div><button disabled>Editar clip</button></div>
+      <div><span class="dot" style="background:#FBBF24"></span><div><strong>WestCOL cuenta qué pasó con MrStiven</strong><span class="hint">2:03:31 · revelación · rinde ×2,6</span></div><button disabled>Editar clip</button></div>
+    </div>
+  </div>
+  <div class="pub-soon"><span>Próximamente</span>Estamos terminando esta función. Mientras tanto, puedes editar tus clips ya cortados en <a href="#" data-go="inicio">Inicio</a>.</div></div>
+@@fin
+          <div class="agent" id="liveBox">
+            <div class="agent-h"><strong>🔴 Clipeo en directo</strong><span class="hint">Mientras el streamer está en directo, Cortex te avisa de los buenos momentos (picos del chat ×2, ×3…, clips de otros clippers y lo que oye la IA), te escribe la transcripción en vivo para que subrayes y saques clips, y puedes pedirle clips a la IA con tus palabras. Con un clic lo tienes editado.</span></div>
+            <label class="f">Canal de Kick<input type="text" id="lvKick" placeholder="por ejemplo: westcol" autocomplete="off"></label>
+            <div class="field"><span class="lbl">Cuentas de TikTok de otros clippers de este streamer <em>una por línea</em></span><textarea id="lvClippers" rows="4" placeholder="@clipper1&#10;@clipper2"></textarea></div>
+            <label class="toggle"><input type="checkbox" id="lvAI"><span></span>La IA también escucha el directo (aprox. 0,3–1 céntimo por minuto)</label>
+            <div class="presets"><button id="lvDir">📁 Elegir la carpeta del grabador</button><button class="primary" id="lvOpen">📡 Abrir el panel en directo</button></div>
+            <p class="hint" id="lvDirInfo"></p>
+          </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+    <div class="steps" id="steps" hidden>
+      <section class="card resume" id="resume" hidden>
+        <div class="resume-t"><strong>Seguir donde lo dejaste</strong><span class="hint" id="resumeText"></span></div>
+        <div class="presets"><button class="primary" id="resumeYes">Recuperar</button><button id="resumeNo">Empezar de cero</button></div>
+      </section>
+
+      <section class="sec step" id="sT">
+        <button class="sec-h" aria-expanded="false"><span class="n">★</span><span class="t">Plantillas</span><span class="sum" id="sum-sT"></span><span class="chev" aria-hidden="true"></span></button>
+        <div class="sec-b">
+          <div class="field"><span class="lbl">Plantillas de Cortex</span><div class="presetgrid" id="presetGrid"></div></div>
+          <div class="presetbar" id="presetBar" hidden>
+            <strong>Plantilla «<span id="presetBarName"></span>»</strong>
+            <div class="presets">
+              <button id="presetSaveBtn" title="Sobrescribe esta plantilla con el estilo que tienes ahora">Guardar cambios en esta plantilla</button>
+              <button id="presetDefaultBtn">☆ Usar al abrir</button>
+              <button id="presetResetBtn">Restaurar original</button>
+            </div>
+          </div>
+          <button id="presetExportBtn">Exportar plantillas (para dejarlas fijas)</button>
+          <span class="lbl">Tus plantillas</span>
+          <div class="inline">
+            <select id="tplSel" aria-label="Plantilla"></select>
+            <button class="primary" id="tplApply">Aplicar</button>
+          </div>
+          <div class="inline">
+            <input type="text" id="tplName" placeholder="Nombre de la nueva plantilla (ej. Primer plano)" aria-label="Nombre de la plantilla">
+            <button id="tplSave">Guardar estilo actual</button>
+          </div>
+          <details class="more"><summary>Gestionar plantilla elegida</summary>
+            <div class="more-b">
+              <div class="presets">
+                <button id="tplUpdate">Sobrescribir con el estilo actual</button>
+                <button id="tplDel">Borrar</button>
+              </div>
+            </div>
+          </details>
+          <p class="status" id="tplStatus">Guarda fuentes, colores, caja, sombra, encuadre, diseño, posición del logo y música.</p>
+        </div>
+      </section>
+
+      <section class="sec step" id="s1">
+        <button class="sec-h" aria-expanded="false"><span class="n">1</span><span class="t">Clip</span><span class="sum" id="sum-s1"></span><span class="chev" aria-hidden="true"></span></button>
+        <div class="sec-b">
+          <label class="drop" id="drop">
+            <input type="file" id="file" accept="video/*">
+            <strong id="dropTitle">Arrastra aquí el clip o haz clic</strong>
+            <span class="hint" id="dropInfo">MP4, MOV o WEBM horizontal, ya cortado. No se sube a ningún servidor.</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="sec step" id="s2">
+        <button class="sec-h" aria-expanded="false"><span class="n">2</span><span class="t">Título</span><span class="sum" id="sum-s2"></span><span class="chev" aria-hidden="true"></span></button>
+        <div class="sec-b">
+          <textarea id="title" placeholder="Escribe el título del clip">Texto predeterminado</textarea>
+          <button type="button" class="emobtn" id="emojiTitle" title="Añadir emojis de iPhone">😀 Emojis</button>
+          <label class="f">Streamer <input type="text" id="streamer" list="streamerList" placeholder="Nombre del streamer (la IA intenta detectarlo)" autocomplete="off"></label>
+          <datalist id="streamerList"></datalist>
+          <label class="toggle"><input type="checkbox" id="ctxSearch"><span></span>Buscar contexto en Google (más preciso, tarda un poco más)</label>
+          <button id="aiTitle" title="La IA mira y escucha el clip y describe lo que pasa">✨ Otro título con IA</button>
+          <p class="status" id="aiTitleStatus"></p>
+          <label class="f" id="titleKeyWrap" hidden>Clave de Gemini (gratis, para el título automático)<input type="password" id="gemKey2" placeholder="Pega aquí tu clave AIza…" autocomplete="off"></label>
+          <div class="tiles c2" role="group" aria-label="Estilo del título">
+            <button class="tile on" id="stPlain" data-style="plain"><span class="ill ill-plain"><i></i><i></i></span>Clásico</button>
+            <button class="tile" id="stBox" data-style="box"><span class="ill ill-box"><b><i></i><i class="r"></i></b></span>Caja blanca</button>
+          </div>
+          <div class="field"><span class="lbl">Palabras en rojo <em>toca para destacar</em></span><div class="chips" id="chips"></div></div>
+          <div class="field"><span class="lbl">Fuente</span><div class="ftiles" id="titleFontTiles"></div></div>
+          <select id="titleFont" class="fontSel" hidden>
+            <option value="Inter|700">Inter</option>
+            <option value="TikTok Sans|500">TikTok Sans Medium</option>
+            <option value="TikTok Sans|800">TikTok Sans Bold</option>
+            <option value="SF Pro Display|600">SF Pro</option>
+            <option value="Coolvetica|400">Coolvetica</option>
+            <option value="Anton|400">Anton (estilo TALLHAUS de TikTok)</option>
+            <option value="Bebas Neue|400">Bebas Neue</option>
+            <option value="Cortex Sans|600">Cortex Sans (la tuya)</option><option value="TikTok Sans|600">TikTok Sans SemiBold</option><option value="Metropolis|600">Metropolis SemiBold</option>
+            <option value="Figtree|600">Figtree SemiBold (tipo Proxima Nova)</option>
+            <option value="Montserrat|800">Montserrat</option>
+            <option value="Montserrat|900">Montserrat Black</option>
+            <option value="Poppins|700">Poppins</option>
+            <option value="Poppins|800">Poppins ExtraBold</option>
+            <option value="Inter|800">Inter ExtraBold</option>
+            <option value="TikTok Sans|900">TikTok Sans Black</option>
+          </select>
+          <label class="f">Tamaño <span class="val" id="titleSizeV">54</span><input type="range" id="titleSize" min="20" max="180" value="54"></label>
+          <label class="toggle"><input type="checkbox" id="titleUpper"><span></span>Título en MAYÚSCULAS</label>
+          <input type="range" id="titleY" min="-1" max="100" value="-1" hidden aria-hidden="true">
+          <div class="group" id="boxOpts" hidden>
+            <div class="tiles c2" role="group" aria-label="Forma de la caja">
+              <button class="tile on" id="bmSingle" data-mode="single"><span class="ill ill-single"><b><i></i><i></i></b></span>Una caja</button>
+              <button class="tile" id="bmLines" data-mode="lines"><span class="ill ill-lines"><b><i></i></b><b class="s"><i></i></b></span>Una por línea</button>
+            </div>
+            <label class="f">Curvatura de bordes <span class="val" id="boxRV">22</span><input type="range" id="boxR" min="0" max="80" value="22"></label>
+            <div class="row">
+              <label class="f">Ancho <span class="val" id="boxPXV">34</span><input type="range" id="boxPX" min="0" max="160" value="34"></label>
+              <label class="f">Alto <span class="val" id="boxPYV">20</span><input type="range" id="boxPY" min="0" max="120" value="20"></label>
+            </div>
+            <div class="row">
+              <label class="sw">Color caja<input type="color" id="boxColor" value="#ffffff"></label>
+              <label class="sw">Color texto<input type="color" id="boxText" value="#111111"></label>
+            </div>
+            <label class="f">Opacidad de la caja <span class="val" id="boxOpV">100%</span><input type="range" id="boxOp" min="0" max="100" value="100"></label>
+          </div>
+          <label class="toggle"><input type="checkbox" id="titleAutoHL"><span></span>La IA destaca palabras del título en color</label>
+          <label class="toggle"><input type="checkbox" id="titleEmoji" checked><span></span>La IA añade un emoji al final del título</label>
+          <label class="f">Ancho del título <span class="val" id="titleWV">auto</span><input type="range" id="titleW" min="0" max="1000" step="10" value="0"></label>
+          <details class="more"><summary>Más ajustes</summary>
+            <div class="more-b">
+              <label class="f">Espacio entre líneas <span class="val" id="titleLHV">1.18</span><input type="range" id="titleLH" min="80" max="200" value="118"></label>
+              <div class="row">
+                <label class="sw">Color destacado<input type="color" id="titleHl" value="#ff1f1f"></label>
+                <label class="sw" id="plainOpts">Color del texto<input type="color" id="titleColor" value="#ffffff"></label>
+              </div>
+              <label class="f">Espacio entre letras <span class="val" id="tLSV">0</span><input type="range" id="tLS" min="-6" max="30" value="0"></label>
+              <div class="row">
+                <label class="f">Contorno <span class="val" id="tStrokeWV">0</span><input type="range" id="tStrokeW" min="0" max="24" value="0"></label>
+                <label class="sw">Color contorno<input type="color" id="tStrokeC" value="#000000"></label>
+              </div>
+              <label class="f">Sombra <span class="val" id="tShadowV">60%</span><input type="range" id="tShadow" min="0" max="100" value="60"></label>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section class="sec step" id="s3">
+        <button class="sec-h" aria-expanded="false"><span class="n">3</span><span class="t">Subtítulos con IA</span><span class="sum" id="sum-s3"></span><span class="chev" aria-hidden="true"></span></button>
+        <div class="sec-b">
+          <div class="row">
+            <select id="lang" aria-label="Idioma del clip">
+              <option value="spanish">Idioma: español</option>
+              <option value="english">Idioma: inglés</option>
+              <option value="portuguese">Idioma: portugués</option>
+              <option value="french">Idioma: francés</option>
+              <option value="italian">Idioma: italiano</option>
+              <option value="arabic">Idioma: árabe</option>
+            </select>
+            <select id="model" aria-label="Calidad de la IA">
+              <option value="base">IA rápida (≈80 MB)</option>
+              <option value="small">IA precisa (≈250 MB)</option>
+            </select>
+          </div>
+          <button class="primary big" id="transcribe" disabled>Generar subtítulos</button>
+          <div class="bar" id="tBarW" hidden><i id="tBar"></i></div>
+          <p class="status" id="tStatus">Sube un clip para empezar.</p>
+          <label class="f" id="elKeyW">Clave de ElevenLabs (subtítulos que entienden todo, como CapCut)<input type="password" id="elKey" placeholder="Pega aquí tu clave sk_…" autocomplete="off"></label>
+          <p class="hint" id="elKeyH">Se guarda solo en este navegador. Sin clave se usa la IA del ordenador (Whisper), que entiende peor.</p>
+          <button type="button" class="emobtn" id="emojiCap" title="Pulsa en un subtítulo de la lista y luego aquí para añadirle un emoji">😀 Emoji en el subtítulo</button>
+          <div class="caps" id="caps"></div>
+        </div>
+      </section>
+
+      <section class="sec step" id="s4">
+        <button class="sec-h" aria-expanded="false"><span class="n">4</span><span class="t">Estilo de subtítulos</span><span class="sum" id="sum-s4"></span><span class="chev" aria-hidden="true"></span></button>
+        <div class="sec-b">
+          <label class="toggle"><input type="checkbox" id="subsGen" checked><span></span>Esta plantilla lleva subtítulos <em class="hint">(si lo apagas, la IA ni siquiera los genera)</em></label>
+          <div hidden id="subExtra">
+            <input type="checkbox" id="duo"><input type="checkbox" id="call">
+            <input type="range" id="edgeT" min="0" max="900" value="0"><input type="range" id="edgeB" min="0" max="900" value="0">
+            <input type="checkbox" id="subBold" checked><input type="checkbox" id="subItalic"><input type="checkbox" id="subUnder">
+            <select id="subCase"><option value="none">normal</option><option value="lower">minúsculas</option><option value="title">Tipo título</option></select>
+            <input type="range" id="subLS" min="-5" max="40" value="0">
+            <select id="subAlign"><option value="center">centro</option><option value="left">izquierda</option><option value="right">derecha</option></select>
+            <input type="checkbox" id="subBg"><select id="subBgMode"><option value="line">por línea</option><option value="block">bloque</option></select>
+            <input type="color" id="subBgC" value="#000000"><input type="range" id="subBgOp" min="0" max="100" value="70">
+            <input type="range" id="subBgR" min="0" max="100" value="30"><input type="range" id="subBgH" min="0" max="100" value="18"><input type="range" id="subBgW" min="0" max="150" value="30">
+            <input type="range" id="subBgX" min="-200" max="200" value="0"><input type="range" id="subBgY" min="-200" max="200" value="0">
+            <input type="checkbox" id="subShOn" checked><input type="color" id="subShC" value="#000000"><input type="range" id="subShD" min="0" max="60" value="0"><input type="range" id="subShA" min="-180" max="180" value="-45">
+          </div>
+          <div class="field"><span class="lbl">Fuente</span><div class="ftiles" id="subFontTiles"></div></div>
+          <select id="subFont" class="fontSel" hidden>
+            <option value="Montserrat|900">Montserrat</option>
+            <option value="Cortex Sans|600">Cortex Sans (la tuya)</option><option value="TikTok Sans|600">TikTok Sans SemiBold</option><option value="Metropolis|600">Metropolis SemiBold</option>
+            <option value="Figtree|600">Figtree SemiBold (tipo Proxima Nova)</option>
+            <option value="TikTok Sans|500">TikTok Sans Medium</option>
+            <option value="TikTok Sans|900">TikTok Sans Black</option>
+            <option value="Coolvetica|400">Coolvetica</option>
+            <option value="SF Pro Display|800">SF Pro</option>
+            <option value="Anton|400">Anton</option>
+            <option value="Poppins|800">Poppins</option>
+            <option value="Bebas Neue|400">Bebas Neue</option>
+            <option value="Inter|800">Inter</option>
+          </select>
+          <label class="f">Tamaño <span class="val" id="subSizeV">72</span><input type="range" id="subSize" min="24" max="200" value="72"></label>
+          <label class="f">Palabras en pantalla a la vez (máximo) <span class="val" id="wpcV">3</span><input type="range" id="wpc" min="1" max="6" value="3"></label>
+          <div class="row">
+            <label class="sw">Color texto<input type="color" id="subColor" value="#ffffff"></label>
+            <label class="toggle"><input type="checkbox" id="upper"><span></span>MAYÚSCULAS</label>
+          </div>
+          <div class="row">
+            <label class="toggle"><input type="checkbox" id="hl"><span></span>Resaltar palabra que suena</label>
+            <label class="sw">Color palabra<input type="color" id="hlColor" value="#ffd23f"></label>
+          </div>
+          <div class="st-inline" id="subStyleInline"></div>
+          <div hidden>
+              <div class="row">
+                <label class="f">Sombra <span class="val" id="shOpV">85%</span><input type="range" id="shOp" min="0" max="100" value="85"></label>
+                <label class="f">Difuminado sombra <span class="val" id="shBlurV">18</span><input type="range" id="shBlur" min="4" max="60" value="18"></label>
+              </div>
+              <label class="toggle"><input type="checkbox" id="strokeOn"><span></span>Contorno</label>
+              <div class="row">
+                <label class="f">Grosor contorno <span class="val" id="strokeWV">12</span><input type="range" id="strokeW" min="2" max="30" value="12"></label>
+                <label class="sw">Color contorno<input type="color" id="strokeC" value="#000000"></label>
+              </div>
+          </div>
+          <details class="more"><summary>Posición y animación</summary>
+            <div class="more-b">
+              <div class="row">
+                <label class="f">Altura <span class="val" id="subYV">60%</span><input type="range" id="subY" min="-40" max="140" value="60"></label>
+                <label class="f">Espacio entre líneas <span class="val" id="subLHV">1.12</span><input type="range" id="subLH" min="80" max="200" value="112"></label>
+              </div>
+              <div class="row">
+                <label class="toggle"><input type="checkbox" id="pop" checked><span></span>Animación de entrada</label>
+                <label class="toggle"><input type="checkbox" id="safe"><span></span>Ver zonas seguras TikTok</label>
+              </div>
+              <label class="btnfile" for="fontFile"><input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2">＋ Subir una fuente (.ttf / .otf)</label>
+              <p class="status" id="fontStatus"></p>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section class="sec step" id="s5">
+        <button class="sec-h" aria-expanded="false"><span class="n">5</span><span class="t">Encuadre y fondo</span><span class="sum" id="sum-s5"></span><span class="chev" aria-hidden="true"></span></button>
+        <div class="sec-b">
+          <div class="presets">
+            <button id="zFit">Original</button>
+            <button id="z150">Zoom 150%</button>
+            <button id="zFill">Pantalla completa</button>
+            <button id="zCenter">Centrar</button>
+          </div>
+          <label class="f">Zoom <span class="val" id="zoomV">100%</span><input type="range" id="zoom" min="30" max="800" value="100"></label>
+          <div class="field"><span class="lbl">Fondo</span>
+            <div class="bgtiles" id="bgTiles">
+              <button class="btile" data-v="black"><canvas width="90" height="160" data-l="0"></canvas>Negro</button>
+              <button class="btile" data-v="blur1"><canvas width="90" height="160" data-l="1"></canvas>Suave</button>
+              <button class="btile" data-v="blur2"><canvas width="90" height="160" data-l="2"></canvas>Medio</button>
+              <button class="btile" data-v="blur3"><canvas width="90" height="160" data-l="3"></canvas>Fuerte</button>
+              <button class="btile" data-v="blur4"><canvas width="90" height="160" data-l="4"></canvas>Máximo</button>
+            </div>
+          </div>
+          <select id="bg" hidden>
+            <option value="black">Negro</option>
+            <option value="blur1">Difuminado suave</option>
+            <option value="blur2">Difuminado medio</option>
+            <option value="blur3">Difuminado fuerte</option>
+            <option value="blur4">Muy difuminado</option>
+          </select>
+          <details class="more"><summary>Posición exacta</summary>
+            <div class="more-b">
+              <label class="f">Mover a los lados <span class="val" id="offXV">0</span><input type="range" id="offX" min="-1700" max="1700" value="0"></label>
+              <label class="f">Mover arriba/abajo <span class="val" id="offYV">0</span><input type="range" id="offY" min="-1000" max="1000" value="0"></label>
+              <p class="hint">También puedes arrastrar el vídeo en la vista previa; se pega solo al centro.</p>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section class="sec step" id="s7">
+        <button class="sec-h" aria-expanded="false"><span class="n">6</span><span class="t">Diseño</span><span class="sum" id="sum-s7"></span><span class="chev" aria-hidden="true"></span></button>
+        <div class="sec-b">
+          <div class="tiles c2" role="group" aria-label="Diseño">
+            <button class="tile on" id="lyNormal" data-ly="single"><span class="ill ill-normal"><b></b></span>Normal</button>
+            <button class="tile" id="lySplit" data-ly="split"><span class="ill ill-split"><b></b><u></u></span>Vídeo + imagen</button>
+            <button class="tile" id="lyReact" data-ly="react"><span class="ill ill-react"><u></u><b></b></span>Reacción</button>
+          </div>
+          <div class="group" id="reactOpts" hidden>
+            <div class="call-opts" id="callOpts" hidden>
+              <span class="lbl">Personas en la llamada</span>
+              <div class="seg" id="callNSeg"><button type="button" data-n="2">2</button><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button><button type="button" data-n="5">5</button></div>
+              <button type="button" id="callFind">🔍 Buscar las cámaras otra vez</button>
+              <p class="hint">Arrastra cada persona en la vista previa para encuadrarla; la rueda del ratón acerca o aleja. Puedes mover el borde de arriba y el de abajo.</p>
+            </div>
+            <p class="hint">Se usa el mismo clip dos veces: arriba la cámara del streamer y abajo lo que está viendo. La cámara se detecta sola; si no es exacta, doble clic en cada parte de la vista previa para marcarla.</p>
+            <p class="status" id="camStatus"></p>
+            <label class="f">Clave de Gemini (detección máxima, gratis)<input type="password" id="gemKey" placeholder="Pega aquí tu clave AIza…" autocomplete="off"></label>
+            <p class="hint">Consíguela gratis en aistudio.google.com/apikey. Se guarda solo en este navegador. Sin clave se usa la detección local.</p>
+            <div class="presets">
+              <button id="camDetect">Detectar cámara otra vez</button>
+              <button id="camBtn">Marcar cámara</button>
+              <button id="contentBtn">Marcar contenido</button>
+              <button id="cropsReset">Posición por defecto</button>
+            </div>
+          </div>
+          <label class="f" id="ratioWrap" hidden><span id="ratioLbl">Espacio para el vídeo</span> <span class="val" id="ratioV">55%</span><input type="range" id="ratio" min="25" max="85" value="55"></label>
+          <div class="group" id="splitOpts" hidden>
+            <label class="drop small" for="imgFile">
+              <input type="file" id="imgFile" accept="image/*,video/*">
+              <strong id="imgTitle">Subir imagen</strong>
+              <span class="hint">Doble clic sobre ella en la vista previa para recortarla.</span>
+            </label>
+            <div class="tiles c2" role="group" aria-label="Posición de la imagen">
+              <button class="tile on" id="ipBottom" data-ip="bottom"><span class="ill ill-split"><b></b><u></u></span>Imagen abajo</button>
+              <button class="tile" id="ipTop" data-ip="top"><span class="ill ill-split flip"><u></u><b></b></span>Imagen arriba</button>
+            </div>
+            <details class="more"><summary>Ajustar imagen</summary>
+              <div class="more-b">
+                <label class="f">Zoom imagen <span class="val" id="imgZoomV">100%</span><input type="range" id="imgZoom" min="30" max="600" value="100"></label>
+                <div class="presets">
+                  <button id="cropBtn" disabled>Recortar</button>
+                  <button id="cropReset" disabled>Imagen original</button>
+                  <button id="imgCenter" disabled>Centrar</button>
+                </div>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec step" id="sX">
+        <button class="sec-h" aria-expanded="false"><span class="n">T</span><span class="t">Texto</span><span class="sum"></span><span class="chev" aria-hidden="true"></span></button>
+        <div class="sec-b">
+          <button class="big primary" id="txtAdd">+ Texto predeterminado</button>
+          <p class="hint">Se añade donde está el cabezal. Arrástralo en la vista previa para moverlo, la rueda del ratón cambia el tamaño y el círculo de arriba lo gira.</p>
+          <div class="group" id="txtEdit" hidden>
+            <div class="field"><span class="lbl">Texto</span><textarea id="txtText" rows="2" aria-label="Texto"></textarea><button type="button" class="emobtn" id="emojiTxt" title="Añadir emojis de iPhone">😀 Emojis</button></div>
+            <label class="f">Fuente<select id="txtFont" class="fontSel"></select></label>
+            <div class="row">
+              <label class="f">Tamaño <span class="val" id="txtSizeV">80</span><input type="range" id="txtSize" min="20" max="260" value="80"></label>
+              <label class="f">Giro <span class="val" id="txtRotV">0°</span><input type="range" id="txtRot" min="-180" max="180" value="0"></label>
+            </div>
+            <label class="f">Espacio entre líneas <span class="val" id="txtLHV">1.15</span><input type="range" id="txtLH" min="70" max="250" value="115"></label>
+            <div class="row">
+              <label class="sw">Color<input type="color" id="txtColor" value="#ffffff"></label>
+              <input type="color" id="txtStrokeC" value="#000000" hidden><input type="color" id="txtBgC" value="#000000" hidden>
+            </div>
+            <div hidden><input type="checkbox" id="txtStroke"><input type="checkbox" id="txtShadow" checked><input type="checkbox" id="txtBg"></div>
+            <div class="st-inline" id="txtStyleInline"></div>
+            <div class="presets">
+              <button id="txtDup">Duplicar</button>
+              <button id="txtCenter">Centrar</button>
+              <button id="txtDel">Borrar</button>
+            </div>
+          </div>
+          <div class="txtlist" id="txtList"></div>
+        </div>
+      </section>
+
+      <section class="sec step" id="sL">
+        <button class="sec-h" aria-expanded="false"><span class="n">7</span><span class="t">Logo</span><span class="sum" id="sum-sL"></span><span class="chev" aria-hidden="true"></span></button>
+        <div class="sec-b">
+          <label class="drop small" for="logoFile">
+            <input type="file" id="logoFile" accept="image/*">
+            <strong id="logoTitle">Subir logo</strong>
+            <span class="hint">PNG con fondo transparente. Queda activo en todos tus clips.</span>
+          </label>
+          <div class="group" id="logoOpts" hidden>
+            <button id="logoRemove" title="Quita el logo de este cliente (puedes volver a subirlo cuando quieras)">✕ Quitar logo</button>
+            <label class="toggle"><input type="checkbox" id="logoLock"><span></span>Candado: fijar posición y tamaño</label>
+            <label class="toggle"><input type="checkbox" id="logoShow" checked><span></span>Mostrar el logo en este clip</label>
+            <p class="hint" id="logoLockHint" hidden>El logo está bloqueado. Quita el candado para moverlo o cambiar su tamaño.</p>
+            <div class="row">
+              <label class="f">Tamaño <span class="val" id="logoSizeV">18%</span><input type="range" id="logoSize" min="2" max="100" value="18"></label>
+              <label class="f">Opacidad <span class="val" id="logoOpV">85%</span><input type="range" id="logoOp" min="5" max="100" value="85"></label>
+            </div>
+            <label class="f">Girar <span class="val" id="logoRotV">0°</span><input type="range" id="logoRot" min="-180" max="180" value="0"></label>
+            <details class="more"><summary>Posición y opciones</summary>
+              <div class="more-b">
+                <div class="presets">
+                  <button id="logoCorner">Esquina superior derecha</button>
+                  <button id="logoCenter">Centrar</button>
+                </div>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec step" id="s6">
+        <button class="sec-h" aria-expanded="false"><span class="n">8</span><span class="t">Música</span><span class="sum" id="sum-s6"></span><span class="chev" aria-hidden="true"></span></button>
+        <div class="sec-b">
+          <div class="presets">
+            <label class="btnfile" for="musicFolder"><input type="file" id="musicFolder" webkitdirectory multiple>＋ Añadir carpeta</label>
+            <label class="btnfile" for="musicFiles"><input type="file" id="musicFiles" accept="audio/*" multiple>＋ Añadir canciones</label>
+          </div>
+          <input type="search" id="musicSearch" placeholder="Buscar en tu biblioteca" aria-label="Buscar canción">
+          <div class="lib" id="lib"></div>
+          <p class="status" id="mStatus"></p>
+          <div class="group" id="musicOpts" hidden>
+            <div class="row">
+              <label class="f">Volumen música <span class="val" id="mVolV">30%</span><input type="range" id="mVol" min="0" max="100" value="30"></label>
+              <label class="f">Volumen voz <span class="val" id="vVolV">100%</span><input type="range" id="vVol" min="0" max="150" value="100"></label>
+            </div>
+            <details class="more"><summary>Inicio, fundidos y repetición</summary>
+              <div class="more-b">
+                <label class="f">La canción empieza en <span class="val" id="mStartV">0:00</span><input type="range" id="mStart" min="0" max="180" step="0.5" value="0"></label>
+                <div class="row">
+                  <label class="f">Entrada suave <span class="val" id="mFadeInV">1 s</span><input type="range" id="mFadeIn" min="0" max="5" step="0.5" value="1"></label>
+                  <label class="f">Salida suave <span class="val" id="mFadeOutV">1.5 s</span><input type="range" id="mFadeOut" min="0" max="5" step="0.5" value="1.5"></label>
+                </div>
+                <label class="toggle"><input type="checkbox" id="mLoop" checked><span></span>Repetir si es más corta que el clip</label>
+                <button id="mRemove">Quitar música del clip</button>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+    </div>
+
+</div>
+<video id="vid" playsinline preload="auto"></video>
+
