@@ -1436,4 +1436,21 @@ body.se-rzing{cursor:ew-resize;user-select:none}
   .chip,.se-hl .chip,#ttcChips .chip{min-height:36px}
   .se-off input,label.check input[type=checkbox]{width:22px;height:22px}
 }
+/* 📝 notas */
+.nt-card{width:min(880px,100%);height:min(620px,90vh);display:flex;flex-direction:column}
+.nt-body{flex:1;min-height:0;display:grid;grid-template-columns:260px 1fr;gap:12px;position:relative}
+.nt-side{display:flex;flex-direction:column;min-height:0;gap:8px}
+.nt-tools{display:flex;gap:6px}.nt-tools input{flex:1;min-width:0}.nt-tools button{width:auto;white-space:nowrap}
+.nt-list{flex:1;min-height:0;overflow-y:auto;display:grid;align-content:start;gap:4px}
+.nt-it{display:block;width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:10px;padding:8px 10px;cursor:pointer;color:inherit}
+.nt-it:hover{background:rgba(127,127,127,.1)}.nt-it.on{border-color:var(--line);background:rgba(127,127,127,.14)}
+.nt-it b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nt-it span{display:block;font-size:11px;opacity:.65;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nt-ed{display:flex;flex-direction:column;gap:8px;min-height:0}.nt-ed[hidden]{display:none}
+.nt-ed input,.nt-ed textarea{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:inherit;font-family:inherit}
+.nt-ed input{font-weight:700;font-size:15px}
+.nt-ed textarea{flex:1;min-height:200px;resize:none;font-size:14px;line-height:1.5}
+.nt-foot{display:flex;align-items:center;gap:8px}.nt-foot button{width:auto}
+.nt-empty{grid-column:2;align-self:center;text-align:center}.nt-empty[hidden]{display:none}
+@media (max-width:700px){.nt-body{grid-template-columns:1fr;grid-template-rows:180px 1fr}.nt-empty{grid-column:1}.nt-card .pv-head .hint{display:none}}
 </style>
