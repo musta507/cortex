@@ -78,6 +78,21 @@ const exportBlob = p => p.evaluate(async () => {
       check('girar 1°, 3° y −3° no deja ver esquinas', ok.every(Boolean), ok);
       await p.context().close();
     }
+    // varias cámaras: lo que ven en grande y 2–5 cámaras abajo, en tira o arriba
+    {
+      const p = await openWithClip(b);
+      await p.evaluate(async () => { setAutoOff(true); await stQuickOpen(true); await applyPreset(PRESETS.find(x => x.name === 'Varias cámaras')); });
+      await p.waitForFunction(() => !$('aiov') || $('aiov').hidden !== false, null, { timeout: 30000 }).catch(() => {}); await p.waitForTimeout(3000);
+      const g = await p.evaluate(() => { crops.mcT = [0, 1, 2].map(i => ({ t: { x: 0.2 + 0.22 * i, y: 0.82, w: 0.16, h: 0.16 }, fx: 0.28 + 0.22 * i, fy: 0.9 })); crops.mcC = { x: 0, y: 0, w: 1, h: 0.8 }; mcSet(3, true);
+        const o = {}; for (const l of ['A', 'B', 'C']) { mcSetLay(l); draw(1, false); const L = lastLayout; o[l] = { n: 1 + L.more.length, camY: L.ir.y, seam: L.seam }; } return { o, fmt: curFmtOf() }; });
+      check('varias cámaras: 3 cámaras abajo, en tira y arriba', g.fmt === 'varias' && ['A', 'B', 'C'].every(l => g.o[l].n === 3) && g.o.A.camY > 800 && g.o.B.camY > g.o.A.camY && g.o.C.camY === 0, g);
+      await p.evaluate(() => { mcSetLay('A'); mcSet(5, true); });
+      check('con 5 cámaras salen 5', await p.evaluate(() => { draw(1, false); return 1 + lastLayout.more.length; }) === 5);
+      const r = await exportBlob(p);
+      check('exporta con varias cámaras', !!r.b64, r.mode || r.err);
+      check('sin errores con varias cámaras', !p.errs.length, p.errs[0]);
+      await p.context().close();
+    }
     // vídeo de abajo (biblioteca de reacciones)
     {
       const p = await openWithClip(b);

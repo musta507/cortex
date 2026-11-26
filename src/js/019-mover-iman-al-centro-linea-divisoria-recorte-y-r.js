@@ -16,7 +16,7 @@ function hitAny(p) {
   const L = lastLayout;
   if (L && L.split && L.top != null && Math.abs(p.y - L.top) < 24 && p.y < L.top + 24) return 'edgeT';
   if (L && L.split && L.bot != null && Math.abs(p.y - L.bot) < 24 && p.y > L.bot - 24) return 'edgeB';
-  if (L && L.split && !L.call && Math.abs(p.y - L.seam) < 28) return 'seam';
+  if (L && L.split && (!L.call || (L.multi && mcLay() !== 'B')) && Math.abs(p.y - L.seam) < 28) return 'seam';
   if (L && L.more) for (let i = 0; i < L.more.length; i++) if (inR(p, L.more[i].R)) return 'p' + (i + 2);
   if (L && L.react && inR(p, L.ir)) return 'cam';
   if (L && L.split && inR(p, L.ir)) return 'image';
@@ -223,7 +223,7 @@ cv.addEventListener('pointermove', e => {
     let v = Math.round(top ? drag.et + ddy : drag.eb - ddy); if (v < 24) v = 0;
     setRange(top ? 'edgeT' : 'edgeB', Math.max(0, Math.min(H - other - 700, v))); tlSig = '';
   } else if (drag.k === 'seam') {
-    const sign = layoutMode === 'react' || imgPos === 'bottom' ? 1 : -1;
+    const sign = multiOn() && mcLay() === 'C' ? -1 : layoutMode === 'react' || imgPos === 'bottom' ? 1 : -1;
     setRange('ratio', Math.round(Math.min(85, Math.max(25, drag.ratio + sign * ddy / H * 100))));
   } else if (drag.k === 'title') {
     pos.tx = snap(drag.tx + ddx, 'x'); snapY = false; pos.ty = drag.ty + ddy;

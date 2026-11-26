@@ -101,15 +101,31 @@ const DEFAULT_CROPS = { cam: { x: 0.74, y: 0.66, w: 0.26, h: 0.34 }, content: { 
 const crops = JSON.parse(JSON.stringify(DEFAULT_CROPS));   // zonas del clip (0-1) para el formato Reacción
 // llamada (Discord): de 2 a 5 personas, cada una en su franja
 const callOn = () => layoutMode === 'react' && $('duo').checked && $('call').checked;
+// «Varias cámaras»: lo que están viendo en grande y de 2 a 5 cámaras pequeñas (A: debajo de 2 en 2 · B: en una tira abajo · C: arriba)
+const multiOn = () => callOn() && $('multi').checked;
+const mcLay = () => ({ A: 'A', B: 'B', C: 'C' }[$('mcLay').value] || 'A');
+function mcCells(n, lay, T0, AH, ratio) {
+  // filas de cámaras: 2 → [2] · 3 → [3] · 4 → [2,2] · 5 → [3,2]; en la tira (B) siempre una sola fila
+  const rows = lay === 'B' ? [n] : ({ 2: [2], 3: [3], 4: [2, 2], 5: [3, 2] }[n] || [n]);
+  const camsH = lay === 'B' ? Math.max(170, Math.min(Math.round(AH * 0.32), Math.round(W / n * 0.8))) : Math.round(AH * (1 - Math.max(0.3, Math.min(0.75, ratio))));
+  const cTop = lay === 'C' ? T0 : T0 + AH - camsH;
+  const vr = lay === 'C' ? { x: 0, y: T0 + camsH, w: W, h: AH - camsH } : { x: 0, y: T0, w: W, h: AH - camsH };
+  const cells = []; rows.forEach((c, r) => { const y = cTop + Math.round(camsH * r / rows.length), y2 = cTop + Math.round(camsH * (r + 1) / rows.length);
+    for (let i = 0; i < c; i++) { const x = Math.round(W * i / c), x2 = Math.round(W * (i + 1) / c); cells.push({ x, y, w: x2 - x, h: y2 - y }); } });
+  return { vr, cells, seam: lay === 'C' ? T0 + camsH : T0 + AH - camsH };
+}
 const cget = (CR, w) => !CR ? null : /^p\d$/.test(w) ? (CR.more || [])[+w.slice(1) - 2] : CR[w];
 function layout(s, vw, vh, t) {
   const eT = Math.max(0, s.edgeT || 0), eB = Math.max(0, s.edgeB || 0), T0 = eT, AH = Math.max(200, H - eT - eB);
   if (layoutMode === 'react') {
-    const cr0 = cropsAt(t || 0), nC = callOn() ? Math.max(2, Math.min(5, cr0.n || 2)) : 0;
+    const cr0 = cropsAt(t || 0), nC = callOn() ? Math.max(2, Math.min(5, cr0.n || 2)) : 0, MC = nC && multiOn();
     const cH = nC ? Math.round(AH / nC) : Math.round(AH * s.ratio);
-    const ir = { x: 0, y: T0, w: W, h: cH }, vr = { x: 0, y: T0 + cH, w: W, h: nC ? cH : AH - cH };
+    let ir = { x: 0, y: T0, w: W, h: cH }, vr = { x: 0, y: T0 + cH, w: W, h: nC ? cH : AH - cH }, seam = T0 + cH;
     const more = [];
-    if (nC > 2) for (let i = 2; i < nC; i++) { const y = T0 + Math.round(AH * i / nC), y2 = T0 + Math.round(AH * (i + 1) / nC); more.push({ R: { x: 0, y, w: W, h: y2 - y }, k: (cr0.more || [])[i - 2] || cr0.cam }); }
+    if (MC) {   // varias cámaras: «content» es lo que ven; «cam» y «more» son las cámaras
+      const g = mcCells(nC, mcLay(), T0, AH, s.ratio); vr = g.vr; ir = g.cells[0]; seam = g.seam;
+      for (let i = 1; i < g.cells.length; i++) more.push({ R: g.cells[i], k: (cr0.more || [])[i - 1] || cr0.cam });
+    } else if (nC > 2) for (let i = 2; i < nC; i++) { const y = T0 + Math.round(AH * i / nC), y2 = T0 + Math.round(AH * (i + 1) / nC); more.push({ R: { x: 0, y, w: W, h: y2 - y }, k: (cr0.more || [])[i - 2] || cr0.cam }); }
     const cr = cr0, k = cr.content, sw = vw * k.w, sh = vh * k.h;
     const contain = cr.fit === 'contain';
     const sc = (contain ? Math.min(vr.w / sw, vr.h / sh) : Math.max(vr.w / sw, vr.h / sh)) * (cr.zk || 1) * s.zoom;
@@ -119,7 +135,7 @@ function layout(s, vw, vh, t) {
     // (con un tweet o una web «entera» se queda como estaba, con el fondo difuminado, hasta que lo muevas o cambies el zoom)
     const crop = { x: vw * k.x, y: vh * k.y, w: sw, h: sh }, v0 = { x: cx - dw / 2, y: cy - dh / 2, w: dw, h: dh };
     const whole = !contain || s.zoom !== 1 || s.offX || s.offY;
-    return { split: true, react: true, vr, ir, seam: T0 + cH, top: T0, bot: T0 + AH, more: more.length ? more : null, call: nC, cr, contain, crop,
+    return { split: true, react: true, vr, ir, seam, top: T0, bot: T0 + AH, more: more.length ? more : null, call: nC, multi: MC, cr, contain, crop,
              src: whole ? { x: 0, y: 0, w: vw, h: vh } : crop,
              video: whole ? { x: v0.x - vw * k.x * sc, y: v0.y - vh * k.y * sc, w: vw * sc, h: vh * sc } : v0, subArea: vr };
   }

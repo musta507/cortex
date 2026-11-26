@@ -1453,4 +1453,11 @@ body.se-rzing{cursor:ew-resize;user-select:none}
 .nt-foot{display:flex;align-items:center;gap:8px}.nt-foot button{width:auto}
 .nt-empty{grid-column:2;align-self:center;text-align:center}.nt-empty[hidden]{display:none}
 @media (max-width:700px){.nt-body{grid-template-columns:1fr;grid-template-rows:180px 1fr}.nt-empty{grid-column:1}.nt-card .pv-head .hint{display:none}}
+.mc-opts{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:6px 0}
+.mc-opts .lbl{font-size:12px;opacity:.75}
+.mc-opts .seg{display:inline-flex;gap:4px}
+.mc-opts .seg button{width:auto;padding:4px 10px;font-size:12px}
+.mc-opts .seg button.on{background:#fff;color:#111}
+.mc-opts .mc-find{width:auto;padding:5px 12px;font-size:12px}
+.mc-host[hidden]{display:none}
 </style>

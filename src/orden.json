@@ -54,6 +54,7 @@
   "js/040-titulo-automatico-con-ia-gemini-escucha-el-clip.js",
   "js/041-reaccion-por-tramos-cambios-de-escena-al-fotogra.js",
   "js/042-llamada-busca-las-camaras-de-la-llamada-discord.js",
+  "js/042a-varias-camaras.js",
   "js/043-dos-personas-busca-a-las-dos-personas-del-set-y.js",
   "js/044-pantalla-de-revision-clip-a-clip-ajustar-con-el.js",
   "js/045-chat-con-el-agente-de-cada-creador-le-das-consej.js",

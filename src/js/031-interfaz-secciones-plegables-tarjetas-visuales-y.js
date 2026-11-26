@@ -67,7 +67,7 @@ function updSummaries() {
 setInterval(() => { updSummaries(); syncTiles(); callOptsSync(); }, 500);
 
 function callOptsSync() {
-  const o = $('callOpts'); if (!o) return; const on = callOn(); o.hidden = !on; if (!on) return;
+  const o = $('callOpts'); if (!o) return; const on = callOn() && !multiOn(); o.hidden = !on; if (!on) return;
   o.querySelectorAll('#callNSeg button').forEach(b => b.classList.toggle('on', +b.dataset.n === (crops.n || 2)));
 }
 setTimeout(() => { const g = $('callNSeg'); if (!g) return; g.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { setCallN(+b.dataset.n); callOptsSync(); } });

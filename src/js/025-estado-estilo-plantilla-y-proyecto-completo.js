@@ -12,7 +12,7 @@ function getStyle() {
            crops: JSON.parse(JSON.stringify(crops)), music: music.cur ? music.cur.id : null };
 }
 let restoring = false;
-const SUB_EXTRA_DEF = { duo: false, call: false, edgeT: '0', edgeB: '0', titleEmoji: true, subsGen: true, titleAutoHL: false, titleW: '0', subBold: true, subItalic: false, subUnder: false, subCase: 'none', subLS: '0', subAlign: 'center', subBg: false, subBgMode: 'line', subBgC: '#000000', subBgOp: '70',
+const SUB_EXTRA_DEF = { duo: false, call: false, multi: false, mcLay: 'A', edgeT: '0', edgeB: '0', titleEmoji: true, subsGen: true, titleAutoHL: false, titleW: '0', subBold: true, subItalic: false, subUnder: false, subCase: 'none', subLS: '0', subAlign: 'center', subBg: false, subBgMode: 'line', subBgC: '#000000', subBgOp: '70',
   subBgR: '30', subBgH: '18', subBgW: '30', subBgX: '0', subBgY: '0', subShOn: true, subShC: '#000000', subShD: '0', subShA: '-45',
   boxOp: '100', tLS: '0', tStrokeW: '0', tStrokeC: '#000000', tShadow: '60' };
 async function applyStyle(st) {

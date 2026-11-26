@@ -296,6 +296,7 @@
                 <div class="se-tplsv"><button id="seFmtSave" class="se-def" title="Guarda en esta plantilla todo tal y como lo ves ahora: tamaño y posición del vídeo, zoom, recortes, dónde va el título y los subtítulos y dónde va el logo (con su tamaño). La próxima vez que elijas esta plantilla saldrá así y solo tendrás que poner el título.">💾 Guardar cómo está en esta plantilla</button><button id="seFmtReset" class="se-def" hidden title="Deja esta plantilla como venía al principio">↩ Original</button></div></div>
               <div class="se-l se-rxw">🎭 Reacción <span class="hint">(tu clip arriba y un vídeo de reacción abajo, en bucle y sin sonido)</span>
                 <div class="se-tplsv"><button id="seRx" class="se-def" title="Tus recortes guardados por streamer: elige uno y se pone abajo, en bucle y sin sonido">🎭 Biblioteca de reacciones</button><button id="seRxUp" class="se-def" title="Poner abajo un vídeo de tu ordenador sin guardarlo en la biblioteca">📁 Subir un vídeo</button></div></div>
+              <div class="mc-host se-mc" id="seMc" hidden></div>
               <div class="se-l">Plantilla de título <span class="hint">(la que elijas queda por defecto)</span><select id="seTT" hidden></select><div class="se-tt" id="seTTG" role="listbox" aria-label="Plantillas de título"></div></div>
               <label class="toggle se-subt"><input type="checkbox" id="seSubsOn"><span></span>Subtítulos en este clip <em class="hint">(apágalo y los siguientes clips también saldrán sin subtítulos)</em></label>
               <div class="se-l">Más<div class="se-more"><button type="button" id="seSubSt" title="Letra, tamaño, color, contorno y fondo de los subtítulos">💬 Estilo de subtítulos</button><button type="button" id="seTxtAdd" title="Añade un texto encima del vídeo">T Añadir texto</button><button type="button" id="seLogoT" title="Poner o cambiar el logo de este creador">🖼️ Logo</button><button type="button" id="seMoreM" title="Todas las opciones: lo mismo que el clic derecho en el vídeo">⋯ Más opciones</button></div><span class="hint">Clic derecho en el vídeo para ver todas las opciones de cada cosa.</span></div>
@@ -715,7 +716,7 @@
         <div class="sec-b">
           <label class="toggle"><input type="checkbox" id="subsGen" checked><span></span>Esta plantilla lleva subtítulos <em class="hint">(si lo apagas, la IA ni siquiera los genera)</em></label>
           <div hidden id="subExtra">
-            <input type="checkbox" id="duo"><input type="checkbox" id="call">
+            <input type="checkbox" id="duo"><input type="checkbox" id="call"><input type="checkbox" id="multi"><select id="mcLay"><option value="A">A</option><option value="B">B</option><option value="C">C</option></select>
             <input type="range" id="edgeT" min="0" max="900" value="0"><input type="range" id="edgeB" min="0" max="900" value="0">
             <input type="checkbox" id="subBold" checked><input type="checkbox" id="subItalic"><input type="checkbox" id="subUnder">
             <select id="subCase"><option value="none">normal</option><option value="lower">minúsculas</option><option value="title">Tipo título</option></select>
@@ -825,8 +826,9 @@
             <button class="tile" id="lyReact" data-ly="react"><span class="ill ill-react"><u></u><b></b></span>Reacción</button>
           </div>
           <div class="group" id="reactOpts" hidden>
+            <div class="mc-host" id="mcOpts" hidden></div>
             <div class="call-opts" id="callOpts" hidden>
-              <span class="lbl">Personas en la llamada</span>
+              <span class="lbl" id="callNLbl">Personas en la llamada</span>
               <div class="seg" id="callNSeg"><button type="button" data-n="2">2</button><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button><button type="button" data-n="5">5</button></div>
               <button type="button" id="callFind">🔍 Buscar las cámaras otra vez</button>
               <p class="hint">Arrastra cada persona en la vista previa para encuadrarla; la rueda del ratón acerca o aleja. Puedes mover el borde de arriba y el de abajo.</p>

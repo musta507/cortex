@@ -1,6 +1,6 @@
 /* ---------- «Dos personas»: busca a las dos personas del set y pone una arriba y otra abajo ---------- */
 async function duoDetect() {
-  if (callOn()) return callDetect();
+  if (callOn()) return multiOn() ? mcDetect() : callDetect();
   if (!loaded) return false;
   const vw = vid.videoWidth || 1920, vh = vid.videoHeight || 1080;
   const half = (side) => ({ x: side ? 0.5 : 0, y: 0, w: 0.5, h: 1 });
@@ -144,6 +144,7 @@ const AG_FORMATS = {
   horizontal_cam: { preset: 'Título y subtítulos', name: 'Horizontal · solo cámara' },
   duo: { preset: 'Dos personas', name: 'Dos personas' },
   llamada: { preset: 'Llamada', name: 'Llamada' },
+  varias: { preset: 'Varias cámaras', name: 'Varias cámaras' },
   horizontal: { preset: 'Título y subtítulos', name: 'Horizontal' },
 };
 const WESTCOL_RULES = `No generar subtítulos, solo título.

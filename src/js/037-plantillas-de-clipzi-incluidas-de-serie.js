@@ -26,6 +26,11 @@ const PRESETS = [
       boxR: '18', boxPX: '28', boxPY: '14', boxColor: '#ffffff', boxText: '#111111', titleHl: '#ff1f1f',
       subFont: 'Inter|800', subSize: '56', subColor: '#ffffff', upper: false, subY: '75', wpc: '2' },
       crops: { cam: { x: 0.02, y: 0.05, w: 0.47, h: 0.45 }, content: { x: 0.51, y: 0.05, w: 0.47, h: 0.45 }, fit: 'cover' } } },
+  { name: 'Varias cámaras', desc: 'Varias cámaras reaccionando a lo mismo: lo que ven en grande y las cámaras pequeñas debajo (o arriba, o en una tira)',
+    s: { titleStyle: 'box', boxMode: 'single', layoutMode: 'react', c: { duo: true, call: true, multi: true, mcLay: 'A', titleY: '-1', titleUpper: false, ratio: '58', zoom: '100', titleFont: 'Inter|700', titleSize: '50', titleLH: '112',
+      boxR: '18', boxPX: '28', boxPY: '14', boxColor: '#ffffff', boxText: '#111111', titleHl: '#ff1f1f',
+      subFont: 'Inter|800', subSize: '56', subColor: '#ffffff', upper: false, subY: '75', wpc: '2' },
+      crops: { n: 3, cam: { x: 0.25, y: 0.8, w: 0.12, h: 0.2 }, more: [{ x: 0.44, y: 0.8, w: 0.12, h: 0.2 }, { x: 0.63, y: 0.8, w: 0.12, h: 0.2 }], content: { x: 0, y: 0, w: 1, h: 0.78 }, fit: 'cover' } } },
 ];
 let BASE_STYLE = null;
 let presetOverrides = {}, presetDefault = null, activePreset = null, presetHidden = [];
@@ -92,11 +97,13 @@ function mockFrom(st, isDefault, kind) {
     ty = imgTop ? 100 - r : r; sy = imgTop ? 100 - r - 8 : r + 8;
   } else if (lay === 'react') {
     const r = Math.max(25, Math.min(75, +c.ratio || 42));
-    if (c.call === true || c.call === 'true' || k === 'llamada' || k === 'Llamada') { const g3 = ['pmx-blue', 'pmx-amber', 'pmx-teal']; for (let i = 0; i < 3; i++) zone(i * 100 / 3, 100 / 3, g3[i], PMX_IC.per, 'pb'); }
+    const isMc = c.multi === true || c.multi === 'true' || k === 'varias' || k === 'Varias cámaras';
+    if (isMc) { const top = c.mcLay === 'C'; zone(top ? 30 : 0, 70, 'pmx-violet', PMX_IC.play); const g = ['pmx-blue', 'pmx-amber', 'pmx-teal']; for (let i = 0; i < 3; i++) { zone(top ? 0 : 70, 30, g[i], PMX_IC.per, 'pb'); const z = pm.lastChild; z.style.left = (i * 100 / 3) + '%'; z.style.width = (100 / 3) + '%'; } }
+    else if (c.call === true || c.call === 'true' || k === 'llamada' || k === 'Llamada') { const g3 = ['pmx-blue', 'pmx-amber', 'pmx-teal']; for (let i = 0; i < 3; i++) zone(i * 100 / 3, 100 / 3, g3[i], PMX_IC.per, 'pb'); }
     else if (c.duo || k === 'duo' || k === 'Dos personas') { zone(0, r, 'pmx-teal', PMX_IC.per, 'pb'); zone(r, 100 - r, 'pmx-amber', PMX_IC.per, 'pb'); }
     else { zone(0, r, 'pmx-amber', PMX_IC.per, 'pb'); zone(r, 100 - r, 'pmx-violet', PMX_IC.play); }
-    const isCall = c.call === true || c.call === 'true' || k === 'llamada' || k === 'Llamada';
-    ty = isCall ? 100 / 3 : r; sy = isCall ? 100 / 3 + 7 : (c.duo || k === 'duo' || k === 'Dos personas') ? r + 8 : 91;
+    const isCall = !isMc && (c.call === true || c.call === 'true' || k === 'llamada' || k === 'Llamada');
+    ty = isMc ? (c.mcLay === 'C' ? 30 : 70) : isCall ? 100 / 3 : r; sy = isCall ? 100 / 3 + 7 : (c.duo || k === 'duo' || k === 'Dos personas') ? r + 8 : 91;
   } else {
     const close = k === 'podcast' || k === 'Podcast' || +c.zoom >= 250;
     if (close) { zone(0, 100, 'pmx-teal', PMX_IC.per, 'close'); ty = 26; sy = 35; }

@@ -43,7 +43,7 @@ async function enterReview(bid) {
   await openAgentClip(first);
 }
 async function exitReview() { await saveNow(); $('app').classList.remove('review'); reviewBatch = null; $('revBack').hidden = true; goHome(); }
-function curFmtOf() { return layoutMode === 'react' ? ($('duo').checked ? ($('call').checked ? 'llamada' : 'duo') : 'reaccion') : layoutMode === 'split' ? 'dividida' : clipMeta.cam ? 'horizontal_cam' : (+$('titleY').value >= 0 ? 'podcast' : 'horizontal'); }
+function curFmtOf() { return layoutMode === 'react' ? ($('duo').checked ? ($('call').checked ? ($('multi').checked ? 'varias' : 'llamada') : 'duo') : 'reaccion') : layoutMode === 'split' ? 'dividida' : clipMeta.cam ? 'horizontal_cam' : (+$('titleY').value >= 0 ? 'podcast' : 'horizontal'); }
 async function addFeedback(e, kind) {
   const cl = clientOf(e.client); if (!cl) return;
   const a = await getAgent(cl), to = curFmtOf();

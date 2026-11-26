@@ -1,7 +1,7 @@
 /* ---------- 3) la IA lo edita sola ---------- */
 // cómo queda cada formato con la plantilla de este streamer (para las vistas previas)
-function fmtStyle(id) { const f = AG_FORMATS[id], p = f && PRESETS.find(x => x.name === f.preset); const st = p ? effectivePreset(p) : JSON.parse(JSON.stringify(BASE_STYLE)); if (id === 'duo' || id === 'llamada') st.layoutMode = 'react'; return st; }
-const EZ_FMTS = [['podcast', '🎙️', 'Primer plano'], ['reaccion', '📺', 'Reacción'], ['dividida', '🖼️', 'Pantalla dividida'], ['horizontal', '▭', 'Horizontal'], ['horizontal_cam', '🎥', 'Horizontal · solo cámara'], ['duo', '👥', 'Dos personas'], ['llamada', '📞', 'Llamada']];
+function fmtStyle(id) { const f = AG_FORMATS[id], p = f && PRESETS.find(x => x.name === f.preset); const st = p ? effectivePreset(p) : JSON.parse(JSON.stringify(BASE_STYLE)); if (id === 'duo' || id === 'llamada' || id === 'varias') st.layoutMode = 'react'; return st; }
+const EZ_FMTS = [['podcast', '🎙️', 'Primer plano'], ['reaccion', '📺', 'Reacción'], ['dividida', '🖼️', 'Pantalla dividida'], ['horizontal', '▭', 'Horizontal'], ['horizontal_cam', '🎥', 'Horizontal · solo cámara'], ['duo', '👥', 'Dos personas'], ['llamada', '📞', 'Llamada'], ['varias', '🎥', 'Varias cámaras']];
 let ezSteps = [];
 function busy(title, steps) {
   if (title === false) { $('ezBusy').hidden = true; return; }
@@ -92,7 +92,7 @@ async function ezApplyFormat0(fmt, extra = {}) {
   activePreset = pr.name; renderPresets();
   if (allWords.length) buildCaptions();
   if (fmt === 'reaccion') { camDetectedFor = null; await autoDetectCam(true); }
-  if (fmt === 'duo' || fmt === 'llamada') await duoDetect();
+  if (fmt === 'duo' || fmt === 'llamada' || fmt === 'varias') await duoDetect();
   if (fmt === 'horizontal_cam') await detectCamOnly();
   if (fmt === 'podcast') await faceTrack(true); else if (clipMeta.track) clipMeta.track.on = false;
   pushHistory();
