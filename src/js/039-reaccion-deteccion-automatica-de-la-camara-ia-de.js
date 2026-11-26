@@ -29,7 +29,14 @@ async function loadFaceApi() {
   await faceapi.nets.ssdMobilenetv1.loadFromUri(FACE_MODELS);   // modelo preciso (menos caras falsas que el «tiny»)
   return faceapi;
 }
+// los fotogramas de muestra se guardan mientras el clip y su recorte no cambien: cambiar de formato no vuelve a sacarlos
+let sfMemo = null;
 async function sampleFrames(n) {
+  const key = vid.src + '|' + srcRange().map(x => x.toFixed(2)).join('-') + '|' + n;
+  if (sfMemo && sfMemo.key === key) return sfMemo.out;
+  const out = await sampleFrames0(n); sfMemo = { key, out }; return out;
+}
+async function sampleFrames0(n) {
   const tv = document.createElement('video'); tv.muted = true; tv.preload = 'auto'; tv.src = vid.src;
   await new Promise((res, rej) => { tv.onloadeddata = res; tv.onerror = () => rej(new Error('vídeo')); });
   const [r0, r1] = srcRange(), d = (r1 - r0) || tv.duration || 1, out = [];
@@ -40,9 +47,11 @@ async function sampleFrames(n) {
     c.getContext('2d').drawImage(tv, 0, 0, c.width, c.height);
     out.push(c);
   }
+  try { tv.removeAttribute('src'); tv.load(); } catch {}
   return out;
 }
-async function facesIn(c) {
+async function facesIn(c) { if (!c._faces) c._faces = await facesIn0(c); return c._faces.map(f => ({ ...f })); }   // cada fotograma se mira una sola vez
+async function facesIn0(c) {
   const found = [];
   const add = (dets, ox, oy, sx, sy) => { for (const d of dets) { const b = d.box; found.push({ x: (ox + b.x * sx) / c.width, y: (oy + b.y * sy) / c.height, w: b.width * sx / c.width, h: b.height * sy / c.height, s: d.score }); } };
   const opt = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.6, maxResults: 10 });
@@ -262,10 +271,10 @@ function aiov(state, title, sub) {
   if (state === 'work' && !aiovT0) aiovT0 = performance.now();
 }
 async function aiovDone(ok, title, sub) {
-  const wait = Math.max(0, 1600 - (performance.now() - aiovT0)); aiovT0 = 0;   // que se vea el análisis aunque sea rápido
+  const wait = Math.max(0, 350 - (performance.now() - aiovT0)); aiovT0 = 0;   // que se vea el análisis aunque sea rápido
   await sleep(wait);
   aiov(ok ? 'ok' : 'fail', title, sub);
-  if (ok) setTimeout(() => aiov('hide'), 1400);
+  if (ok) setTimeout(() => aiov('hide'), 900);
 }
 $('aiovManual').onclick = () => { aiov('hide'); enterCrop('cam'); };
 $('aiovClose').onclick = () => aiov('hide');

@@ -76,13 +76,32 @@ async function pickLiveDir() {
   catch (e) { console.warn(e); ldg('no pude escribir en la carpeta: ' + e.name + ' · ' + e.message); liveDiagShow(); toast('No pude escribir en esa carpeta'); }
   return d;
 }
-async function renderLiveBox(cl) {
+// canales del directo: cada uno con su canal de Kick, sus cuentas de clippers y su casilla de IA
+let lvChanId = null;
+async function renderLiveBox(cl0) {
+  const cl = clientOf(lvChanId) || cl0; lvChanId = cl.id;
+  const box = $('lvChans'); box.innerHTML = '';
+  const slug = k => (k || '').trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?kick\.com\//i, '').split(/[/?#]/)[0];
+  for (const c of clients) {
+    const k = slug((await getLive(c)).kick); if (!k && c !== cl) continue;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'lv-chip' + (c === cl ? ' on' : ''); b.textContent = k || 'Canal nuevo';
+    b.onclick = async () => { await save(); lvChanId = c.id; renderLiveBox(cl0); }; box.append(b);
+  }
+  const add = document.createElement('button'); add.type = 'button'; add.className = 'lv-chip add'; add.textContent = '＋ Otro canal';
+  add.onclick = async () => { await save(); const n = { id: 'c' + Date.now().toString(36), name: 'Canal ' + (clients.length + 1), created: Date.now(), tg: groupOf(clients[0].id), chan: true }; clients.push(n); await saveClients(); lvChanId = n.id; await renderLiveBox(cl0); $('lvKick').focus(); };
+  box.append(add);
+  if (cl !== clients[0]) {
+    const del = document.createElement('button'); del.type = 'button'; del.className = 'lv-chip del'; del.textContent = '🗑 Quitar este canal';
+    twoStep(del, 'Pulsa otra vez para quitar este canal (sus clips no se borran)', async () => { clearTimeout(save.t); clients = clients.filter(c => c !== cl); await saveClients(); lvChanId = null; await writeLiveConfig(); renderLiveBox(clients[0]); });
+    box.append(del);
+  }
   const L = await getLive(cl);
   $('lvKick').value = L.kick; $('lvClippers').value = L.clippers; $('lvAI').checked = !!L.ai;
-  const save = async () => { await saveLive(cl, { kick: $('lvKick').value.trim(), clippers: $('lvClippers').value, ai: $('lvAI').checked }); };
+  const save = async () => { if (!clients.includes(cl)) return; const kick = $('lvKick').value.trim(); if (cl.chan && slug(kick) && cl.name !== slug(kick)) { cl.name = slug(kick); await saveClients(); } await saveLive(cl, { kick, clippers: $('lvClippers').value, ai: $('lvAI').checked }); };
   ['lvKick', 'lvClippers'].forEach(id => $(id).oninput = () => { clearTimeout(save.t); save.t = setTimeout(save, 500); });
   $('lvAI').onchange = save;
-  $('lvDir').onclick = async () => { await save(); if (await pickLiveDir()) renderLiveBox(cl); };
+  $('lvKick').onchange = async () => { clearTimeout(save.t); await save(); renderLiveBox(cl0); };
+  $('lvDir').onclick = async () => { await save(); if (await pickLiveDir()) renderLiveBox(cl0); };
   $('lvOpen').onclick = async () => { await save(); openLive(); };
   const d = liveDir || await kv.get('grabDir').catch(() => null);
   $('lvDirInfo').textContent = d ? `Carpeta del grabador: «${d.name}». Ábrela y haz doble clic en «Grabador Clipzi.bat» antes del directo (déjalo abierto).` : 'Primero elige una carpeta vacía para el grabador: Cortex pondrá ahí el programa.';
@@ -112,8 +131,7 @@ function appBack() {
   }
   if (!$('livePage').hidden) { $('lvBackHome').click(); return true; }
   if (typeof homeSec !== 'undefined' && homeSec !== 'inicio') { setHomeSec('inicio'); return true; }
-  if (typeof curClient !== 'undefined' && curClient && typeof clients !== 'undefined' && clients.length > 1 && !document.querySelector('.pub')) { curClient = null; renderHome(); return true; }
-  return false;
+    return false;
 }
 try {
   history.pushState({ cortex: 1 }, '');

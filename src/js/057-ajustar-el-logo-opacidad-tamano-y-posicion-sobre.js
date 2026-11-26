@@ -74,7 +74,7 @@ function lgxDraw() {
 function lgxSync() {
   const box = $('lgx'); if (!box) return; const c = clientOf(curClient), has = !!logo, lk = !!trk.logo.lock;
   if (!has) LGX.open = false; box.hidden = !LGX.open; if (!LGX.open) return;
-  $('lgxWho').textContent = c ? c.name : 'este creador'; $('lgxEmpty').hidden = has;
+  $('lgxWho').textContent = ''; $('lgxEmpty').hidden = has;
   $('lgxOp').value = $('logoOp').value; $('lgxOpV').textContent = $('logoOp').value + '%';
   $('lgxSz').value = $('logoSize').value; $('lgxSzV').textContent = $('logoSize').value + '%';
   $('lgxRot').value = $('logoRot').value; $('lgxRotV').textContent = $('logoRot').value + '°';

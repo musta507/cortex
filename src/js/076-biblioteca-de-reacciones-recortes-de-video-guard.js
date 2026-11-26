@@ -29,10 +29,12 @@ async function rxRender() {
     r.append(v, n, s, use, del); box.append(r);
   }
 }
+// la biblioteca vive en su sección del menú (Reacciones) y, desde el editor, se abre en una ventana
+function rxPlace(inPage) { const pop = document.querySelector('.rx-pop'), host = inPage ? $('rxHome') : $('rxBk'); if (!pop || !host) return; if (pop.parentNode !== host) host.append(pop); pop.classList.toggle('inpage', inPage); if (inPage) { $('rxBk').hidden = true; rxRender(); } }
 setTimeout(() => {
   if (!$('seRx')) return;
   document.body.append($('rxBk'));   // fuera de la página del directo: tiene que verse también desde el editor
-  $('seRx').onclick = () => { $('rxBk').hidden = false; rxRender(); };
+  $('seRx').onclick = () => { rxPlace(false); $('rxBk').hidden = false; rxRender(); };
   $('seRxUp').onclick = () => { if (!loaded) { toast('Abre primero un clip'); return; } const i = document.createElement('input'); i.type = 'file'; i.accept = 'video/*'; i.onchange = () => { if (i.files[0]) rxUse(i.files[0], i.files[0].name); }; i.click(); };
   $('rxX').onclick = () => { $('rxBk').hidden = true; };
   $('rxBk').addEventListener('pointerdown', e => { if (e.target === $('rxBk')) $('rxBk').hidden = true; });

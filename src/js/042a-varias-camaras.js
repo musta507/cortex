@@ -36,14 +36,17 @@ Answer only JSON: {"cams":[{"box_2d":[ymin,xmin,ymax,xmax],"face_box_2d":[ymin,x
 async function mcFaces(frames) {
   await loadFaceApi();
   const all = [];
+  const t0 = performance.now();
   for (let i = 0; i < frames.length; i++) {
+    if (i >= 2 && performance.now() - t0 > 15000) break;   // nunca se queda pensando: con dos fotogramas ya vale
     aiov('work', 'Buscando las cámaras', `Fotograma ${i + 1} de ${frames.length}…`);
     const c = frames[i]; for (const f of await facesIn(c)) all.push({ ...f, i });
+    if (c._mcx) { for (const f of c._mcx) all.push({ ...f, i }); continue; } c._mcx = [];
     // además, el centro de arriba y de abajo ampliados (ahí suelen ir las tiras de cámaras pequeñas)
     const q = document.createElement('canvas'); q.width = c.width; q.height = c.height; const qx = q.getContext('2d'), tw = c.width / 3, th = c.height / 3;
     for (const [ox, oy] of [[tw, 0], [tw, c.height - th]]) {
       qx.drawImage(c, ox, oy, tw, th, 0, 0, q.width, q.height);
-      for (const d of await faceapi.detectAllFaces(q, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.6, maxResults: 10 }))) { const b = d.box; all.push({ x: (ox + b.x / 3) / c.width, y: (oy + b.y / 3) / c.height, w: b.width / 3 / c.width, h: b.height / 3 / c.height, s: d.score, i }); }
+      for (const d of await faceapi.detectAllFaces(q, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.6, maxResults: 10 }))) { const b = d.box; const f = { x: (ox + b.x / 3) / c.width, y: (oy + b.y / 3) / c.height, w: b.width / 3 / c.width, h: b.height / 3 / c.height, s: d.score }; c._mcx.push(f); all.push({ ...f, i }); }
     }
   }
   const groups = [];
@@ -70,12 +73,15 @@ async function mcFaces(frames) {
 async function mcDetect() {
   if (!loaded) return false;
   let r = { cams: [], content: null };
-  try {
+  const work = async () => {
     aiov('work', 'Buscando las cámaras', 'Mirando el clip…');
     const frames = await sampleFrames(5);
-    if (getGemKey()) { try { aiov('work', 'Buscando las cámaras', 'La IA está localizando cada cámara y lo que ven…'); r = await mcGemini(frames[2] || frames[0]); } catch (e) { console.warn('varias cámaras · Gemini', e); } }
-    if (r.cams.length < 2) r = await mcFaces(frames);
-  } catch (e) { console.warn('varias cámaras', e); }
+    if (getGemKey()) { try { aiov('work', 'Buscando las cámaras', 'La IA está localizando cada cámara y lo que ven…'); r = await Promise.race([mcGemini(frames[2] || frames[0]), new Promise((_, no) => setTimeout(() => no(new Error('la IA tarda demasiado')), 12000))]); } catch (e) { console.warn('varias cámaras · Gemini', e); } }
+    if (r.cams.length < 2) r = await mcFaces([frames[0], frames[2], frames[4]].filter(Boolean));
+  };
+  // pase lo que pase, en 40 s como mucho se queda con lo que haya (y si no hay nada, 3 cámaras abajo para ajustarlas a mano)
+  try { await Promise.race([work(), new Promise(ok => setTimeout(ok, 40000))]); } catch (e) { console.warn('varias cámaras', e); }
+  if (!r || !r.cams) r = { cams: [], content: null };
   aiov('hide'); aiovT0 = 0;
   // en orden de lectura y sin pisarse en la misma fila
   const cams = r.cams.sort((a, b) => Math.abs(a.t.y - b.t.y) > Math.min(a.t.h, b.t.h) * 0.6 ? a.t.y - b.t.y : a.t.x - b.t.x);

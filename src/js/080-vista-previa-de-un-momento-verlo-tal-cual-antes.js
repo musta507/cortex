@@ -78,7 +78,7 @@ async function speechStart(f, a, lim) {
 }
 async function openLiveClip(S, g, f, off, dur, fmtPick) {
   const cl = clients.find(c => c.name.toLowerCase() === String(S.status.client || '').toLowerCase()) || clientOf(curClient) || clients[0];
-  curClient = cl.id;
+  curClient = clients[0].id;
   if (!stDock) $('livePage').hidden = true;
   await newClip();
   const file = new File([f], `${S.status.slug}_min${clockOf(g.t0 - S.status.started).replace(/:/g, '-')}.mp4`, { type: 'video/mp4' });

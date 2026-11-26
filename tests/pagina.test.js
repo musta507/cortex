@@ -93,6 +93,36 @@ const exportBlob = p => p.evaluate(async () => {
       check('sin errores con varias cámaras', !p.errs.length, p.errs[0]);
       await p.context().close();
     }
+    // un solo espacio: los antiguos clientes se juntan sin perder clips ni plantillas
+    {
+      const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } }); const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+      await ctx.route(/^https?:/, r => r.abort()); await p.goto(PC); await p.waitForTimeout(1200);
+      await p.evaluate(async () => {
+        await kv.set('clients', [{ id: 'ca', name: 'Pablo' }, { id: 'cb', name: 'Arz', tg: 'ca' }, { id: 'cw', name: 'WestCOL' }]);
+        await kv.set('projects', [{ id: 'p1', client: 'cw', name: 'w1', time: 3 }, { id: 'p2', client: 'cw', name: 'w2', time: 2 }, { id: 'p3', client: 'ca', name: 'pablo1', time: 1 }]);
+        await kv.set('tplg:cw', { overrides: { Podcast: { c: { zoom: '120' } } }, templates: { 'Mía': { c: { zoom: '111' } } } });
+        await kv.set('tplg:ca', { overrides: { Podcast: { c: { zoom: '150' } } }, templates: { 'Mía': { c: { zoom: '199' } }, Otra: { c: { zoom: '101' } } } });
+        await kv.set('client:ca', { live: { kick: 'pablo', clippers: '', ai: false } });
+        await kv.del('mig-un-espacio'); await kv.set('mig-link-pablo-arz', 1);
+      });
+      await p.reload(); await p.waitForTimeout(2200);
+      const o = await p.evaluate(() => ({ main: clients[0].name, cur: curClient, clips: $('recents').querySelectorAll('.rcard').length - 1, tpl: Object.keys(templates).sort(), ov: presetOverrides.Podcast.c.zoom, lista: !$('homeClients').hidden, grupos: new Set(clients.map(c => groupOf(c.id))).size }));
+      check('sin clientes: todos los clips juntos y un solo juego de plantillas', o.main === 'WestCOL' && o.cur === 'cw' && o.clips === 3 && !o.lista && o.grupos === 1 && o.ov === '120' && ['Mía', 'Mía · Pablo', 'Otra', 'Podcast · Pablo'].every(n => o.tpl.includes(n)), o);
+      await p.click('#hnav .hi[data-sec=directo]'); await p.waitForTimeout(700);
+      check('los canales de Kick siguen en «En directo»', await p.evaluate(() => [...$('lvChans').querySelectorAll('.lv-chip')].map(x => x.textContent).join('|')).then(t => t.includes('westcol') && t.includes('pablo')));
+      await p.click('#hnav .hi[data-sec=reacciones]'); await p.waitForTimeout(400);
+      check('Reacciones es una sección del menú', await p.evaluate(() => !$('rxHome').closest('.hsec').hidden && !!$('rxHome').querySelector('#rxAdd')));
+      check('sin errores al juntar', !errs.length, errs[0]);
+      await ctx.close();
+    }
+    // cambiar de formato: al volver a uno ya visto no se busca otra vez
+    {
+      const p = await openWithClip(b);
+      await p.evaluate(async () => { setAutoOff(true); await stQuickOpen(true); });
+      const r = await p.evaluate(async () => { await ezSetFormat('varias'); crops.cam.x = 0.123; let n = 0; const d0 = mcDetect; mcDetect = async () => { n++; return d0(); }; await ezSetFormat('horizontal'); const t = performance.now(); await ezSetFormat('varias'); return { n, ms: Math.round(performance.now() - t), x: crops.cam.x, fmt: curFmtOf() }; });
+      check('volver a un formato es inmediato y conserva tus ajustes', r.n === 0 && r.ms < 1500 && r.x === 0.123 && r.fmt === 'varias', r);
+      await p.context().close();
+    }
     // vídeo de abajo (biblioteca de reacciones)
     {
       const p = await openWithClip(b);

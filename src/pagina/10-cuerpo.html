@@ -13,9 +13,9 @@
     <div class="hdr-actions">
       <button id="liveBack" class="primary" hidden title="Volver a la lista de momentos del directo">← Volver al directo</button>
       <button id="revBack" class="primary" hidden title="Volver a revisar los clips del agente">← Volver a la revisión</button>
-      <button id="homeBtn" title="Volver a los clips del cliente (se guarda solo)"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z"/></svg>Inicio</button>
-      <button id="ttBtn" class="fmt-btn" hidden title="Diseños de título: elige uno y se usará en todos los clips de este creador"><svg viewBox="0 0 24 24"><path d="M4 7V5h16v2M9 19h6M12 5v14"/></svg>Plantilla de título<svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
-      <button id="tplBtn" class="fmt-btn" hidden title="Aplicar otra plantilla de este creador"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Cambiar plantilla<svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button id="homeBtn" title="Volver a tus clips (se guarda solo)"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z"/></svg>Inicio</button>
+      <button id="ttBtn" class="fmt-btn" hidden title="Diseños de título: elige uno y se usará en todos los clips nuevos"><svg viewBox="0 0 24 24"><path d="M4 7V5h16v2M9 19h6M12 5v14"/></svg>Plantilla de título<svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button id="tplBtn" class="fmt-btn" hidden title="Aplicar otra plantilla"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Cambiar plantilla<svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
       <button id="fmtBtn" class="fmt-btn" hidden title="Si la IA eligió mal el formato, cámbialo aquí"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Cambiar formato<svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
       <button id="undo" class="ico" disabled title="Deshacer (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 010 10h-2"/></svg></button>
       <button id="redo" class="ico" disabled title="Rehacer (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M15 7l5 5-5 5M20 12H9a5 5 0 000 10h2"/></svg></button>
@@ -245,7 +245,7 @@
     </div>
     <div class="home" id="livePage" hidden>
       <div class="home-in">
-        <div class="lv-head"><button class="ib" id="lvBackHome" style="width:auto;padding:0 10px;font-size:14px">← Clientes</button><h2 class="home-h" style="margin:0">📡 En directo</h2><span class="lv-modes" role="tablist"><button id="lvModeTr" title="Clipear leyendo lo que se dice">📝 Transcripción</button><button id="lvModeSt" title="Clipear viendo el directo en grande">📺 Pantalla</button></span><button id="lvHistB" class="lc-b" title="Los clips que has sacado: pulsa uno para abrirlo otra vez">🕘 Historial</button><button id="lvChatB" class="lc-b" title="Ver el chat del directo en una columna (con ella cerrada no gasta nada)">💬 Chat</button><button id="lvPrepH" style="margin-left:auto;width:auto;padding:0 14px" title="Abre el editor vacío (lo que pongas se usa en el próximo clip que saques o subas)">✂️ Abrir el editor</button><button id="lvUpB" style="width:auto;padding:0 14px" title="Edita un vídeo que no es del directo (de tu ordenador) en el mismo panel · también puedes arrastrarlo aquí">➕ Subir un vídeo</button><input type="file" id="lvUpF" accept="video/*,.mp4,.mov,.webm,.mkv,.m4v" hidden><button id="lvData" style="width:auto;padding:0 14px" title="Descarga un archivo con todo lo exportado, abierto y descartado">📥 Datos de clips</button><button class="primary" id="lvMiniShow" style="width:auto;padding:0 14px">📺 Ver el directo</button></div>
+        <div class="lv-head"><button class="ib" id="lvBackHome" style="width:auto;padding:0 10px;font-size:14px">← Inicio</button><h2 class="home-h" style="margin:0">📡 En directo</h2><span class="lv-modes" role="tablist"><button id="lvModeTr" title="Clipear leyendo lo que se dice">📝 Transcripción</button><button id="lvModeSt" title="Clipear viendo el directo en grande">📺 Pantalla</button></span><button id="lvHistB" class="lc-b" title="Los clips que has sacado: pulsa uno para abrirlo otra vez">🕘 Historial</button><button id="lvChatB" class="lc-b" title="Ver el chat del directo en una columna (con ella cerrada no gasta nada)">💬 Chat</button><button id="lvPrepH" style="margin-left:auto;width:auto;padding:0 14px" title="Abre el editor vacío (lo que pongas se usa en el próximo clip que saques o subas)">✂️ Abrir el editor</button><button id="lvUpB" style="width:auto;padding:0 14px" title="Edita un vídeo que no es del directo (de tu ordenador) en el mismo panel · también puedes arrastrarlo aquí">➕ Subir un vídeo</button><input type="file" id="lvUpF" accept="video/*,.mp4,.mov,.webm,.mkv,.m4v" hidden><button id="lvData" style="width:auto;padding:0 14px" title="Descarga un archivo con todo lo exportado, abierto y descartado">📥 Datos de clips</button><button class="primary" id="lvMiniShow" style="width:auto;padding:0 14px">📺 Ver el directo</button></div>
         <div class="lv-status" id="lvStatus"></div>
         <div class="lv-crit" id="lvCrit"></div>
         <div class="lv-auto" id="lvAuto"><button id="auBtn" title="Cada clip que suban los otros clippers se saca del directo con el mismo inicio y final, se monta con el fondo difuminado y se exporta solo">🤖 Modo automático: apagado</button><span class="au-cfg"><label>Formato <select id="auFmt"></select></label><label>Fondo <select id="auBg"><option value="tpl">El de la plantilla</option><option value="black">Negro</option><option value="blur1">Difuminado suave</option><option value="blur2">Difuminado medio</option><option value="blur3">Difuminado fuerte</option><option value="blur4">Muy difuminado</option></select></label><label>Título <select id="auTT"></select></label><label class="check"><input type="checkbox" id="auSubs">Subtítulos</label><button id="auTplEd" title="Abre la página de Plantillas para cambiar el diseño de ese formato">✏️ Editar la plantilla</button></span><span class="hint" id="auS">Saca, monta con fondo difuminado y exporta solo cada clip que suben los otros clippers. No tienes que tocar nada.</span></div>
@@ -379,11 +379,11 @@
             <div class="recents" id="recents"></div>
           </div>
           <div class="hsec" data-sec="plantillas" hidden>
-          <label class="f linkf">Plantillas compartidas con <select id="linkSel"></select></label>
-          <p class="hint" id="linkHint"></p>
+          <label class="f linkf" hidden>Plantillas compartidas con <select id="linkSel"></select></label>
+          <p class="hint" id="linkHint" hidden></p>
           <section class="tplbox" id="tplBox">
 @@solo-pc
-            <div class="tpl-h"><strong>🎨 Plantillas de <span id="tplWho"></span></strong><span class="hint">El estilo de este creador. Se aplican solas al editar sus clips: la IA elige el formato y usa su versión.</span></div>
+            <div class="tpl-h"><strong>🎨 Tus plantillas<span id="tplWho" hidden></span></strong><span class="hint">Se aplican solas al editar: la IA elige el formato y usa tu versión.</span></div>
 @@fin
 @@solo-web
             <div class="tpl-h"><strong>🎨 Tus plantillas<span id="tplWho" hidden></span></strong><span class="hint">Cada tipo de clip tiene su plantilla. La IA elige sola cuál usar en cada clip; tú puedes cambiar el estilo de cualquiera.</span></div>
@@ -396,7 +396,7 @@
             <div class="tpl-imp" id="tplImp" hidden></div>
           </section>
           <section class="tplbox" id="ttBox">
-            <div class="tpl-h"><strong>🔤 Plantillas de título de <span id="ttWho"></span></strong><span class="hint">Solo el diseño del título (letra, tamaño, caja y colores). Pulsa una para dejarla fija: se pondrá sola en todos los clips nuevos de este creador, sea cual sea el formato.</span></div>
+            <div class="tpl-h"><strong>🔤 Plantillas de título<span id="ttWho" hidden></span></strong><span class="hint">Solo el diseño del título (letra, tamaño, caja y colores). Pulsa una para dejarla fija: se pondrá sola en todos los clips nuevos, sea cual sea el formato.</span></div>
             <div class="tt-grid" id="ttGrid"></div>
             <div class="tpl-act"><button class="primary" id="ttNewBtn">➕ Crear plantilla de título</button></div>
             <p class="hint">Elige la letra, el tamaño, los colores, el contorno, la sombra y el fondo, y lo ves al momento. Para editar una tuya, pasa el ratón por encima y pulsa ✏️. También puedes guardar el título de un clip abierto: arriba, «Plantilla de título» → «Guardar el título actual como plantilla».</p>
@@ -407,7 +407,7 @@
             <input type="file" id="fnFile" accept=".ttf,.otf,.woff,.woff2" multiple hidden>
           </section>
           <section class="tplbox" id="lgBox">
-            <div class="tpl-h"><strong>🖼️ Logos</strong><span class="hint">Todos tus logos en un sitio. Pulsa uno para ponérselo a <b id="lgWho"></b>: saldrá en todos sus clips. Puedes subir varios a la vez.</span></div>
+            <div class="tpl-h"><strong>🖼️ Logos</strong><span class="hint">Todos tus logos en un sitio. Pulsa uno para ponerlo en <b id="lgWho"></b>: saldrá en todos. Puedes subir varios a la vez.</span></div>
             <div class="lg-grid" id="lgGrid"></div>
             <input type="file" id="lgFile" accept="image/*" multiple hidden>
             <div class="lgx" id="lgx" hidden>
@@ -421,12 +421,13 @@
                 <div class="lgx-f"><span>Posición rápida</span><div class="lgx-pos" id="lgxPos"></div></div>
                 <label class="toggle"><input type="checkbox" id="lgxTk" checked><span></span>Ver lo que tapa TikTok (botones y descripción)</label>
                 <label class="toggle"><input type="checkbox" id="lgxLock"><span></span>Candado: fijar posición y tamaño</label>
-                <p class="hint">Se guarda para <b id="lgxWho">este creador</b> y se usa en todos sus clips.</p>
+                <p class="hint">Se guarda <b id="lgxWho" hidden></b>y se usa en todos tus clips.</p>
                 <button type="button" class="primary lgx-ok" id="lgxOk">✓ Listo</button>
               </div>
             </div>
           </section>
           </div>
+          <div class="hsec" data-sec="reacciones" hidden><div id="rxHome"></div></div>
           <div class="hsec" data-sec="agente" hidden>
 @@solo-web
 <div class="pub" data-pub="agente">
@@ -441,7 +442,7 @@
 @@fin
           <div class="agent" id="agentBox">
             <div class="agent-h"><strong>🤖 Agente de clips</strong><span class="hint">Le das un directo y saca los clips virales. Cuándo usa cada formato lo decides debajo de cada plantilla; aquí van las reglas generales y la conversación con el agente.</span></div>
-            <div class="field"><span class="lbl">Reglas generales de este creador</span><textarea id="agRules" rows="3" placeholder="Por ejemplo: objetivo viralidad · el casino nunca se enseña · prioriza las polémicas…"></textarea></div>
+            <div class="field"><span class="lbl">Reglas generales</span><textarea id="agRules" rows="3" placeholder="Por ejemplo: objetivo viralidad · el casino nunca se enseña · prioriza las polémicas…"></textarea></div>
             <details class="field" id="agManBox"><summary class="lbl">📘 Criterio sacado de los clips virales <em id="agManInfo"></em></summary>
               <p class="hint">El agente lo sigue para elegir los momentos, dónde empezar y acabar cada clip y cómo titular. Puedes editarlo.</p>
               <textarea id="agManual" rows="12" style="width:100%"></textarea>
@@ -450,7 +451,7 @@
               <div class="presets"><button id="agManReset">↺ Poner el criterio del informe de WestCOL</button><button id="agManOff">Quitar el criterio</button></div>
             </details>
             <div class="agchat">
-              <span class="lbl">💬 Habla con el agente de este creador</span>
+              <span class="lbl">💬 Habla con el agente</span>
               <div class="agmsgs" id="agMsgs"></div>
               <div class="agin"><textarea id="agChatIn" rows="2" placeholder="Dale consejos o pregúntale. Por ejemplo: «los clips de casino no funcionan, prioriza cuando se enfada»"></textarea><button class="primary" id="agChatGo">Enviar</button></div>
               <p class="hint">Cuando le das un consejo te propone el cambio en sus reglas y tú decides si lo aplicas. <a id="agChatClear">Borrar conversación</a></p>
@@ -500,7 +501,7 @@
   <div class="pub-soon"><span>Próximamente</span>Analiza los clips virales de TU streamer y Cortex aprenderá qué funciona con su público.</div></div>
 @@fin
           <div class="agent" id="vlBox">
-            <div class="agent-h"><strong>📊 Aprender de clips virales</strong><span class="hint">Cortex lee las cuentas de otros clippers de este creador, ve con la IA los clips que más y menos funcionaron y saca los patrones: estructura de los títulos, ganchos, duración, temas, formato… Con eso escribe un manual para el agente.</span></div>
+            <div class="agent-h"><strong>📊 Aprender de clips virales</strong><span class="hint">Cortex lee las cuentas de otros clippers, ve con la IA los clips que más y menos funcionaron y saca los patrones: estructura de los títulos, ganchos, duración, temas, formato… Con eso escribe un manual para el agente.</span></div>
             <div class="field"><span class="lbl">1 · Cuentas de clippers <em>una por línea: @ de TikTok, enlace de un canal o enlaces de vídeos sueltos</em></span><textarea id="vlAccs" rows="3" placeholder="@clipper1&#10;@clipper2"></textarea></div>
             <div class="presets"><label class="f" style="width:auto">Vídeos por cuenta <select id="vlMax" style="width:auto"><option value="50">50</option><option value="100">100</option><option value="200">200</option><option value="400">400</option><option value="1000">1000</option><option value="100000">Todos</option></select></label><button class="primary" id="vlGo">📥 Recoger clips (gratis)</button><button id="vlStopCol" hidden>⏹ Parar y quedarme con lo recogido</button><button id="vlImp" title="Carga los vídeos que el grabador ya haya leído, aunque no terminara">📂 Cargar lo ya recogido</button></div>
             <p class="hint" id="vlStatus"></p>
@@ -548,6 +549,7 @@
 @@fin
           <div class="agent" id="liveBox">
             <div class="agent-h"><strong>🔴 Clipeo en directo</strong><span class="hint">Mientras el streamer está en directo, Cortex te avisa de los buenos momentos (picos del chat ×2, ×3…, clips de otros clippers y lo que oye la IA), te escribe la transcripción en vivo para que subrayes y saques clips, y puedes pedirle clips a la IA con tus palabras. Con un clic lo tienes editado.</span></div>
+            <div class="lv-chans" id="lvChans"></div>
             <label class="f">Canal de Kick<input type="text" id="lvKick" placeholder="por ejemplo: westcol" autocomplete="off"></label>
             <div class="field"><span class="lbl">Cuentas de TikTok de otros clippers de este streamer <em>una por línea</em></span><textarea id="lvClippers" rows="4" placeholder="@clipper1&#10;@clipper2"></textarea></div>
             <label class="toggle"><input type="checkbox" id="lvAI"><span></span>La IA también escucha el directo (aprox. 0,3–1 céntimo por minuto)</label>
@@ -907,7 +909,7 @@
             <span class="hint">PNG con fondo transparente. Queda activo en todos tus clips.</span>
           </label>
           <div class="group" id="logoOpts" hidden>
-            <button id="logoRemove" title="Quita el logo de este cliente (puedes volver a subirlo cuando quieras)">✕ Quitar logo</button>
+            <button id="logoRemove" title="Quita el logo (puedes volver a subirlo cuando quieras)">✕ Quitar logo</button>
             <label class="toggle"><input type="checkbox" id="logoLock"><span></span>Candado: fijar posición y tamaño</label>
             <label class="toggle"><input type="checkbox" id="logoShow" checked><span></span>Mostrar el logo en este clip</label>
             <p class="hint" id="logoLockHint" hidden>El logo está bloqueado. Quita el candado para moverlo o cambiar su tamaño.</p>

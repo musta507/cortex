@@ -76,7 +76,13 @@ async function ezApplyFormat(fmt, extra = {}) {
   fmt = fixFmt(fmt);
   try { return await ezApplyFormat0(fmt, extra); } finally { if (!$('subsGen').checked) { trk.caps.hide = true; clipMeta.noSubs = true; syncTrackUI(); } }
 }
+// lo que ya se encontró en este clip para cada formato (cámaras, encuadres…): al volver a un formato sale al instante, con tus ajustes
+const fmtMemo = new Map(), FMT_DET = new Set(['reaccion', 'duo', 'llamada', 'varias', 'horizontal_cam']);
+const fmtSig = f => (file ? file.name + '|' + file.size : '') + '|' + (loaded ? srcRange().map(x => x.toFixed(2)).join('-') : '') + '|' + f;
+function fmtKeep() { const f = clipMeta.fmt; if (!loaded || !f || !FMT_DET.has(f) || !fmtMemo.has(fmtSig(f))) return; fmtMemo.set(fmtSig(f), JSON.stringify({ crops, zones, cam: clipMeta.cam || null, lay: $('mcLay').value })); }
+function fmtBack(f) { const m = loaded && fmtMemo.get(fmtSig(f)); if (!m || m === 1) return false; try { const o = JSON.parse(m); for (const k of Object.keys(crops)) delete crops[k]; Object.assign(crops, o.crops); zones = o.zones || []; if (o.cam) clipMeta.cam = o.cam; $('mcLay').value = o.lay || 'A'; tlSig = ''; return true; } catch { return false; } }
 async function ezApplyFormat0(fmt, extra = {}) {
+  try { fmtKeep(); } catch {}
   const F = AG_FORMATS[fmt] || AG_FORMATS.horizontal, pr = PRESETS.find(x => x.name === F.preset);
   const A = await ezAgentCfg(), titleTop = /t[ií]tulo\s+(va\s+)?arriba/i.test(A.rules || '');
   const st = cleanForPreset(effectivePreset(pr)); st.c = st.c || {};
@@ -91,10 +97,15 @@ async function ezApplyFormat0(fmt, extra = {}) {
   clipMeta.imgPrompt = fmt === 'dividida' ? (extra.image || clipMeta.imgPrompt || 'algo que represente lo que dice') : '';
   activePreset = pr.name; renderPresets();
   if (allWords.length) buildCaptions();
-  if (fmt === 'reaccion') { camDetectedFor = null; await autoDetectCam(true); }
-  if (fmt === 'duo' || fmt === 'llamada' || fmt === 'varias') await duoDetect();
-  if (fmt === 'horizontal_cam') await detectCamOnly();
-  if (fmt === 'podcast') await faceTrack(true); else if (clipMeta.track) clipMeta.track.on = false;
+  const back = !extra.again && FMT_DET.has(fmt) && fmtBack(fmt);
+  if (!back) {
+    if (fmt === 'reaccion') { camDetectedFor = null; await autoDetectCam(true); }
+    if (fmt === 'duo' || fmt === 'llamada' || fmt === 'varias') await duoDetect();
+    if (fmt === 'horizontal_cam') await detectCamOnly();
+    if (FMT_DET.has(fmt)) { fmtMemo.set(fmtSig(fmt), 1); fmtKeep(); }
+  }
+  // podcast: si ya se siguió la cara en este mismo trozo, no se vuelve a mirar el clip entero
+  if (fmt === 'podcast') { const tr = clipMeta.track, r = srcRange(); if (tr && tr.p && tr.r && Math.abs(tr.r[0] - r[0]) < 0.05 && Math.abs(tr.r[1] - r[1]) < 0.05) tr.on = true; else await faceTrack(true); } else if (clipMeta.track) clipMeta.track.on = false;
   pushHistory();
 }
 const ezSkip = { title: false, subs: false, scenes: false, speech: false };   // desde la pantalla del directo se puede pedir que no haga el título o los subtítulos
@@ -122,7 +133,7 @@ async function ezRunAI() {
     if (ezPref('scenes') !== '0' && !ezSkip.scenes) { try { await scenesAuto(true); } catch (e) { console.warn('escenas', e); } }
     if ($('aiov').dataset.state !== 'fail') aiov('hide');
     $('ezBusy').hidden = false;
-    busyStep('fmt', auto ? 'skip' : 'ok', (EZ_FMTS.find(x => x[0] === fmt) || [])[2] + (auto ? ' (plantilla del cliente)' : fmtMine ? ' (elegido por ti)' : '')); busyMsg('');
+    busyStep('fmt', auto ? 'skip' : 'ok', (EZ_FMTS.find(x => x[0] === fmt) || [])[2] + (auto ? ' (tu plantilla)' : fmtMine ? ' (elegido por ti)' : '')); busyMsg('');
     // subtítulos
     const subsOn = A.subs && $('subsGen').checked && !ezSkip.subs;
     clipMeta.noSubs = !subsOn; if (!subsOn) { trk.caps.hide = true; syncTrackUI(); }

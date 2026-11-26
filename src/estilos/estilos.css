@@ -1460,4 +1460,8 @@ body.se-rzing{cursor:ew-resize;user-select:none}
 .mc-opts .seg button.on{background:#fff;color:#111}
 .mc-opts .mc-find{width:auto;padding:5px 12px;font-size:12px}
 .mc-host[hidden]{display:none}
+.lv-chans{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.lv-chip{width:auto;padding:5px 12px;font-size:13px;border-radius:999px}
+.lv-chip.on{background:#fff;color:#111}
+.lv-chip.add,.lv-chip.del{background:transparent;border:1px dashed rgba(255,255,255,.25)}
 </style>

@@ -34,7 +34,7 @@ async function faceTrack(quiet) {
     const c = document.createElement('canvas'); c.width = 640; c.height = Math.round(640 * tv.videoHeight / tv.videoWidth);
     const cx = c.getContext('2d', { willReadFrequently: true });
     const opt = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.45, maxResults: 6 });
-    const step = Math.max(0.4, (b - a) / 220), raw = [];
+    const step = Math.max(0.5, (b - a) / 90), raw = [];
     let prev = null, found = 0;
     for (let t = a; t <= b + 1e-3; t += step) {
       await tvSeek(tv, Math.min(b - 0.03, t));

@@ -8,7 +8,7 @@ async function lgAdd(src, name) {
 function lgShrink(file) { return new Promise((res, rej) => { const fr = new FileReader(); fr.onerror = rej; fr.onload = () => { const im = new Image(); im.onerror = rej; im.onload = () => { const k = Math.min(1, 600 / Math.max(im.width, im.height)); if (k >= 1 && fr.result.length < 900000) { res(fr.result); return; } const c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL('image/png')); }; im.src = fr.result; }; fr.readAsDataURL(file); }); }
 let lgRenderN = 0;
 async function lgRender() {
-  const box = $('lgGrid'); if (!box) return; const my = ++lgRenderN, c = clientOf(curClient); $('lgWho').textContent = c ? c.name : 'este creador';
+  const box = $('lgGrid'); if (!box) return; const my = ++lgRenderN, c = clientOf(curClient); $('lgWho').textContent = 'tus clips';
   let lib = await lgLib(); const have = new Set(lib.map(x => x.src)); let added = false;
   for (const o of clients) { let st = null; try { st = await kv.get('client:' + o.id); } catch {} const src = st && st.logo && st.logo.src; if (src && !have.has(src)) { have.add(src); lib.push({ id: 'c' + o.id + Date.now().toString(36), name: 'Logo de ' + o.name, src, at: Date.now() }); added = true; } }
   if (added) { try { await kv.set('logoLib', lib); } catch {} }

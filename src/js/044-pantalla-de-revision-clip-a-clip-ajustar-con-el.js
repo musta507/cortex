@@ -3,7 +3,7 @@ let reviewBatch = null;
 const revClips = () => projIndex.filter(x => x.batch === reviewBatch).sort((a, b) => (b.score || 0) - (a.score || 0));
 async function openAgentClip(e) {
   const f = await batchFile(e.batch); if (!f) return false;
-  curClient = e.client; await loadClientStore(e.client); resetEditor(); curProj = e.id;
+  curClient = clients[0] ? clients[0].id : e.client; await loadClientStore(curClient); resetEditor(); curProj = e.id;
   let saved = null, im = null;
   try { saved = await kv.get('proj:' + e.id); im = await kv.get('image:' + e.id); } catch {}
   hideHome(); setCrumb();

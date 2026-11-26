@@ -334,7 +334,7 @@ async function tplRender() {
   ttRender().catch(e => console.warn('títulos', e)); fontsRender().catch(() => {});
   const c = clientOf(curClient), box = $('tplBox'); if (!c || !box) { lgRender().catch(() => {}); return; }
   await loadClientStore(c.id); lgRender().catch(e => console.warn('logos', e));
-  $('tplWho').textContent = c.name;
+  $('tplWho').textContent = '';
   const g = $('tplGrid'); g.innerHTML = '';
   const AW = await getAgent(c);
   const whenFields = (card, keys) => {

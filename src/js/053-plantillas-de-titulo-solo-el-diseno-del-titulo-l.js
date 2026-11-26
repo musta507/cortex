@@ -84,7 +84,7 @@ async function ttApply(n, quiet) {
 async function ttPick(n) {
   if (!(await ttApply(n))) return;
   titleDef = n; await saveTypeStore();
-  const c = clientOf(curClient); toast(`Título «${n}» puesto` + (c ? ` · fijo para ${c.name}` : ''));
+  const c = clientOf(curClient); toast(`Título «${n}» puesto y fijo para los clips nuevos`);
 }
 // en cada clip nuevo: el título fijo del creador (si tiene)
 async function ttApplyDef() { if (titleDef && ttGet(titleDef)) { try { await ttApply(titleDef, true); } catch (e) { console.warn('título', e); } } }
@@ -92,12 +92,12 @@ async function ttSave() {
   const n = (prompt('Nombre para esta plantilla de título (se guarda el diseño que tiene ahora: letra, tamaño, caja y colores):', '') || '').trim();
   if (!n) return;
   titleTpls[n] = titlePart(getStyle()); titleDef = n; await saveTypeStore();
-  const c = clientOf(curClient); toast(`Plantilla de título «${n}» guardada` + (c ? ` y fija para ${c.name}` : ''));
+  const c = clientOf(curClient); toast(`Plantilla de título «${n}» guardada y fija para los clips nuevos`);
 }
 // en la página de Plantillas: verlas todas y elegir la fija de este creador sin abrir un clip
 async function ttRender() {
   const box = $('ttGrid'); if (!box) return;
-  const c = clientOf(curClient); $('ttWho').textContent = c ? c.name : 'este creador';
+  const c = clientOf(curClient); $('ttWho').textContent = '';
   box.innerHTML = '';
   const names = [...Object.keys(titleTpls), ...Object.keys(TT_BUILTIN).filter(n => !titleTpls[n])];
   const card = (n, tp) => {

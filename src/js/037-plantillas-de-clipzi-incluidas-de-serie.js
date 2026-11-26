@@ -150,7 +150,7 @@ $('presetDefaultBtn').onclick = async () => {
   if (!activePreset) return;
   presetDefault = presetDefault === activePreset ? null : activePreset;
   await savePresetStore(); renderPresets();
-  setStatus($('tplStatus'), presetDefault ? `«${presetDefault}» se aplicará sola en cada clip nuevo de este cliente.` : 'Los clips nuevos de este cliente empezarán sin plantilla.', 'ok');
+  setStatus($('tplStatus'), presetDefault ? `«${presetDefault}» se aplicará sola en cada clip nuevo.` : 'Los clips nuevos empezarán sin plantilla.', 'ok');
 };
 $('presetResetBtn').onclick = async () => {
   if (!activePreset || !presetOverrides[activePreset]) return;
@@ -259,7 +259,7 @@ function resetEditor() {
   ['transcribe', 'play', 'seek', 'export'].forEach(id => $(id).disabled = true);
   syncTrackUI(); fillTextPanel(); tlSig = ''; flagsMsg = null; if (typeof renderFlags === 'function') renderFlags();
 }
-function setCrumb() { const c = clientOf(curClient); $('crumb').textContent = c ? '› ' + c.name : ''; $('crumb').hidden = !c; }
+function setCrumb() { $('crumb').textContent = ''; $('crumb').hidden = true; }
 async function newClip() {
   await loadClientStore(curClient); resetEditor();
   curProj = 'p' + Date.now().toString(36);
@@ -271,7 +271,7 @@ async function newClip() {
   setEasy(true); ezShow('insert');
 }
 async function openProject(e) {
-  curClient = e.client; await loadClientStore(e.client); resetEditor(); curProj = e.id;
+  curClient = clients[0] ? clients[0].id : e.client; await loadClientStore(curClient); resetEditor(); curProj = e.id;
   let saved = null, clip = null, im = null;
   try { saved = await kv.get('proj:' + e.id); clip = await kv.get('clip:' + e.id); im = await kv.get('image:' + e.id); } catch {}
   hideHome(); setCrumb(); showLeft('media'); setEasy(true); ezShow('edit');
@@ -289,6 +289,38 @@ async function openProject(e) {
     else if (ezPref('quickEd') !== '0') stQuickOpen(false);
   } catch (err) { console.error(err); toast('No se pudo abrir el clip'); }
 }
+// Un solo espacio (antes había «clientes», cada uno con sus plantillas y sus clips). Se juntan una vez:
+// los clips van todos al mismo sitio, las plantillas son un único juego (las del que más clips tenía) y las que eran
+// distintas en los demás se guardan aparte con su nombre, para no perder nada. Los antiguos clientes quedan solo como canales del directo.
+async function oneSpace() {
+  try {
+    if (await kv.get('mig-un-espacio')) return;
+    if (clients.length > 1) {
+      await kv.set('clients-antes', JSON.parse(JSON.stringify(clients)));
+      await kv.set('projects-antes', projIndex.map(x => ({ id: x.id, client: x.client })));
+      const cnt = id => projIndex.filter(x => x.client === id).length;
+      const main = clients.map((c, i) => ({ c, i, n: cnt(c.id) })).sort((a, b) => b.n - a.n || a.i - b.i)[0].c, gid = groupOf(main.id);
+      const groupData = async (g, id) => { let G = null; try { G = await kv.get('tplg:' + g); } catch {} if (!G) { let st = null; try { st = await kv.get('client:' + id); } catch {} if (st) G = { overrides: st.overrides || {}, def: st.def || null, templates: st.templates || {} }; } return G; };
+      const G = (await groupData(gid, main.id)) || { overrides: {}, def: null, templates: {} };
+      G.overrides = G.overrides || {}; G.templates = G.templates || {}; G.titleTpls = G.titleTpls || {};
+      const same = (a, b) => JSON.stringify(a) === JSON.stringify(b), seen = new Set([gid]);
+      const keep = (dst, n, v, who) => { if (!v) return; if (!dst[n]) { dst[n] = v; return; } if (same(dst[n], v)) return; let k = n + ' · ' + who, i = 2; while (dst[k] && !same(dst[k], v)) k = n + ' · ' + who + ' ' + i++; dst[k] = v; };
+      for (const c of clients) {
+        const g2 = groupOf(c.id); if (seen.has(g2)) continue; seen.add(g2);
+        const g = await groupData(g2, c.id); if (!g) continue;
+        for (const [n, v] of Object.entries(g.templates || {})) keep(G.templates, n, v, c.name);
+        for (const [n, v] of Object.entries(g.overrides || {})) if (!same(G.overrides[n], v)) keep(G.templates, n + ' · ' + c.name, v, c.name);   // su versión de una plantilla de serie
+        for (const [n, v] of Object.entries(g.titleTpls || {})) keep(G.titleTpls, n, v, c.name);
+      }
+      await kv.set('tplg:' + gid, G);
+      for (const c of clients) if (c !== main) c.tg = c.id === gid ? null : gid;
+      for (const x of projIndex) { if (x.client !== main.id) { x.client0 = x.client; x.client = main.id; } }
+      clients = [main, ...clients.filter(c => c !== main)];
+      await saveClients(); await saveIndex();
+    }
+    await kv.set('mig-un-espacio', 1);
+  } catch (e) { console.warn('un solo espacio', e); }
+}
 async function saveIndex() { try { await kv.set('projects', projIndex); } catch {} }
 function projThumb() {
   if (!loaded) return null;
@@ -301,9 +333,9 @@ async function upsertProject() {
   e.name = t && t !== DEFAULT_TITLE ? t : (file ? file.name.replace(/\.[^.]+$/, '') : 'Clip sin nombre');
   e.time = Date.now(); e.client = curClient; const th = projThumb(); if (th) e.thumb = th;
   projIndex = [e, ...projIndex.filter(x => x.id !== e.id)];
-  // como mucho 30 clips guardados por cliente (los más viejos se borran)
-  const mine = projIndex.filter(x => x.client === curClient);
-  for (const old of mine.slice(30)) { projIndex = projIndex.filter(x => x !== old); await delProjectData(old.id); }
+  // como mucho 90 clips guardados (los más viejos se borran)
+  const mine = projIndex.filter(x => !x.batch);
+  for (const old of mine.slice(90)) { projIndex = projIndex.filter(x => x !== old); await delProjectData(old.id); }
   await saveIndex();
 }
 async function delProjectData(id) { for (const k of ['proj:', 'clip:', 'image:']) try { await kv.del(k + id); } catch {} }
@@ -337,13 +369,14 @@ const HSECS = [
 @@solo-pc
   ['agente', 'Agente de clips', '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/>'],
   ['viral', 'Qué peta', '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>'],
-  ['directo', 'En directo', '<circle cx="12" cy="12" r="3"/><path d="M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>']
+  ['directo', 'En directo', '<circle cx="12" cy="12" r="3"/><path d="M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>'],
 @@fin
 @@solo-web
   ['viral', 'Qué hace viral un clip', '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>'],
   ['agente', 'Clips de un vídeo largo', '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/>'],
-  ['directo', 'Clips en directo', '<circle cx="12" cy="12" r="3"/><path d="M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>']
+  ['directo', 'Clips en directo', '<circle cx="12" cy="12" r="3"/><path d="M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>'],
 @@fin
+  ['reacciones', 'Reacciones', '<rect x="3" y="3" width="18" height="8" rx="2"/><rect x="3" y="13" width="18" height="8" rx="2"/><path d="M10 15.5l4 1.5-4 1.5z"/>']
 ];
 const hIcon = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
 @@solo-web
@@ -355,16 +388,12 @@ function setHomeSec(k) {
   const it = HSECS.find(x => x[0] === k); $('hSecName').textContent = it ? it[1] : '';
   document.querySelectorAll('#hnav .hi[data-sec]').forEach(b => b.classList.toggle('on', b.dataset.sec === k));
   $('home').scrollTop = 0;
+  if (k === 'reacciones') try { rxPlace(true); } catch {}
 }
 function renderHnav(c) {
   const n = $('hnav'); n.innerHTML = '';
   const brand = document.createElement('button'); brand.className = 'hb'; brand.innerHTML = '<i><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></i>Cortex';
-@@solo-pc
-  brand.onclick = () => { curClient = null; renderHome(); }; n.append(brand);
-@@fin
-@@solo-web
   brand.onclick = () => setHomeSec('inicio'); n.append(brand);
-@@fin
   const item = (label, icon, on, fn, sec) => { const b = document.createElement('button'); b.className = 'hi' + (on ? ' on' : ''); b.innerHTML = hIcon(icon) + '<span></span>'; b.lastChild.textContent = label; if (sec) b.dataset.sec = sec; b.onclick = fn; n.append(b); return b; };
   const lbl = t => { const d = document.createElement('div'); d.className = 'hlbl'; d.textContent = t; n.append(d); };
   if (c) {
@@ -372,11 +401,7 @@ function renderHnav(c) {
     for (const [k, l, ic] of HSECS) { const b = item(l, ic, homeSec === k, () => setHomeSec(k), k); if (k === 'agente' || k === 'directo') { const t = document.createElement('em'); t.className = 'hpro'; t.textContent = 'Pronto'; b.append(t); } }
   } else if (false) {
 @@fin
-    const cl = document.createElement('div'); cl.className = 'hcl'; cl.innerHTML = '<b></b><span></span>'; cl.firstChild.textContent = c.name.slice(0, 1).toUpperCase(); cl.lastChild.textContent = c.name; n.append(cl);
     for (const [k, l, ic] of HSECS) item(l, ic, homeSec === k, () => setHomeSec(k), k);
-    lbl('Clientes');
-    for (const o of clients.filter(o => o.id !== c.id).slice(0, 8)) item(o.name, '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', false, () => { curClient = o.id; renderHome(); });
-    item('Todos los clientes', '<path d="M15 18l-6-6 6-6"/>', false, () => { curClient = null; renderHome(); });
   } else {
     item('Clientes', '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', true, () => {});
     lbl('Tus clientes');
@@ -386,7 +411,6 @@ function renderHnav(c) {
 @@solo-pc
   if (!(window.cortexApp && window.cortexApp.isApp)) item('Pasar mis datos a la app', '<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>', false, cxToApp);
 @@fin
-  item('Reacciones', '<rect x="3" y="3" width="18" height="8" rx="2"/><rect x="3" y="13" width="18" height="8" rx="2"/><path d="M10 15.5l4 1.5-4 1.5z"/>', false, () => { $('rxBk').hidden = false; rxRender(); });
   item('Notas', '<path d="M5 3h10l4 4v14H5z"/><path d="M14 3v5h5M8 12h8M8 16h6"/>', false, notesOpen);
   item('Limpiar CapCut', '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', false, ccCleanOpen);
 @@solo-pc
@@ -467,9 +491,7 @@ function renderBento(c) {
   if ($('hToViral')) $('hToViral').onclick = () => setHomeSec('viral');
 }
 function renderHome() {
-@@solo-web
-  if (!clientOf(curClient) && clients[0]) curClient = clients[0].id;
-@@fin
+  if (clients[0]) curClient = clients[0].id;   // un solo espacio: ya no hay pantalla de clientes
   const c = clientOf(curClient);
   $('homeClients').hidden = !!c; $('homeClient').hidden = !c;
   if (c && homeSecFor !== c.id) { homeSecFor = c.id; homeSec = 'inicio'; }
@@ -508,7 +530,7 @@ function renderHome() {
     $('newClientBtn').onclick = create; $('newClientName').onkeydown = ev => { if (ev.key === 'Enter') create(); };
     return;
   }
-  $('clientName').textContent = c.name;
+  $('clientName').textContent = '';
   setHomeSec(homeSec); renderBento(c);
   tplRender();
   // con quién comparte plantillas
@@ -522,7 +544,7 @@ function renderHome() {
   const nb = document.createElement('button'); nb.className = 'rcard rnew'; nb.innerHTML = '<span class="rthumb">+</span><strong>Nuevo clip</strong>';
   nb.onclick = newClip; r.append(nb);
   renderAgentBox(c); renderLiveBox(c); renderViral(c);
-  for (const e of projIndex.filter(x => x.client === c.id && !x.batch)) {
+  for (const e of projIndex.filter(x => !x.batch)) {
     const card = document.createElement('div'); card.className = 'rcard';
     const open = document.createElement('button'); open.className = 'rthumb'; open.title = 'Abrir';
     if (e.thumb) { const im = document.createElement('img'); im.src = e.thumb; im.alt = ''; open.append(im); } else open.textContent = '🎬';
@@ -548,6 +570,7 @@ async function initProjects() {
       await kv.set('mig-link-pablo-arz', 1);
     }
   } catch (e) { console.warn(e); }
+  await oneSpace();
   // clips de versiones anteriores: van al primer cliente
   try {
     const saved = await kv.get('project');
