@@ -375,7 +375,8 @@
           <div class="hpg"><h2 id="hSecName">Inicio</h2><span class="hint" id="clientName"></span></div>
           <div class="hsec" data-sec="inicio">
             <div class="hbento" id="hBento"></div>
-            <div class="hpg"><h3 class="home-h" style="margin:6px 0 0">Clips recientes</h3></div>
+            <div class="hpg rec-h"><h3 class="home-h" style="margin:6px 0 0">Tus clips <span class="hint" id="recCount"></span></h3>
+              <div class="rec-bar" id="recBar" hidden><input type="search" id="recQ" placeholder="Buscar por nombre…" aria-label="Buscar clips" autocomplete="off"><select id="recSort" aria-label="Ordenar"><option value="new">Más recientes</option><option value="old">Más antiguos</option><option value="name">Por nombre</option></select></div></div>
             <div class="recents" id="recents"></div>
           </div>
           <div class="hsec" data-sec="plantillas" hidden>
@@ -462,6 +463,7 @@
               <label class="toggle"><input type="checkbox" id="agCensor"><span></span>Silenciar malas palabras</label>
               <select id="agCensorLvl" aria-label="Qué silenciar" style="width:auto"><option value="tiktok">Todo lo que TikTok penaliza</option><option value="bad">Solo palabrotas</option></select>
             </div>
+            <details class="field ag-adv"><summary class="lbl">Ajustes avanzados <em>palabras extra a silenciar y analizar solo un trozo</em></summary>
             <label class="f">Más palabras a silenciar (separadas por comas)<input type="text" id="agBad" placeholder="por ejemplo: palabra1, palabra2"></label>
             <div class="aglink-r agrange">
               <span class="lbl" style="width:100%">⏱ Sacar clips solo de un trozo del directo <em>(opcional; vacío = todo el directo)</em></span>
@@ -469,6 +471,7 @@
               <label class="f">Hasta el minuto <input type="text" id="agTo" placeholder="el final"></label>
             </div>
             <p class="hint">Escribe minutos (por ejemplo 90 y 150) o horas:minutos:segundos (1:30:00). Sirve para analizar el directo de tu PC y el de un enlace.</p>
+            </details>
             <div class="presets"><button class="primary" id="agRun">🎬 Analizar un directo…</button></div>
             <div class="aglink">
               <span class="lbl">…o pega el enlace de un vídeo (YouTube, Kick, Twitch…) y saca varios clips</span>

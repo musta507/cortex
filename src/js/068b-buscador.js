@@ -1,0 +1,52 @@
+/* ---------- buscador de toda la app (Ctrl+K): secciones, acciones, clips y plantillas en un solo sitio ---------- */
+let cmdkSel = 0, cmdkItems = [];
+function cmdkAll() {
+  const out = [];
+  for (const [k, l] of HSECS) out.push({ g: 'Ir a', t: l, run: () => setHomeSec(k) });
+  out.push({ g: 'Acciones', t: 'Nuevo clip', k: 'crear subir editar', run: () => newClip() });
+  out.push({ g: 'Acciones', t: 'Notas', k: 'apuntes', run: () => notesOpen() });
+  out.push({ g: 'Acciones', t: 'Limpiar CapCut', k: 'disco espacio borrar', run: () => ccCleanOpen() });
+@@solo-pc
+  out.push({ g: 'Acciones', t: 'Abrir el panel en directo', k: 'kick grabar stream', run: () => { setHomeSec('directo'); $('lvOpen').click(); } });
+  out.push({ g: 'Acciones', t: 'Analizar un directo con el agente', k: 'vod clips virales', run: () => { setHomeSec('agente'); } });
+@@fin
+  out.push({ g: 'Acciones', t: document.querySelector('#home.navmin') ? 'Ensanchar el menú' : 'Encoger el menú', k: 'barra lateral', run: () => document.querySelector('#hnav .hmin').click() });
+  for (const p of PRESETS) if (!(presetHidden || []).includes(p.name)) out.push({ g: 'Plantillas', t: fmtLbl(p.name), k: 'formato', run: () => setHomeSec('plantillas') });
+  for (const n of Object.keys(templates || {})) out.push({ g: 'Plantillas', t: n, k: 'guardada', run: () => setHomeSec('plantillas') });
+  for (const e of projIndex.filter(x => !x.batch)) out.push({ g: 'Clips', t: e.name || 'Clip sin nombre', s: new Date(e.time).toLocaleDateString('es-ES'), run: () => openProject(e) });
+  return out;
+}
+function cmdkRender() {
+  const norm = t => String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''), q = norm($('cmdkQ').value.trim()), words = q.split(/\s+/).filter(Boolean), box = $('cmdkList'); box.innerHTML = '';
+  let all = cmdkAll().filter(x => { const h = norm(x.t + ' ' + (x.k || '') + ' ' + x.g); return words.every(w => h.includes(w)); });
+  if (!q) all = all.filter(x => x.g !== 'Plantillas').filter((x, i, a) => x.g !== 'Clips' || a.filter(y => y.g === 'Clips').indexOf(x) < 6);
+  cmdkItems = all.slice(0, 40); cmdkSel = Math.max(0, Math.min(cmdkSel, cmdkItems.length - 1));
+  if (!cmdkItems.length) { const p = document.createElement('p'); p.className = 'hint'; p.style.padding = '14px'; p.textContent = 'Nada con ese nombre.'; box.append(p); return; }
+  let g = null;
+  cmdkItems.forEach((x, i) => {
+    if (x.g !== g) { g = x.g; const h = document.createElement('div'); h.className = 'cmdk-g'; h.textContent = g; box.append(h); }
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'cmdk-i' + (i === cmdkSel ? ' on' : ''); const a = document.createElement('span'); a.textContent = x.t; b.append(a);
+    if (x.s) { const s = document.createElement('em'); s.textContent = x.s; b.append(s); }
+    b.onclick = () => cmdkRun(i); b.onmousemove = () => { if (cmdkSel !== i) { cmdkSel = i; box.querySelectorAll('.cmdk-i').forEach((el, k) => el.classList.toggle('on', k === i)); } };
+    box.append(b);
+  });
+  const on = box.querySelector('.cmdk-i.on'); if (on) on.scrollIntoView({ block: 'nearest' });
+}
+function cmdkRun(i) { const x = cmdkItems[i]; if (!x) return; cmdkClose(); try { x.run(); } catch (e) { console.warn(e); } }
+function cmdkOpen() { if ($('home').hidden) return; $('cmdk').hidden = false; $('cmdkQ').value = ''; cmdkSel = 0; cmdkRender(); $('cmdkQ').focus(); }
+function cmdkClose() { $('cmdk').hidden = true; }
+setTimeout(() => {
+  const d = document.createElement('div'); d.id = 'cmdk'; d.className = 'cmdk'; d.hidden = true;
+  d.innerHTML = '<div class="cmdk-pop" role="dialog" aria-label="Buscar"><input id="cmdkQ" type="text" placeholder="Busca un clip, una sección o una acción…" autocomplete="off" spellcheck="false"><div class="cmdk-list" id="cmdkList"></div><div class="cmdk-f"><span>↑↓ moverse</span><span>Enter abrir</span><span>Esc cerrar</span></div></div>';
+  document.body.append(d);
+  d.addEventListener('pointerdown', e => { if (e.target === d) cmdkClose(); });
+  $('cmdkQ').addEventListener('input', () => { cmdkSel = 0; cmdkRender(); });
+  $('cmdkQ').addEventListener('keydown', e => {
+    e.stopPropagation();
+    if (e.key === 'ArrowDown') { e.preventDefault(); cmdkSel = Math.min(cmdkItems.length - 1, cmdkSel + 1); cmdkRender(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); cmdkSel = Math.max(0, cmdkSel - 1); cmdkRender(); }
+    else if (e.key === 'Enter') { e.preventDefault(); cmdkRun(cmdkSel); }
+    else if (e.key === 'Escape') { e.preventDefault(); cmdkClose(); }
+  });
+  document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k' && !$('home').hidden) { e.preventDefault(); e.stopImmediatePropagation(); $('cmdk').hidden ? cmdkOpen() : cmdkClose(); } }, true);
+}, 0);

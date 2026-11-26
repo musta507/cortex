@@ -396,23 +396,29 @@ function renderHnav(c) {
   brand.onclick = () => setHomeSec('inicio'); n.append(brand);
   const item = (label, icon, on, fn, sec) => { const b = document.createElement('button'); b.className = 'hi' + (on ? ' on' : ''); b.innerHTML = hIcon(icon) + '<span></span>'; b.lastChild.textContent = label; if (sec) b.dataset.sec = sec; b.onclick = fn; n.append(b); return b; };
   const lbl = t => { const d = document.createElement('div'); d.className = 'hlbl'; d.textContent = t; n.append(d); };
-  if (c) {
+  // buscador de toda la app y botón para encoger el menú
+  const sb = document.createElement('button'); sb.className = 'hsearch'; sb.title = 'Buscar clips, secciones y acciones (Ctrl+K)'; sb.innerHTML = hIcon('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>') + '<span>Buscar…</span><kbd>Ctrl K</kbd>'; sb.onclick = () => cmdkOpen(); n.append(sb);
+  // secciones agrupadas por lo que se hace con ellas
+  const GROUPS = [['Crear', ['inicio', 'directo', 'agente']], ['Biblioteca', ['plantillas', 'reacciones']], ['Analizar', ['viral']]];
+  for (const [g, ks] of GROUPS) {
+    const secs = ks.map(k => HSECS.find(x => x[0] === k)).filter(Boolean); if (!secs.length) continue;
+    lbl(g);
+    for (const [k, l, ic] of secs) {
+      const b = item(l, ic, homeSec === k, () => setHomeSec(k), k);
 @@solo-web
-    for (const [k, l, ic] of HSECS) { const b = item(l, ic, homeSec === k, () => setHomeSec(k), k); if (k === 'agente' || k === 'directo') { const t = document.createElement('em'); t.className = 'hpro'; t.textContent = 'Pronto'; b.append(t); } }
-  } else if (false) {
+      if (k === 'agente' || k === 'directo') { const t = document.createElement('em'); t.className = 'hpro'; t.textContent = 'Pronto'; b.append(t); }
 @@fin
-    for (const [k, l, ic] of HSECS) item(l, ic, homeSec === k, () => setHomeSec(k), k);
-  } else {
-    item('Clientes', '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', true, () => {});
-    lbl('Tus clientes');
-    for (const o of clients) item(o.name, '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', false, () => { curClient = o.id; renderHome(); });
+    }
+    if (g === 'Biblioteca') item('Notas', '<path d="M5 3h10l4 4v14H5z"/><path d="M14 3v5h5M8 12h8M8 16h6"/>', false, notesOpen);
   }
   const sp = document.createElement('div'); sp.className = 'hsp'; n.append(sp);
+  lbl('Herramientas');
+  item('Limpiar CapCut', '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', false, ccCleanOpen);
 @@solo-pc
   if (!(window.cortexApp && window.cortexApp.isApp)) item('Pasar mis datos a la app', '<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>', false, cxToApp);
 @@fin
-  item('Notas', '<path d="M5 3h10l4 4v14H5z"/><path d="M14 3v5h5M8 12h8M8 16h6"/>', false, notesOpen);
-  item('Limpiar CapCut', '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', false, ccCleanOpen);
+  const min = item('Encoger el menú', '<path d="M15 6l-6 6 6 6"/>', false, () => { const on = !$('home').classList.contains('navmin'); $('home').classList.toggle('navmin', on); try { localStorage.setItem('cortex-navmin', on ? '1' : '0'); } catch {} }); min.classList.add('hmin');
+  for (const b of n.querySelectorAll('.hi')) b.title = b.textContent;
 @@solo-pc
   const f = document.createElement('div'); f.className = 'hfoot'; f.textContent = 'Todo se guarda en este ordenador'; n.append(f);
 @@fin
@@ -420,6 +426,7 @@ function renderHnav(c) {
   const f = document.createElement('div'); f.className = 'hfoot'; f.innerHTML = 'Versión de prueba' + (window.__cxMe ? ` · ${String(window.__cxMe).replace(/[<>&]/g, '')} · <a href="/salir" style="color:inherit">Salir</a>` : ''); n.append(f);
 @@fin
 }
+try { if (localStorage.getItem('cortex-navmin') === '1') $('home').classList.add('navmin'); } catch {}
 // lo que más rinde de cada creador (datos reales del análisis de clips virales)
 @@solo-web
 const QUE_PETA_GEN = [['Acción / sustos', 2.8, '#FB923C'], ['Revelación', 1.5, '#A78BFA'], ['Polémica', 1.46, '#F87171'], ['Invitados', 1.36, '#60A5FA'], ['Humor de relleno', 0.89, '#FACC15'], ['Juego / fútbol', 0.85, '#9CA3AF']];
@@ -460,14 +467,14 @@ function renderBento(c) {
   if (data) {
     const mx = Math.max(...data.map(d => d[1]));
 @@solo-pc
-    qp.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline"><strong style="font-size:14px">Qué peta de ${c.name}</strong><span class="hint" style="font-size:11px">rinde frente a un clip normal</span></div>` +
+    qp.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline"><strong style="font-size:14px">Qué peta</strong><span class="hint" style="font-size:11px">rinde frente a un clip normal</span></div>` +
 @@fin
 @@solo-web
     qp.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline"><strong style="font-size:14px">Qué hace petar un clip</strong><span class="hint" style="font-size:11px">3.714 clips virales analizados</span></div>` +
 @@fin
       data.map(([n, v, col]) => `<div class="qp"><span>${n}</span><i><b style="width:${Math.round(v / mx * 100)}%;background:${col}"></b></i><span style="color:${col}">×${String(v).replace('.', ',')}</span></div>`).join('');
   } else {
-    qp.innerHTML = `<strong style="font-size:14px">Qué peta de ${c.name}</strong><span class="hint">Analiza los clips virales de este creador para saber qué temas funcionan mejor.</span><button id="hToViral" style="justify-self:start;align-self:flex-start">Ir a «Qué peta»</button>`;
+    qp.innerHTML = `<strong style="font-size:14px">Qué peta</strong><span class="hint">Analiza clips virales para saber qué temas funcionan mejor.</span><button id="hToViral" style="justify-self:start;align-self:flex-start">Ir a «Qué peta»</button>`;
   }
   b.append(hero, st1, st2, qp);
 @@solo-pc
@@ -544,7 +551,14 @@ function renderHome() {
   const nb = document.createElement('button'); nb.className = 'rcard rnew'; nb.innerHTML = '<span class="rthumb">+</span><strong>Nuevo clip</strong>';
   nb.onclick = newClip; r.append(nb);
   renderAgentBox(c); renderLiveBox(c); renderViral(c);
-  for (const e of projIndex.filter(x => !x.batch)) {
+  const all = projIndex.filter(x => !x.batch), q = recQ.trim().toLowerCase();
+  let list = q ? all.filter(x => (x.name || '').toLowerCase().includes(q)) : all.slice();
+  if (recSort === 'name') list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es')); else if (recSort === 'old') list.sort((a, b) => a.time - b.time); else list.sort((a, b) => b.time - a.time);
+  $('recCount').textContent = all.length ? (q ? `${list.length} de ${all.length}` : `${all.length} clip${all.length > 1 ? 's' : ''}`) : '';
+  $('recBar').hidden = all.length < 4; $('recSort').value = recSort; if ($('recQ').value !== recQ) $('recQ').value = recQ;
+  nb.hidden = !!q;
+  if (q && !list.length) { const em = document.createElement('p'); em.className = 'hint rec-empty'; em.textContent = `Ningún clip se llama «${recQ.trim()}».`; r.append(em); }
+  for (const e of list) {
     const card = document.createElement('div'); card.className = 'rcard';
     const open = document.createElement('button'); open.className = 'rthumb'; open.title = 'Abrir';
     if (e.thumb) { const im = document.createElement('img'); im.src = e.thumb; im.alt = ''; open.append(im); } else open.textContent = '🎬';
@@ -558,6 +572,9 @@ function renderHome() {
   }
 }
 $('backClients').onclick = () => { curClient = null; renderHome(); };
+let recQ = '', recSort = 'new'; try { recSort = localStorage.getItem('cortex-recSort') || 'new'; } catch {}
+$('recQ').addEventListener('input', () => { recQ = $('recQ').value; renderHome(); $('recQ').focus(); });
+$('recSort').addEventListener('change', () => { recSort = $('recSort').value; try { localStorage.setItem('cortex-recSort', recSort); } catch {} renderHome(); });
 async function initProjects() {
   try { clients = (await kv.get('clients')) || null; } catch { clients = null; }
   if (!clients) { clients = SEED_CLIENTS.map((name, i) => ({ id: 'c' + (Date.now() + i).toString(36), name, created: Date.now() })); await saveClients(); }

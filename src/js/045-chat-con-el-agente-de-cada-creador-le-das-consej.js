@@ -3,7 +3,7 @@ const agTargetName = k => k === 'general' ? 'Reglas generales' : (AG_FORMATS[k] 
 let agThinking = false;
 async function agChatRender(cl) {
   const A = await getAgent(cl), box = $('agMsgs'); box.innerHTML = '';
-  if (!A.chat.length) { const m = document.createElement('div'); m.className = 'agm ai'; m.textContent = `¡Hola! Soy el agente de ${cl.name}. Dime qué funciona y qué no con sus clips, o pregúntame cómo lo clipearía, y ajusto mis reglas.`; box.append(m); }
+  if (!A.chat.length) { const m = document.createElement('div'); m.className = 'agm ai'; m.textContent = `¡Hola! Soy tu agente de clips. Dime qué funciona y qué no con sus clips, o pregúntame cómo lo clipearía, y ajusto mis reglas.`; box.append(m); }
   A.chat.forEach((x, i) => {
     const m = document.createElement('div'); m.className = 'agm ' + (x.r === 'u' ? 'u' : 'ai') + (x.err ? ' err' : ''); m.textContent = x.t;
     (x.changes || []).forEach((c, j) => {

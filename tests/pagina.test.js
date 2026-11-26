@@ -112,6 +112,11 @@ const exportBlob = p => p.evaluate(async () => {
       check('los canales de Kick siguen en «En directo»', await p.evaluate(() => [...$('lvChans').querySelectorAll('.lv-chip')].map(x => x.textContent).join('|')).then(t => t.includes('westcol') && t.includes('pablo')));
       await p.click('#hnav .hi[data-sec=reacciones]'); await p.waitForTimeout(400);
       check('Reacciones es una sección del menú', await p.evaluate(() => !$('rxHome').closest('.hsec').hidden && !!$('rxHome').querySelector('#rxAdd')));
+      await p.evaluate(() => setHomeSec('inicio')); await p.keyboard.press('Control+k'); await p.keyboard.type('pablo1'); await p.waitForTimeout(300);
+      const found = await p.evaluate(() => [...document.querySelectorAll('.cmdk-i')].map(x => x.textContent).join('|'));
+      await p.keyboard.press('Escape'); await p.keyboard.press('Control+k'); await p.keyboard.type('reaccion'); await p.keyboard.press('Enter'); await p.waitForTimeout(300);
+      check('el buscador (Ctrl+K) encuentra clips y lleva a las secciones', found.includes('pablo1') && await p.evaluate(() => homeSec === 'reacciones' && $('cmdk').hidden), found);
+      await p.click('#hnav .hmin'); check('el menú se encoge y se recuerda', await p.evaluate(() => $('home').classList.contains('navmin') && localStorage.getItem('cortex-navmin') === '1'));
       check('sin errores al juntar', !errs.length, errs[0]);
       await ctx.close();
     }
