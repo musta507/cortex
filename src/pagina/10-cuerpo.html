@@ -429,6 +429,27 @@
           </section>
           </div>
           <div class="hsec" data-sec="reacciones" hidden><div id="rxHome"></div></div>
+          <div class="hsec" data-sec="ajustes" hidden>
+            <div class="agent set-card" id="setKeys">
+              <div class="agent-h"><strong>Claves de la IA</strong><span class="hint">Se guardan solo en este ordenador. Aquí se ponen una vez y valen para toda la app.</span></div>
+              <label class="f">Gemini <em id="setGemSt"></em><input type="password" id="setGem" placeholder="Pega aquí tu clave AIza…" autocomplete="off"></label>
+              <p class="hint">La usa la IA para elegir el formato, escribir el título, encontrar las cámaras y escuchar el directo.</p>
+              <label class="f">ElevenLabs <em id="setElSt"></em><input type="password" id="setEl" placeholder="Pega aquí tu clave sk_…" autocomplete="off"></label>
+              <p class="hint">Subtítulos más fiables. Sin ella se usa la IA del ordenador, que entiende peor.</p>
+            </div>
+            <div class="agent set-card">
+              <div class="agent-h"><strong>Directo y grabador</strong><span class="hint">Los canales de Kick, las cuentas de otros clippers y la carpeta del grabador.</span></div>
+              <div class="presets"><button id="setToLive">Ir a «En directo»</button></div>
+            </div>
+            <div class="agent set-card">
+              <div class="agent-h"><strong>Mantenimiento</strong><span class="hint">Liberar espacio y mover tus datos.</span></div>
+              <div class="presets"><button id="setCC">Limpiar CapCut</button><button id="setToApp" hidden>Pasar mis datos a la app</button></div>
+            </div>
+            <div class="agent set-card">
+              <div class="agent-h"><strong>Atajos</strong></div>
+              <div class="set-keys"><span><kbd>Ctrl</kbd> <kbd>K</kbd> Buscar en toda la app</span><span><kbd>Espacio</kbd> Reproducir o parar</span><span><kbd>Ctrl</kbd> <kbd>B</kbd> Dividir en la línea</span><span><kbd>Q</kbd> / <kbd>W</kbd> Quitar lo de antes / después</span><span><kbd>Ctrl</kbd> <kbd>Z</kbd> Deshacer</span><span><kbd>Supr</kbd> Eliminar lo elegido</span></div>
+            </div>
+          </div>
           <div class="hsec" data-sec="agente" hidden>
 @@solo-web
 <div class="pub" data-pub="agente">

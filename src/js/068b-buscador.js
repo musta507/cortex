@@ -6,6 +6,10 @@ function cmdkAll() {
   out.push({ g: 'Acciones', t: 'Nuevo clip', k: 'crear subir editar', run: () => newClip() });
   out.push({ g: 'Acciones', t: 'Notas', k: 'apuntes', run: () => notesOpen() });
   out.push({ g: 'Acciones', t: 'Limpiar CapCut', k: 'disco espacio borrar', run: () => ccCleanOpen() });
+  out.push({ g: 'Acciones', t: 'Claves de la IA', k: 'gemini elevenlabs api key ajustes', run: () => setHomeSec('ajustes') });
+@@solo-pc
+  out.push({ g: 'Acciones', t: 'Replicar un viral', k: 'copiar clip vod crudo', run: async () => { await newClip(); repOpen(); } });
+@@fin
 @@solo-pc
   out.push({ g: 'Acciones', t: 'Abrir el panel en directo', k: 'kick grabar stream', run: () => { setHomeSec('directo'); $('lvOpen').click(); } });
   out.push({ g: 'Acciones', t: 'Analizar un directo con el agente', k: 'vod clips virales', run: () => { setHomeSec('agente'); } });
@@ -49,4 +53,25 @@ setTimeout(() => {
     else if (e.key === 'Escape') { e.preventDefault(); cmdkClose(); }
   });
   document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k' && !$('home').hidden) { e.preventDefault(); e.stopImmediatePropagation(); $('cmdk').hidden ? cmdkOpen() : cmdkClose(); } }, true);
+}, 0);
+
+/* ---------- Ajustes: lo que se configura una vez (claves, mantenimiento) en un solo sitio ---------- */
+function setRender() {
+  const web = typeof CORTEX_PROXY !== 'undefined' && CORTEX_PROXY; $('setKeys').hidden = !!web;
+  const st = (id, v) => { $(id).textContent = v ? '· puesta' : '· falta'; $(id).className = v ? 'set-ok' : 'set-no'; };
+  let g = '', e = ''; try { g = (localStorage.getItem('clipzi-gemini') || '').trim(); e = (localStorage.getItem('clipzi-eleven') || '').trim(); } catch {}
+  if (document.activeElement !== $('setGem')) $('setGem').value = g; if (document.activeElement !== $('setEl')) $('setEl').value = e;
+  st('setGemSt', g); st('setElSt', e);
+@@solo-pc
+  $('setToApp').hidden = !!(window.cortexApp && window.cortexApp.isApp);
+@@fin
+}
+setTimeout(() => {
+  if (!$('setGem')) return;
+  $('setGem').addEventListener('input', () => { const v = $('setGem').value.trim(); try { localStorage.setItem('clipzi-gemini', v); } catch {} for (const id of ['gemKey', 'gemKey2', 'ezKey']) if ($(id)) $(id).value = v; setRender(); });
+  $('setEl').addEventListener('input', () => { const v = $('setEl').value.trim(); try { localStorage.setItem('clipzi-eleven', v); } catch {} if ($('elKey')) $('elKey').value = v; setRender(); });
+  $('setToLive').onclick = () => setHomeSec('directo'); $('setCC').onclick = () => ccCleanOpen();
+@@solo-pc
+  $('setToApp').onclick = () => cxToApp();
+@@fin
 }, 0);

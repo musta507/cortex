@@ -116,6 +116,9 @@ const exportBlob = p => p.evaluate(async () => {
       const found = await p.evaluate(() => [...document.querySelectorAll('.cmdk-i')].map(x => x.textContent).join('|'));
       await p.keyboard.press('Escape'); await p.keyboard.press('Control+k'); await p.keyboard.type('reaccion'); await p.keyboard.press('Enter'); await p.waitForTimeout(300);
       check('el buscador (Ctrl+K) encuentra clips y lleva a las secciones', found.includes('pablo1') && await p.evaluate(() => homeSec === 'reacciones' && $('cmdk').hidden), found);
+      await p.click('#hnav .hi[data-sec=ajustes]'); await p.fill('#setGem', 'CLAVE-DE-PRUEBA');
+      check('Ajustes: la clave puesta ahí vale para toda la app', await p.evaluate(() => getGemKey() === 'CLAVE-DE-PRUEBA' && $('gemKey').value === 'CLAVE-DE-PRUEBA' && /puesta/.test($('setGemSt').textContent)));
+      await p.evaluate(() => localStorage.removeItem('clipzi-gemini'));
       await p.click('#hnav .hmin'); check('el menú se encoge y se recuerda', await p.evaluate(() => $('home').classList.contains('navmin') && localStorage.getItem('cortex-navmin') === '1'));
       check('sin errores al juntar', !errs.length, errs[0]);
       await ctx.close();
