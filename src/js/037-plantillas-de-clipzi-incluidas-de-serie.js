@@ -379,6 +379,7 @@ function renderHnav(c) {
 @@solo-pc
   if (!(window.cortexApp && window.cortexApp.isApp)) item('Pasar mis datos a la app', '<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>', false, cxToApp);
 @@fin
+  item('Reacciones', '<rect x="3" y="3" width="18" height="8" rx="2"/><rect x="3" y="13" width="18" height="8" rx="2"/><path d="M10 15.5l4 1.5-4 1.5z"/>', false, () => { $('rxBk').hidden = false; rxRender(); });
   item('Notas', '<path d="M5 3h10l4 4v14H5z"/><path d="M14 3v5h5M8 12h8M8 16h6"/>', false, notesOpen);
   item('Limpiar CapCut', '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>', false, ccCleanOpen);
 @@solo-pc

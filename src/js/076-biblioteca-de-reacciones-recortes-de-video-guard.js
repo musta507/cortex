@@ -22,7 +22,7 @@ async function rxRender() {
     const n = document.createElement('span'); n.textContent = it.name; n.title = it.name;
     const s = document.createElement('small'); s.textContent = (it.size / 1048576).toFixed(1) + ' MB';
     const use = document.createElement('button'); use.className = 'primary'; use.textContent = 'Usar';
-    use.onclick = async () => { const b = await kv.get('rxClip:' + it.id).catch(() => null); if (!b) { toast('No encuentro ese recorte'); return; } if (await rxUse(b, it.name)) $('rxBk').hidden = true; };
+    use.onclick = async () => { if (!loaded) { toast('Abre primero un clip: el recorte se pone debajo de él'); return; } const b = await kv.get('rxClip:' + it.id).catch(() => null); if (!b) { toast('No encuentro ese recorte'); return; } if (await rxUse(b, it.name)) $('rxBk').hidden = true; };
     const del = document.createElement('button'); del.textContent = '🗑'; del.title = 'Borrar de la biblioteca';
     del.onclick = async () => { if (del.dataset.sure !== '1') { del.dataset.sure = '1'; del.textContent = '¿Borrar?'; setTimeout(() => { del.dataset.sure = ''; del.textContent = '🗑'; }, 3000); return; }
       RX.lib = lib.filter(x => x.id !== it.id); await kv.set('rxLib', RX.lib).catch(() => {}); kv.del('rxClip:' + it.id).catch(() => {}); rxRender(); };
