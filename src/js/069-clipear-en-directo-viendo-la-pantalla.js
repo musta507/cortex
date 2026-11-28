@@ -14,6 +14,7 @@ function stMode(m) {
   if (m) ezPref('liveMode', m);
   const on = stOn(); $('livePage').classList.toggle('stage', on); $('lvStage').hidden = !on;
   $('lvModeSt').classList.toggle('on', on); $('lvModeTr').classList.toggle('on', !on);
+  $('lvModeSt').setAttribute('aria-selected', on ? 'true' : 'false'); $('lvModeTr').setAttribute('aria-selected', on ? 'false' : 'true');
   if (on) { lvMiniOff = false; $('lvMini').classList.remove('min'); const S = lvTrSess(); if (S) liveMini(S); }
   stTick();
 }

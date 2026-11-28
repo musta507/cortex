@@ -173,6 +173,8 @@ const exportBlob = p => p.evaluate(async () => {
       check('el chat de dos canales sale en una columna (máximo 100)', c.filas === 100 && c.chips === 2 && c.emote, c);
       const cb = await p.evaluate(() => { liveWant = ['westcol', 'otro']; liveRender(); const chips = [...document.querySelectorAll('.lv-cbar .lv-chip')]; const o = chips.find(b => b.classList.contains('live') && !b.classList.contains('on')); const want = o.querySelector('span').textContent; o.click(); return [chips.filter(b => b.classList.contains('live')).length, lvTrSess().status.slug === want, !!document.querySelector('.lv-cbar .add')]; });
       check('barra de canales: se ve quién está en directo y se elige cuál seguir', cb[0] === 2 && cb[1] && cb[2], cb);
+      const md = await p.evaluate(() => { $('lvModeSt').click(); const a = stOn() && $('livePage').classList.contains('stage'); $('lvModeTr').click(); return [a, !stOn(), $('lvModeSt').textContent.includes('Manual'), $('lvModeTr').textContent.includes('Con IA'), getComputedStyle($('lvTrBox')).display === 'none', lvTrOn() === false]; });
+      check('directo: Manual (la pantalla) y Con IA (los momentos), sin transcripción', md.every(Boolean), md);
       check('sin errores en el directo', !errs.length, errs[0]);
       await ctx.close();
     }

@@ -1245,7 +1245,7 @@ body.se-rzing{cursor:ew-resize;user-select:none}
 /* modo Pantalla: el directo lo más grande posible; el estado, los criterios y el modo automático se quedan en la pestaña Transcripción */
 #livePage.stage .lv-status,#livePage.stage .lv-crit,#livePage.stage .lv-auto,#livePage.stage .home-in>p.hint{display:none!important}
 #livePage.stage .home-in{max-width:none;padding:10px 18px 14px;gap:8px}
-#livePage.stage .lv-mini,#livePage.stage .lv-stage{width:min(100%,calc((100vh - 280px)*16/9));min-width:420px}
+#livePage.stage .lv-mini,#livePage.stage .lv-stage{width:min(100%,calc((100vh - 335px)*16/9));min-width:420px}
 #livePage.stage .lv-mini{margin:0 auto}
 #livePage.stage .lv-stage{margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 10px}
 #livePage.stage .lv-stage[hidden]{display:none}
@@ -1598,4 +1598,21 @@ body.se-rzing{cursor:ew-resize;user-select:none}
 .ls-tx{display:grid;gap:2px;min-width:0}.ls-tx strong{font-size:14.5px}
 .ls-tx .t{color:#c8c8ce;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ls-tx .c{color:#8E8E96;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ls-empty{grid-column:1/-1;padding:28px;border-radius:16px;border:1px dashed rgba(255,255,255,.1);color:#8E8E96;font-size:14px;text-align:center}
+/* ===== panel del directo: dos formas de clipear (Manual = la pantalla, Con IA = los momentos con tus criterios) ===== */
+#lvTrBox,#lvTrPop,#lvData{display:none!important}   /* transcripción quitada; «Datos de clips» está en Ajustes */
+#livePage .home-in>.lv-head{order:0}
+#livePage .home-in>.lv-status{order:1}
+#livePage .home-in>.lv-crit{order:2}
+#livePage .home-in>.lv-mini,#livePage .home-in>.lv-stage{order:3}
+#livePage .home-in>.lv-list{order:4}
+#livePage .home-in>.lv-missw{order:5}
+#livePage .home-in>.lv-agent{order:6}
+#livePage .home-in>.lv-auto{order:7}
+#livePage .home-in>.lv-fmt{order:8}
+#livePage .home-in>p.hint{order:9}
+#livePage.stage .lv-status{display:block!important}
+#livePage.stage .lv-status>:not(.lv-cbar){display:none!important}
+#livePage.stage .lv-status .lv-cbar{margin:0}
+.lv-modes{margin-left:6px}
+.lv-modes button{padding:7px 16px;font-size:14px}
 </style>

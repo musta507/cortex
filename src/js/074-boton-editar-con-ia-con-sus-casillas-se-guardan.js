@@ -190,7 +190,7 @@ setTimeout(() => {
 }, 0);
 setTimeout(() => {
   if (!$('lvStage')) return;
-  $('lvModeSt').onclick = () => stMode('stage'); $('lvModeTr').onclick = () => { if (!$('stEd').hidden && stPend !== 'prep') { toast('Cierra primero el clip que tienes abierto al lado'); return; } stMode('tr'); };
+  $('lvModeSt').onclick = () => stMode('stage'); $('lvModeSt').setAttribute('role', 'tab'); $('lvModeTr').setAttribute('role', 'tab'); $('lvModeTr').onclick = () => { if (!$('stEd').hidden && stPend !== 'prep') { toast('Cierra primero el clip que tienes abierto al lado'); return; } stMode('tr'); };
   for (const b of document.querySelectorAll('.st-b')) {
     const n = +b.dataset.n; b.onclick = () => stCut(null, n);
     b.onmouseenter = () => { const z = $('stZone'); z.style.width = (n / ST_W * 100) + '%'; z.hidden = false; }; b.onmouseleave = () => { $('stZone').hidden = true; };
