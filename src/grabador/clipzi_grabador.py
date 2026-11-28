@@ -12,7 +12,7 @@ No hace falta tocar nada aquí: Clipzi escribe config.json y tú solo abres
 """
 import os, sys, json, time, threading, subprocess, shutil, re, glob, wave, traceback, datetime, uuid
 
-GRABADOR_VERSION = 34   # Clipzi solo lo sobrescribe con una versión más nueva
+GRABADOR_VERSION = 35   # Clipzi solo lo sobrescribe con una versión más nueva
 BASE = os.path.dirname(os.path.abspath(__file__))
 CFG = os.path.join(BASE, 'config.json')
 DIRS = os.path.join(BASE, 'directos')
@@ -1390,14 +1390,12 @@ def perfil_one(rid, q):
         base = [PY, '-m', 'yt_dlp', '-j', '--skip-download', '--ignore-errors', '--no-warnings', '--playlist-end', str(maxn), '--sleep-requests', '0.7']
         done = set()
         n, err = 0, ''
-        for extra in ([['--impersonate', 'chrome'], []] + ([['--cookies', ck]] if os.path.exists(ck) else []) +
-                      [['--cookies-from-browser', b] for b in ('firefox', 'edge', 'chrome')]):
+        # nunca con la sesión de tu navegador (podría ser tu cuenta principal): solo sin sesión o con un cookies.txt que pongas tú a propósito
+        for extra in ([['--impersonate', 'chrome'], []] + ([['--cookies', ck]] if os.path.exists(ck) else [])):
             k, err = run(base + extra + [url_of(a)], acc, done)
             n += k
             if n >= maxn * 0.9 or k >= 60 or os.path.exists(stopf):   # pasa de 50: TikTok ya da la lista entera, no hace falta probar más
                 break
-            if n:   # TikTok sin sesión suele cortar en ~50: pruebo con la sesión de tu navegador para sacar más
-                log('   %s: %d vídeos, pruebo a sacar más con tu sesión del navegador…' % (a, n))
         total += n
         if not n:
             errs[a] = (err.strip().splitlines() or ['no devuelve vídeos'])[-1][-300:]
@@ -1499,7 +1497,7 @@ def download_one(rid, q):
             except Exception: pass
     need_auth = lambda t: any(k in ' '.join(t).lower() for k in ('cookies', 'sign in', 'not a bot', 'login', 'confirm your age'))
     extra = []
-    if code != 0 and need_auth(tail):
+    if code != 0 and need_auth(tail) and re.search(r'youtu\.?be', cmd[-1]):   # solo YouTube; a TikTok nunca se entra con tu sesión
         # YouTube pide "demostrar que no eres un bot": pruebo otras formas de entrar
         ck = os.path.join(BASE, 'cookies.txt')
         tries = ([['--cookies', ck]] if os.path.exists(ck) else []) + \
