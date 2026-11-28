@@ -44,7 +44,7 @@ const fmtS = t => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), s = t
 function setEasy(on) {
   ezMode = on;
   $('app').classList.toggle('easy', on); document.body.classList.toggle('easy', on);
-  $('modeBtn').hidden = false;
+  $('modeBtn').hidden = false; $('modeBtn').classList.toggle('to-adv', on);
   $('modeBtn').innerHTML = on ? '<svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Editor avanzado' : '<svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>Modo fácil';
   $('modeBtn').title = on ? 'Abre el editor completo con todas las herramientas' : 'Vuelve a la vista sencilla: solo el clip y clic derecho';
   if (!on) { ezShow('edit'); showLeft('media'); showInsp('video'); tlSig = ''; }

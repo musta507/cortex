@@ -71,6 +71,14 @@ const exportBlob = p => p.evaluate(async () => {
       check('la plantilla guardada vuelve igual (zoom y logo)', mine === await snap());
       await p.context().close();
     }
+    // editor avanzado escondido: sin botón, se entra con Ctrl+Mayús+E
+    {
+      const p = await openWithClip(b); await p.evaluate(async () => { setAutoOff(true); await stQuickOpen(true); });
+      const hid = await p.evaluate(() => getComputedStyle($('seFull')).display === 'none');
+      await p.keyboard.press('Control+Shift+E'); await p.waitForTimeout(800);
+      check('editor avanzado escondido y se entra con Ctrl+Mayús+E', hid && await p.evaluate(() => $('stEd').hidden && !ezMode), hid);
+      await p.context().close();
+    }
     // girar el vídeo: el recorte tapa las esquinas en los dos sentidos
     {
       const p = await openWithClip(b);

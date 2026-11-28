@@ -1708,4 +1708,7 @@ svg.ic.ic-l{margin-right:.4em}svg.ic.ic-r{margin-left:.35em}
 /* «Replicar un viral» como sección del menú */
 #repHomeBox>.ez-rep{max-width:980px;margin:0}
 #repHomeBox>.ez-rep>.ez-h>strong{display:none}
+/* editor avanzado escondido (Ajustes lo vuelve a enseñar) */
+body:not(.adv-ed) #modeBtn.to-adv,body:not(.adv-ed) #seFull{display:none!important}
+.set-card .agent-h kbd{font:600 11px var(--f-body);color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:5px;padding:1px 5px;background:rgba(255,255,255,.05)}
 </style>

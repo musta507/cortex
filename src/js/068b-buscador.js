@@ -98,3 +98,17 @@ function keysSync() {
   const gl = $('gemKey') && $('gemKey').closest('label'); if (gl && document.activeElement !== $('gemKey')) gl.hidden = !!g;
   if ($('elKeyW') && document.activeElement !== $('elKey') && !$('elKeyW').dataset.web) { const web = typeof elWeb === 'function' && elWeb(); if (!web) { $('elKeyW').hidden = !!e; if ($('elKeyH')) $('elKeyH').hidden = !!e; } }
 }
+
+/* ---------- editor avanzado escondido: sin botón salvo que lo actives en Ajustes; se entra con Ctrl+Mayús+E ---------- */
+const advEdOn = () => ezPref('advEd') === '1';
+function advEdSync() { document.body.classList.toggle('adv-ed', advEdOn()); if ($('setAdv')) $('setAdv').checked = advEdOn(); }
+function advEdOpen() {
+  if (!$('home').hidden) { toast('Abre primero un clip'); return; }
+  if ($('stEd') && !$('stEd').hidden) { $('seFull').click(); return; }
+  if (typeof ezMode !== 'undefined' && ezMode) { setEasy(false); toast('Editor avanzado: aquí tienes todas las herramientas'); }
+}
+setTimeout(() => {
+  advEdSync();
+  if ($('setAdv')) $('setAdv').addEventListener('change', () => { ezPref('advEd', $('setAdv').checked ? '1' : '0'); advEdSync(); });
+  document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && e.key.toLowerCase() === 'e') { e.preventDefault(); e.stopImmediatePropagation(); advEdOpen(); } }, true);
+}, 0);
