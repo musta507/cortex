@@ -112,3 +112,11 @@ setTimeout(() => {
   if ($('setAdv')) $('setAdv').addEventListener('change', () => { ezPref('advEd', $('setAdv').checked ? '1' : '0'); advEdSync(); });
   document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && e.key.toLowerCase() === 'e') { e.preventDefault(); e.stopImmediatePropagation(); advEdOpen(); } }, true);
 }, 0);
+
+/* ---------- con el inicio o el directo a la vista, el editor de detrás no se ve nunca (antes asomaba el editor avanzado al volver) ---------- */
+function onHomeSync() { const h = $('home'), l = $('livePage'); document.body.classList.toggle('on-home', !!((h && !h.hidden) || (l && !l.hidden))); }
+setTimeout(() => {
+  onHomeSync();
+  const mo = new MutationObserver(onHomeSync);
+  for (const id of ['home', 'livePage']) if ($(id)) mo.observe($(id), { attributes: true, attributeFilter: ['hidden'] });
+}, 0);

@@ -355,8 +355,8 @@ async function goHome() {
   if (exporting) { toast('Espera a que termine la exportación'); return; }
   if (typeof tplEditing !== 'undefined' && tplEditing) { tplEditing = null; $('tplBar').hidden = true; document.body.classList.remove('tpl-edit'); curProj = null; }
   $('app').classList.remove('review'); $('revBack').hidden = true; reviewBatch = null;
-  await saveNow(); vid.pause(); ezLeave(); $('livePage').hidden = true; $('liveBack').hidden = true;
-  renderHome(); $('home').hidden = false;
+  await saveNow(); vid.pause(); document.body.classList.add('on-home'); renderHome(); $('home').hidden = false;   // primero el inicio, luego se recoge el editor (sin que asome)
+  ezLeave(); $('livePage').hidden = true; $('liveBack').hidden = true;
 }
 const twoStep = (btn, msg, fn) => { let armed = false; btn.onclick = async ev => { ev.stopPropagation(); if (!armed) { armed = true; btn.classList.add('off'); toast(msg); setTimeout(() => { armed = false; btn.classList.remove('off'); }, 3000); return; } await fn(); }; };
 const TRASH = '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>';

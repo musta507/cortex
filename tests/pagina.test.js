@@ -79,6 +79,15 @@ const exportBlob = p => p.evaluate(async () => {
       check('editor avanzado escondido y se entra con Ctrl+Mayús+E', hid && await p.evaluate(() => $('stEd').hidden && !ezMode), hid);
       await p.context().close();
     }
+    // al volver al inicio no asoma el editor avanzado por detrás
+    {
+      const p = await openWithClip(b);
+      await p.evaluate(() => { window.__vis = []; const q = ['#app>.center', '#insp', '#lpanel', '#tl', '.wrap>header']; const ob = () => { if (!$('home').hidden) { const v = q.filter(s => { const e = document.querySelector(s); return e && getComputedStyle(e).visibility !== 'hidden' && e.getClientRects().length; }); if (v.length) window.__vis.push(v.join()); } if (window.__vis.length < 50) requestAnimationFrame(ob); }; ob(); $('homeBtn').click(); });
+      await p.waitForTimeout(1200);
+      const v = await p.evaluate(() => [...new Set(window.__vis)]);
+      check('al volver al inicio no se ve el editor avanzado detrás', !v.length, v);
+      await p.context().close();
+    }
     // girar el vídeo: el recorte tapa las esquinas en los dos sentidos
     {
       const p = await openWithClip(b);

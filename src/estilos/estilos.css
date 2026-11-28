@@ -1711,4 +1711,6 @@ svg.ic.ic-l{margin-right:.4em}svg.ic.ic-r{margin-left:.35em}
 /* editor avanzado escondido (Ajustes lo vuelve a enseñar) */
 body:not(.adv-ed) #modeBtn.to-adv,body:not(.adv-ed) #seFull{display:none!important}
 .set-card .agent-h kbd{font:600 11px var(--f-body);color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:5px;padding:1px 5px;background:rgba(255,255,255,.05)}
+/* el editor no asoma detrás del inicio ni del directo */
+body.on-home .wrap>header,body.on-home #revPanel,body.on-home #rail,body.on-home #lpanel,body.on-home #app>.center,body.on-home #insp,body.on-home #tl,body.on-home .wrap>.steps,body.on-home #tplBar{visibility:hidden!important}
 </style>
