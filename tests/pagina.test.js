@@ -192,6 +192,8 @@ const exportBlob = p => p.evaluate(async () => {
         const b = [...$('lvIa').querySelectorAll('button')].find(x => /escuche/.test(x.textContent)); b.click(); await new Promise(r => setTimeout(r, 400)); const on = (await getLive(await lvClientOf('westcol'))).ai;
         ezPref('lvExtra', '1'); lvSoloSync(); const back = getComputedStyle($('lvCrit')).display !== 'none'; ezPref('lvExtra', '0'); lvSoloSync(); localStorage.removeItem('clipzi-gemini'); return [hid, on, back]; });
       check('Con IA: solo lo de la IA (lo demás escondido) y se enciende desde ahí', ia.every(Boolean), ia);
+      const ly = await p.evaluate(() => { $('lvModeSt').click(); const o = []; for (const l of ['below', 'over', 'side']) { ezPref('lvLay', l); lvLaySync(); o.push($('livePage').classList.contains('lay-' + l)); } const st = getComputedStyle($('lvStage')).display; ezPref('lvLay', 'below'); lvLaySync(); o.push(getComputedStyle($('lvStage')).position === 'static', st === 'contents'); $('lvModeTr').click(); return o; });
+      check('Manual: botones debajo, encima o al lado (lo elige el clipper)', ly.every(Boolean), ly);
       check('sin errores en el directo', !errs.length, errs[0]);
       await ctx.close();
     }
