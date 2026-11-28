@@ -152,6 +152,8 @@ const exportBlob = p => p.evaluate(async () => {
         const d = document.createElement('div'); d.innerHTML = '<button>🗑️ Borrar</button><span class="rinfo"><strong>🔥 MI TÍTULO</strong></span><select><option>⚡ Rápida</option></select>'; document.body.append(d); await new Promise(r => setTimeout(r, 30));
         const out = { seen, btn: d.querySelector('button').innerHTML.startsWith('<svg'), user: d.querySelector('strong').textContent === '🔥 MI TÍTULO', opt: d.querySelector('option').textContent === 'Rápida' }; d.remove(); return out; });
       check('sin emojis en la interfaz (iconos), pero los títulos de la gente intactos', !r.seen.length && r.btn && r.user && r.opt, r);
+      await p.click('#hnav .hi[data-sec=replicar]'); await p.waitForTimeout(300);
+      check('Replicar un viral se abre con el menú lateral a la vista', await p.evaluate(() => !$('home').hidden && homeSec === 'replicar' && !!$('repHomeBox').querySelector('#ezRep') && !$('ezRep').hidden));
       check('sin errores con los iconos', !errs.length, errs[0]);
       await ctx.close();
     }

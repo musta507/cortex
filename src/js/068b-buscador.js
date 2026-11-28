@@ -8,7 +8,7 @@ function cmdkAll() {
   out.push({ g: 'Acciones', t: 'Limpiar CapCut', k: 'disco espacio borrar', run: () => ccCleanOpen() });
   out.push({ g: 'Acciones', t: 'Claves de la IA', k: 'gemini elevenlabs api key ajustes', run: () => setHomeSec('ajustes') });
 @@solo-pc
-  out.push({ g: 'Acciones', t: 'Replicar un viral', k: 'copiar clip vod crudo', run: async () => { await newClip(); repOpen(); } });
+  out.push({ g: 'Acciones', t: 'Replicar un viral', k: 'copiar clip vod crudo', run: () => setHomeSec('replicar') });
 @@fin
 @@solo-pc
   out.push({ g: 'Acciones', t: 'Canales de Kick y grabador', k: 'directo cuentas clippers carpeta ajustes', run: () => setHomeSec('ajustes') });

@@ -843,7 +843,7 @@ body.st-open .app.easy .ez-flags{visibility:hidden}
 .ez-alt span{font-weight:400;opacity:.75}
 .rep-row{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
 .rep-row.over{border-color:var(--accent,#7c5cff)}
-.rep-n{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--accent,#7c5cff);color:#fff;font-weight:700}
+.rep-n{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--accent,#7c5cff);color:var(--accent-ink,#111);font-weight:700}
 .rep-b{display:grid;gap:6px;flex:1;min-width:0}
 .rep-ctl{display:flex;flex-wrap:wrap;gap:6px}
 .rep-ctl input{flex:1;min-width:180px}
@@ -1705,4 +1705,7 @@ svg.ic.ic-l{margin-right:.4em}svg.ic.ic-r{margin-left:.35em}
 #livePage.stage.lay-side .lv-stage .st-rw{grid-column:2;grid-row:4;margin:12px 14px 0;flex-wrap:wrap}
 #livePage.stage.lay-side .lv-stage .st-rw button{flex:1;background:rgba(255,255,255,.06)!important;backdrop-filter:none}
 #livePage.stage.lay-side .lv-stage .st-mk button:not(.primary){background:rgba(255,255,255,.06)!important;backdrop-filter:none}
+/* «Replicar un viral» como sección del menú */
+#repHomeBox>.ez-rep{max-width:980px;margin:0}
+#repHomeBox>.ez-rep>.ez-h>strong{display:none}
 </style>

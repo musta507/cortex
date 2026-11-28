@@ -376,6 +376,7 @@ const HSECS = [
   ['agente', 'Clips de un vídeo largo', '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/>'],
   ['directo', 'Clips en directo', '<circle cx="12" cy="12" r="3"/><path d="M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>'],
 @@fin
+  ['replicar', 'Replicar un viral', '<path d="M8 4h9a2 2 0 0 1 2 2v9"/><rect x="4" y="8" width="11" height="12" rx="2"/>'],
   ['reacciones', 'Reacciones', '<rect x="3" y="3" width="18" height="8" rx="2"/><rect x="3" y="13" width="18" height="8" rx="2"/><path d="M10 15.5l4 1.5-4 1.5z"/>'],
   ['marca', 'Marca', '<path d="M4 20l5-14h2l5 14M6.5 14h7"/><circle cx="19" cy="7" r="2.5"/>'],
   ['ajustes', 'Ajustes', '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 2.9-1.2V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.1a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>']
@@ -392,6 +393,7 @@ function setHomeSec(k) {
   $('home').scrollTop = 0;
   if (k === 'reacciones') try { rxPlace(true); } catch {}
   if (k === 'ajustes') try { setRender(); } catch {}
+  if (k === 'replicar') try { repHome(); } catch (e) { console.warn(e); }
 @@solo-pc
   if (k === 'directo') { $('hSecName').textContent = '¿A quién clipeas hoy?'; try { lsRender(); } catch (e) { console.warn(e); } }
 @@fin
@@ -407,7 +409,7 @@ function renderHnav(c) {
   // lo que más se hace, siempre a un clic
   const nw = document.createElement('button'); nw.className = 'hnew primary'; nw.title = 'Nuevo clip'; nw.innerHTML = hIcon('<path d="M12 5v14M5 12h14"/>') + '<span>Nuevo clip</span>'; nw.onclick = () => newClip(); n.append(nw);
   // secciones agrupadas por lo que se hace con ellas
-  const GROUPS = [['Crear', ['inicio', 'directo', 'agente']], ['Biblioteca', ['plantillas', 'marca', 'reacciones']], ['Analizar', ['viral']]];
+  const GROUPS = [['Crear', ['inicio', 'directo', 'agente', 'replicar']], ['Biblioteca', ['plantillas', 'marca', 'reacciones']], ['Analizar', ['viral']]];
   for (const [g, ks] of GROUPS) {
     const secs = ks.map(k => HSECS.find(x => x[0] === k)).filter(Boolean); if (!secs.length) continue;
     lbl(g);
@@ -417,9 +419,6 @@ function renderHnav(c) {
       if (k === 'agente' || k === 'directo') { const t = document.createElement('em'); t.className = 'hpro'; t.textContent = 'Pronto'; b.append(t); }
 @@fin
     }
-@@solo-pc
-    if (g === 'Crear') item('Replicar un viral', '<path d="M8 4h9a2 2 0 0 1 2 2v9"/><rect x="4" y="8" width="11" height="12" rx="2"/>', false, async () => { await newClip(); repOpen(); });
-@@fin
     if (g === 'Biblioteca') item('Notas', '<path d="M5 3h10l4 4v14H5z"/><path d="M14 3v5h5M8 12h8M8 16h6"/>', false, notesOpen);
   }
   const sp = document.createElement('div'); sp.className = 'hsp'; n.append(sp);
