@@ -11,7 +11,7 @@ function cmdkAll() {
   out.push({ g: 'Acciones', t: 'Replicar un viral', k: 'copiar clip vod crudo', run: async () => { await newClip(); repOpen(); } });
 @@fin
 @@solo-pc
-  out.push({ g: 'Acciones', t: 'Abrir el panel en directo', k: 'kick grabar stream', run: () => { setHomeSec('directo'); $('lvOpen').click(); } });
+  out.push({ g: 'Acciones', t: 'Canales de Kick y grabador', k: 'directo cuentas clippers carpeta ajustes', run: () => setHomeSec('ajustes') });
   out.push({ g: 'Acciones', t: 'Analizar un directo con el agente', k: 'vod clips virales', run: () => { setHomeSec('agente'); } });
 @@fin
   out.push({ g: 'Acciones', t: document.querySelector('#home.navmin') ? 'Ensanchar el menú' : 'Encoger el menú', k: 'barra lateral', run: () => document.querySelector('#hnav .hmin').click() });
@@ -62,6 +62,7 @@ function setRender() {
   let g = '', e = ''; try { g = (localStorage.getItem('clipzi-gemini') || '').trim(); e = (localStorage.getItem('clipzi-eleven') || '').trim(); } catch {}
   if (document.activeElement !== $('setGem')) $('setGem').value = g; if (document.activeElement !== $('setEl')) $('setEl').value = e;
   st('setGemSt', g); st('setElSt', e);
+  keysSync();
 @@solo-pc
   $('setToApp').hidden = !!(window.cortexApp && window.cortexApp.isApp);
 @@fin
@@ -70,8 +71,30 @@ setTimeout(() => {
   if (!$('setGem')) return;
   $('setGem').addEventListener('input', () => { const v = $('setGem').value.trim(); try { localStorage.setItem('clipzi-gemini', v); } catch {} for (const id of ['gemKey', 'gemKey2', 'ezKey']) if ($(id)) $(id).value = v; setRender(); });
   $('setEl').addEventListener('input', () => { const v = $('setEl').value.trim(); try { localStorage.setItem('clipzi-eleven', v); } catch {} if ($('elKey')) $('elKey').value = v; setRender(); });
-  $('setToLive').onclick = () => setHomeSec('directo'); $('setCC').onclick = () => ccCleanOpen();
+  $('setCC').onclick = () => ccCleanOpen(); $('setLog').onclick = () => { try { clipLogDownload(); } catch (e) { toast('Todavía no hay datos de clips'); } };
+@@solo-pc
+  $('setLiveHost').append($('liveBox'));   // canales, cuentas y carpeta: se configuran una vez, van en Ajustes
+  $('lvCfg').onclick = () => { $('lvBackHome').click(); setHomeSec('ajustes'); setTimeout(() => $('liveBox').scrollIntoView({ block: 'center', behavior: 'smooth' }), 60); };
+@@fin
+@@solo-web
+  $('lvCfg').hidden = true;
+@@fin
+  keysSync();
 @@solo-pc
   $('setToApp').onclick = () => cxToApp();
 @@fin
 }, 0);
+
+// «En directo» en un paso: si ya hay un canal puesto abre el panel; si no, lleva a ponerlo
+async function liveGo() {
+  try { document.activeElement.blur(); } catch {}
+  let any = false; try { for (const c of clients) if (((await getLive(c)).kick || '').trim()) { any = true; break; } } catch {}
+  if (!any) { setHomeSec('ajustes'); toast('Pon primero tu canal de Kick y la carpeta del grabador'); setTimeout(() => { $('liveBox').scrollIntoView({ block: 'center' }); $('lvKick').focus(); }, 60); return; }
+  $('lvOpen').click();
+}
+// las casillas de clave repartidas por el editor solo salen si la clave falta: una vez puesta, se cambia en Ajustes
+function keysSync() {
+  let g = '', e = ''; try { g = (localStorage.getItem('clipzi-gemini') || '').trim(); e = (localStorage.getItem('clipzi-eleven') || '').trim(); } catch {}
+  const gl = $('gemKey') && $('gemKey').closest('label'); if (gl && document.activeElement !== $('gemKey')) gl.hidden = !!g;
+  if ($('elKeyW') && document.activeElement !== $('elKey') && !$('elKeyW').dataset.web) { const web = typeof elWeb === 'function' && elWeb(); if (!web) { $('elKeyW').hidden = !!e; if ($('elKeyH')) $('elKeyH').hidden = !!e; } }
+}

@@ -510,7 +510,7 @@ async function renderViral(cl, light) {
   const box = $('vlBox'); if (!box || !cl) return;
   const v = await vlGet(cl);
   if (!light) {
-    if (!v.accs) { const L = await getLive(cl); v.accs = L.clippers || ''; }
+    if (!v.accs) { const all = []; for (const c of clients) { try { for (const a of String((await getLive(c)).clippers || '').split(/[\s,;]+/)) if (a.trim() && !all.includes(a.trim())) all.push(a.trim()); } catch {} } v.accs = all.join('\n'); }   // las mismas cuentas que ya pusiste en tus canales
     $('vlAccs').value = v.accs; $('vlMax').value = String(v.max || 100);
     $('vlGo').onclick = () => vlCollect(cl);
     $('vlStopCol').onclick = () => { vlStopReq = true; $('vlStopCol').disabled = true; $('vlStatus').textContent = 'Parando y guardando lo recogido…'; setTimeout(() => $('vlStopCol').disabled = false, 3000); };

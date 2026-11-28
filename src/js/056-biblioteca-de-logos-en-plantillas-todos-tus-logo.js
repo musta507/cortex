@@ -18,7 +18,7 @@ async function lgRender() {
     const b = document.createElement('div'); b.className = 'lg-card' + ((x ? cur === x.src : !cur) ? ' on' : ''); b.tabIndex = 0;
     const pv = document.createElement('div'); pv.className = 'lg-pv'; if (x) { const im = document.createElement('img'); im.src = x.src; im.alt = ''; pv.append(im); } else { pv.classList.add('none'); pv.textContent = 'Sin logo'; }
     const nm = document.createElement('div'); nm.className = 'tt-n'; nm.textContent = x ? x.name : 'Ninguno'; b.append(pv, nm);
-    if (b.classList.contains('on')) { const f = document.createElement('div'); f.className = 'tt-fix'; f.textContent = '✓ El de ' + (c ? c.name : 'este creador'); b.append(f); }
+    if (b.classList.contains('on')) { const f = document.createElement('div'); f.className = 'tt-fix'; f.textContent = '✓ En uso'; b.append(f); }
     if (x) {
       const ed = document.createElement('button'); ed.className = 'lg-ren'; ed.title = 'Cambiar el nombre'; ed.textContent = '🏷️';
       ed.onclick = async e => { e.stopPropagation(); const n = (prompt('Nombre del logo:', x.name) || '').trim(); if (!n) return; const l = await lgLib(), it = l.find(y => y.id === x.id); if (it) { it.name = n.slice(0, 40); await kv.set('logoLib', l); } lgRender(); };

@@ -108,9 +108,11 @@ const exportBlob = p => p.evaluate(async () => {
       await p.reload(); await p.waitForTimeout(2200);
       const o = await p.evaluate(() => ({ main: clients[0].name, cur: curClient, clips: $('recents').querySelectorAll('.rcard').length - 1, tpl: Object.keys(templates).sort(), ov: presetOverrides.Podcast.c.zoom, lista: !$('homeClients').hidden, grupos: new Set(clients.map(c => groupOf(c.id))).size }));
       check('sin clientes: todos los clips juntos y un solo juego de plantillas', o.main === 'WestCOL' && o.cur === 'cw' && o.clips === 3 && !o.lista && o.grupos === 1 && o.ov === '120' && ['Mía', 'Mía · Pablo', 'Otra', 'Podcast · Pablo'].every(n => o.tpl.includes(n)), o);
-      await p.click('#hnav .hi[data-sec=directo]'); await p.waitForTimeout(700);
-      check('los canales de Kick siguen en «En directo»', await p.evaluate(() => [...$('lvChans').querySelectorAll('.lv-chip')].map(x => x.textContent).join('|')).then(t => t.includes('westcol') && t.includes('pablo')));
+      await p.click('#hnav .hi[data-sec=ajustes]'); await p.waitForTimeout(700);
+      check('los canales de Kick están en Ajustes', await p.evaluate(() => [...$('lvChans').querySelectorAll('.lv-chip')].map(x => x.textContent).join('|')).then(t => t.includes('westcol') && t.includes('pablo')));
       await p.click('#hnav .hi[data-sec=reacciones]'); await p.waitForTimeout(400);
+      check('Marca tiene las fuentes y los logos; el agente enseña primero la acción', await p.evaluate(() => { setHomeSec('marca'); const m = !$('fnBox').closest('.hsec').hidden && $('lgBox').closest('.hsec').dataset.sec === 'marca'; setHomeSec('agente'); return m && !$('agCfg').open && $('agRun').offsetParent !== null; }));
+      await p.click('#hnav .hi[data-sec=reacciones]'); await p.waitForTimeout(300);
       check('Reacciones es una sección del menú', await p.evaluate(() => !$('rxHome').closest('.hsec').hidden && !!$('rxHome').querySelector('#rxAdd')));
       await p.evaluate(() => setHomeSec('inicio')); await p.keyboard.press('Control+k'); await p.keyboard.type('pablo1'); await p.waitForTimeout(300);
       const found = await p.evaluate(() => [...document.querySelectorAll('.cmdk-i')].map(x => x.textContent).join('|'));

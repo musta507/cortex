@@ -377,6 +377,7 @@ const HSECS = [
   ['directo', 'Clips en directo', '<circle cx="12" cy="12" r="3"/><path d="M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>'],
 @@fin
   ['reacciones', 'Reacciones', '<rect x="3" y="3" width="18" height="8" rx="2"/><rect x="3" y="13" width="18" height="8" rx="2"/><path d="M10 15.5l4 1.5-4 1.5z"/>'],
+  ['marca', 'Marca', '<path d="M4 20l5-14h2l5 14M6.5 14h7"/><circle cx="19" cy="7" r="2.5"/>'],
   ['ajustes', 'Ajustes', '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 2.9-1.2V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.1a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>']
 ];
 const hIcon = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
@@ -384,6 +385,9 @@ const hIcon = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
 document.addEventListener('click', e => { const a = e.target.closest('[data-go]'); if (a) { e.preventDefault(); setHomeSec(a.dataset.go); } });
 @@fin
 function setHomeSec(k) {
+@@solo-pc
+  if (k === 'directo') { liveGo(); return; }   // «En directo» abre el panel directamente; sus ajustes están en Ajustes
+@@fin
   homeSec = k;
   document.querySelectorAll('#homeClient .hsec').forEach(el => el.hidden = el.dataset.sec !== k);
   const it = HSECS.find(x => x[0] === k); $('hSecName').textContent = it ? it[1] : '';
@@ -403,7 +407,7 @@ function renderHnav(c) {
   // lo que más se hace, siempre a un clic
   const nw = document.createElement('button'); nw.className = 'hnew primary'; nw.title = 'Nuevo clip'; nw.innerHTML = hIcon('<path d="M12 5v14M5 12h14"/>') + '<span>Nuevo clip</span>'; nw.onclick = () => newClip(); n.append(nw);
   // secciones agrupadas por lo que se hace con ellas
-  const GROUPS = [['Crear', ['inicio', 'directo', 'agente']], ['Biblioteca', ['plantillas', 'reacciones']], ['Analizar', ['viral']]];
+  const GROUPS = [['Crear', ['inicio', 'directo', 'agente']], ['Biblioteca', ['plantillas', 'marca', 'reacciones']], ['Analizar', ['viral']]];
   for (const [g, ks] of GROUPS) {
     const secs = ks.map(k => HSECS.find(x => x[0] === k)).filter(Boolean); if (!secs.length) continue;
     lbl(g);
@@ -505,6 +509,9 @@ function renderHome() {
   const c = clientOf(curClient);
   $('homeClients').hidden = !!c; $('homeClient').hidden = !c;
   if (c && homeSecFor !== c.id) { homeSecFor = c.id; homeSec = 'inicio'; }
+@@solo-pc
+  if (homeSec === 'directo') homeSec = 'inicio';
+@@fin
   renderHnav(c);
   if (!c) {
     const g = $('clientGrid'); g.innerHTML = '';

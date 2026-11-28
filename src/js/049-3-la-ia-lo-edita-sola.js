@@ -142,7 +142,7 @@ async function ezRunAI() {
       const ok = await doTranscribe(m => busyMsg(m));
       if (ok) clipMeta.subR = srcRange();
       busyStep('subs', ok ? 'ok' : 'fail', ok ? captions.length + ' frases' : 'no se pudo'); busyMsg('');
-    } else busyStep('subs', 'skip', A.subs ? 'esta plantilla va sin' : 'este cliente va sin');
+    } else busyStep('subs', 'skip', A.subs ? 'esta plantilla va sin' : 'está apagado');
     // palabrotas
     // el gancho ya no se busca solo: se hace desde el clic derecho si quieres
     // título

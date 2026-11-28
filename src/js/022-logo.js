@@ -25,7 +25,7 @@ $('logoFile').addEventListener('change', e => {
   const fr = new FileReader(); fr.onload = () => setLogo(fr.result); fr.readAsDataURL(f);
   e.target.value = '';
 });
-$('logoRemove').onclick = () => { clearLogo(); toast('Logo quitado de este cliente'); };
+$('logoRemove').onclick = () => { clearLogo(); toast('Logo quitado'); };
 $('logoCenter').onclick = () => { if (trk.logo.lock) return; logoPos.x = W / 2; pushHistory(); saveLogoCfg(); };
 $('logoCorner').onclick = () => { if (trk.logo.lock) return; logoPos.x = W - 170; logoPos.y = 240; pushHistory(); saveLogoCfg(); };
 $('logoLock').addEventListener('change', () => { trk.logo.lock = $('logoLock').checked; saveLogoCfg(); syncTrackUI(); toast(trk.logo.lock ? 'Logo bloqueado' : 'Logo desbloqueado'); });
