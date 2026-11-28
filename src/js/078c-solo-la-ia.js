@@ -28,6 +28,9 @@ async function lvIaBar() {
 setTimeout(() => {
   if (!$('lvStatus')) return;
   const bar = document.createElement('div'); bar.id = 'lvIa'; bar.className = 'lv-iabar'; $('lvStatus').after(bar);
+  // los canales van en la cabecera, al lado de Manual / Con IA; y los controles de la pantalla, encima del vídeo (como en un reproductor)
+  const modes = document.querySelector('#livePage .lv-modes'); if (modes) modes.after($('lvStatus'));
+  $('lvMini').append($('lvStage'));
   const x = $('lvExtra'); if (x) { x.checked = lvExtra(); x.addEventListener('change', () => { ezPref('lvExtra', x.checked ? '1' : '0'); lvSoloSync(); try { liveRender(); } catch {} }); }
   lvSoloSync();
   setInterval(() => { if (!$('livePage').hidden) lvIaBar(); }, 3000);

@@ -17,17 +17,16 @@ function lvChanBar(st, S) {
     const on = !!(s && s.on), b = document.createElement('button'); b.type = 'button';
     b.className = 'lv-chip' + (slug === curSlug ? ' on' : '') + (on ? ' live' : '');
     b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', slug === curSlug ? 'true' : 'false');
-    let info = 'sin directo';
-    if (s && on) { const mins = Math.round(((s.segs && s.segs.length ? s.segs[s.segs.length - 1].t1 : s.status.started) - s.status.started) / 60); info = `en directo · ${mins} min`; }
-    else if (s && Date.now() / 1000 - s.status.updated < 3600 * 3) info = 'terminó hace poco';
+    let info = '';
+    if (s && on) { const mins = Math.round(((s.segs && s.segs.length ? s.segs[s.segs.length - 1].t1 : s.status.started) - s.status.started) / 60); info = mins >= 60 ? `${Math.floor(mins / 60)} h ${mins % 60} min` : `${mins} min`; }
     b.innerHTML = '<i class="lv-dot"></i><span></span><em></em>'; b.children[1].textContent = slug; b.children[2].textContent = info;
     b.title = on ? `Seguir el directo de ${slug}: transcripción, pantalla y momentos` : `${slug} no está en directo ahora. El grabador empieza solo cuando entre.`;
     b.onclick = () => { if (!on && !s) { const c = lvTrSess(); toast(`${slug} no está en directo ahora${c && c.on ? ': sigues a ' + c.status.slug : ''}. Cuando entre, aparecerá en rojo y podrás pulsarlo.`); return; } lvFocusSet(slug); };
     bar.append(b);
   }
-  const add = document.createElement('button'); add.type = 'button'; add.className = 'lv-chip add'; add.textContent = '＋ Añadir canal'; add.title = 'Graba y sigue otro canal de Kick';
+  const add = document.createElement('button'); add.type = 'button'; add.className = 'lv-chip add'; add.innerHTML = '＋<span> Añadir canal</span>'; add.title = 'Graba y sigue otro canal de Kick';
   add.onclick = () => lvChanAdd(add); bar.append(add);
-  const cfg = document.createElement('button'); cfg.type = 'button'; cfg.className = 'lv-chip ghost'; cfg.textContent = '⚙ Ajustes del directo'; cfg.title = 'Cuentas de clippers, IA que escucha, quitar canales y carpeta del grabador';
+  const cfg = document.createElement('button'); cfg.type = 'button'; cfg.className = 'lv-chip ghost'; cfg.innerHTML = '⚙<span> Ajustes del directo</span>'; cfg.title = 'Cuentas de clippers, IA que escucha, quitar canales y carpeta del grabador';
   cfg.onclick = () => $('lvCfg').click(); bar.append(cfg);
   st.append(bar);
 }

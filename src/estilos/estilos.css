@@ -1631,4 +1631,39 @@ body.se-rzing{cursor:ew-resize;user-select:none}
 .lv-iabar.warn{border-color:rgba(251,146,60,.35);background:rgba(251,146,60,.07)}.lv-iabar.warn .lv-iabar-dot{background:#fb923c}
 .lv-iabar-t{flex:1;display:grid;gap:2px;min-width:0}.lv-iabar-t strong{font-size:14.5px;font-weight:600}.lv-iabar-t span{color:#8E8E96;font-size:12.5px}
 .lv-iabar-b{display:flex;gap:8px;flex:none}.lv-iabar-b button{width:auto;padding:7px 14px;font-size:13px}
+/* ===== Manual estilo «cine»: el directo grande y los controles encima, abajo, como en un reproductor ===== */
+#livePage .lv-head>.lv-status{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0!important}
+#livePage .lv-head>.lv-status>:not(.lv-cbar){flex-basis:100%}
+#livePage .lv-head .lv-cbar{margin:0;gap:6px}
+#livePage .lv-head .lv-cbar .lv-chip{padding:6px 12px;font-size:13px}
+#livePage .lv-head .lv-cbar .lv-chip.add span,#livePage .lv-head .lv-cbar .lv-chip.ghost span{display:none}
+#livePage .lv-head .lv-cbar .lv-chip.add,#livePage .lv-head .lv-cbar .lv-chip.ghost{padding:6px 11px}
+#livePage .lv-cbar .lv-chip em:empty{display:none}
+#livePage.stage .home-in{display:grid;grid-template-rows:auto minmax(0,1fr);height:100vh;padding:12px 22px 16px!important;gap:12px!important;overflow:hidden}
+#livePage.stage .lv-head{grid-row:1;flex-wrap:nowrap;gap:10px}
+#livePage.stage .lv-head h2{display:none}
+#livePage.stage #lvHistB{margin-left:auto}
+#livePage.stage #lvPrepH{margin-left:0!important}
+#livePage.stage .lv-head>.lv-status>:not(.lv-cbar):not(.lv-off){display:none!important}
+#livePage.stage .lv-head .lv-off{flex-basis:auto;padding:6px 12px}
+#livePage.stage .lv-mini{grid-row:2;align-self:center;position:relative!important;top:auto!important;right:auto!important;width:min(100%,calc((100vh - 96px)*16/9))!important;min-width:0!important;margin:0 auto!important;border-radius:18px;border:1px solid rgba(255,255,255,.1);box-shadow:0 30px 80px rgba(0,0,0,.5)}
+#livePage.stage .lv-mini video,#livePage.stage .lv-mini iframe{width:100%;aspect-ratio:16/9;height:auto;border:0}
+#livePage.stage .lv-mh{position:absolute;left:14px;right:14px;top:14px;z-index:3;background:none;padding:0;pointer-events:none}
+#livePage.stage .lv-mh>*{pointer-events:auto}
+#livePage.stage #lvMiniT{flex:none;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.62);backdrop-filter:blur(8px);font-size:13px;margin-right:auto}
+#livePage.stage .lv-mh button,#livePage.stage .lv-mh a{background:rgba(0,0,0,.55)!important;backdrop-filter:blur(8px);border-radius:10px}
+#livePage.stage .lv-mini>.lv-stage{position:absolute!important;left:0;right:auto;bottom:0;z-index:4;width:100%!important;box-sizing:border-box;justify-self:auto;min-width:0!important;margin:0!important;padding:80px 18px 16px;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.55) 35%,rgba(0,0,0,.85));display:flex!important;flex-wrap:wrap;align-items:center;justify-content:flex-start!important;gap:10px!important}
+#livePage.stage .lv-mini>.lv-stage[hidden]{display:none!important}
+#livePage.stage .lv-stage .st-det{order:0;flex:0 0 100%;margin:0}
+#livePage.stage .lv-stage .st-tl{order:1;flex:0 0 100%;height:54px!important;background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);backdrop-filter:blur(8px)}
+#livePage.stage .lv-stage .st-rw{order:2;margin:0;flex-wrap:nowrap}
+#livePage.stage .lv-stage .st-btns.st-mk{order:3;margin:0 0 0 auto!important}
+#livePage.stage .lv-stage .st-btns:not(.st-mk){order:4;margin:0!important;padding:5px;border-radius:14px;background:rgba(255,255,255,.1);backdrop-filter:blur(10px);gap:5px!important}
+#livePage.stage .lv-stage .st-btns:not(.st-mk)>.hint:first-child{padding:0 8px;color:#e4e4e7;font-weight:600;font-size:13px}
+#livePage.stage .lv-stage #stS:empty{display:none}
+#livePage.stage .lv-stage .st-btns .st-b{padding:9px 16px!important;font-size:15px}
+#livePage.stage .lv-stage .st-b:not(.primary){background:#fff;color:#111;border-color:#fff}
+#livePage.stage #stRwT,#livePage.stage #stMarkT{display:none!important}
+#livePage.stage .lv-stage .st-rw button,#livePage.stage .lv-stage .st-mk button:not(.primary){background:rgba(255,255,255,.12)!important;border:1px solid rgba(255,255,255,.14)!important;color:#fff!important;backdrop-filter:blur(10px);padding:9px 14px}
+#livePage.stage #stRwLive{background:#ff2d2d!important;border-color:#ff2d2d!important}
 </style>
