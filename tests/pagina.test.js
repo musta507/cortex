@@ -175,6 +175,10 @@ const exportBlob = p => p.evaluate(async () => {
       check('barra de canales: se ve quién está en directo y se elige cuál seguir', cb[0] === 2 && cb[1] && cb[2], cb);
       const md = await p.evaluate(() => { $('lvModeSt').click(); const a = stOn() && $('livePage').classList.contains('stage'); $('lvModeTr').click(); return [a, !stOn(), $('lvModeSt').textContent.includes('Manual'), $('lvModeTr').textContent.includes('Con IA'), getComputedStyle($('lvTrBox')).display === 'none', lvTrOn() === false]; });
       check('directo: Manual (la pantalla) y Con IA (los momentos), sin transcripción', md.every(Boolean), md);
+      const ia = await p.evaluate(async () => { localStorage.setItem('clipzi-gemini', 'x'); lvFocusSet('westcol'); $('lvModeTr').click(); await lvIaBar(); const hid = getComputedStyle($('lvCrit')).display === 'none' && getComputedStyle($('lvAuto')).display === 'none';
+        const b = [...$('lvIa').querySelectorAll('button')].find(x => /escuche/.test(x.textContent)); b.click(); await new Promise(r => setTimeout(r, 400)); const on = (await getLive(await lvClientOf('westcol'))).ai;
+        ezPref('lvExtra', '1'); lvSoloSync(); const back = getComputedStyle($('lvCrit')).display !== 'none'; ezPref('lvExtra', '0'); lvSoloSync(); localStorage.removeItem('clipzi-gemini'); return [hid, on, back]; });
+      check('Con IA: solo lo de la IA (lo demás escondido) y se enciende desde ahí', ia.every(Boolean), ia);
       check('sin errores en el directo', !errs.length, errs[0]);
       await ctx.close();
     }

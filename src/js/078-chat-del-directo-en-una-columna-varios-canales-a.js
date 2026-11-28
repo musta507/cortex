@@ -126,6 +126,7 @@ function liveRender(state) {
     st.append(p);
   }
   { const f = lvTrSess(); liveMini(f && f.on ? f : S.find(s => s.on)); }
+  try { lvSoloSync(); lvIaBar(); } catch {}
   box.innerHTML = '';
   const all = [];
   // los que coinciden salen juntos en «Varios criterios» y además cada señal suelta en su sección

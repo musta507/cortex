@@ -1615,4 +1615,20 @@ body.se-rzing{cursor:ew-resize;user-select:none}
 #livePage.stage .lv-status .lv-cbar{margin:0}
 .lv-modes{margin-left:6px}
 .lv-modes button{padding:7px 16px;font-size:14px}
+/* ===== «Con IA»: solo lo que encuentra la IA ===== */
+#livePage.lv-solo:not(.stage) .lv-crit,#livePage.lv-solo:not(.stage) .lv-agent,#livePage.lv-solo:not(.stage) .lv-auto,#livePage.lv-solo:not(.stage) .lv-fmt,#livePage.lv-solo:not(.stage) .lv-missw,
+#livePage.lv-solo .lv-list>.lv-sec:not(.lv-sec-ia){display:none!important}
+#livePage.lv-solo .lv-sec-ia>.lv-sh{display:none}
+#livePage .home-in>.lv-iabar{order:1}
+#livePage .lv-iabar{margin-right:400px}
+@media (max-width:1100px){#livePage .lv-iabar{margin-right:310px}}
+#livePage.stage .lv-iabar{display:none}
+.lv-iabar{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;background:#111114;border:1px solid rgba(255,255,255,.08)}
+.lv-iabar:empty{display:none}
+.lv-iabar-dot{width:10px;height:10px;border-radius:50%;background:#52525b;flex:none}
+.lv-iabar.on .lv-iabar-dot{background:#4ade80;box-shadow:0 0 0 4px rgba(74,222,128,.18);animation:lvBlink 1.8s ease-in-out infinite}
+.lv-iabar.wait .lv-iabar-dot{background:#a1a1aa}
+.lv-iabar.warn{border-color:rgba(251,146,60,.35);background:rgba(251,146,60,.07)}.lv-iabar.warn .lv-iabar-dot{background:#fb923c}
+.lv-iabar-t{flex:1;display:grid;gap:2px;min-width:0}.lv-iabar-t strong{font-size:14.5px;font-weight:600}.lv-iabar-t span{color:#8E8E96;font-size:12.5px}
+.lv-iabar-b{display:flex;gap:8px;flex:none}.lv-iabar-b button{width:auto;padding:7px 14px;font-size:13px}
 </style>

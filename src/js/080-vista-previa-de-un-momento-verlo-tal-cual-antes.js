@@ -122,7 +122,7 @@ function wavToF32(buf) {
 }
 async function liveAI(S) {
   if (S.aiBusy || !getGemKey()) return;
-  const cl = clients.find(c => c.name.toLowerCase() === String(S.status.client || '').toLowerCase()); if (!cl) return;
+  const cl = await lvClientOf(String(S.status.slug || '')) || clients.find(c => c.name.toLowerCase() === String(S.status.client || '').toLowerCase()); if (!cl) return;
   const L = await getLive(cl); if (!L.ai) return;
   const recent = S.segs.filter(x => !S.aiDone.has(x.f) && Date.now() / 1000 - x.t1 < 600);
   const take = []; for (const x of recent) { take.push(x); if (x.t1 - take[0].t0 >= 110) break; }
@@ -132,7 +132,7 @@ async function liveAI(S) {
     const parts = [];
     for (const x of take) { const { a } = wavToF32(await (await fileAt(S.h, x.wav)).arrayBuffer()); parts.push(a); }
     const n = parts.reduce((s, a) => s + a.length, 0), au = new Float32Array(n); let o = 0; for (const a of parts) { au.set(a, o); o += a.length; }
-    const A = await getAgent(cl);
+    const A = await getAgent(clients[0]);   // un solo agente: el criterio es el de «Agente de clips»
     const res = await geminiJSON([{ inline_data: { mime_type: 'audio/wav', data: wavB64(au, 8000) } }, { text: `Son ${Math.round(n / 8000)} segundos de audio del directo de ${S.status.slug}${S.status.client ? ' (cliente: ' + S.status.client + ')' : ''}, ahora mismo.
 ${A.rules ? 'PAUTAS DEL CLIENTE:\n' + A.rules + '\n' : ''}Eres un clipper profesional de TikTok. ¿Hay aquí algún momento que pueda ser un clip viral (algo gracioso, polémico, una reacción fuerte, una frase potente, una historia que engancha)?
 Solo los buenos de verdad (nota 7 o más sobre 10). Si no hay ninguno, lista vacía.

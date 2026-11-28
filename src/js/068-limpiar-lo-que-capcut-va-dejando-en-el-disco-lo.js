@@ -187,6 +187,7 @@ async function livePoll() {
   finally { livePolling = false; }
 }
 function liveNotify(S, m) {
+  if (!lvExtra() && m.src !== 'ia') return;   // escondido: sin avisos de lo que no se enseña
   const who = { chat: '💬 El chat ha explotado', kick: '🎬 Un espectador ha hecho un clip', clipper: '📱 ' + (m.who || 'Un clipper') + ' ha subido este momento', ia: '🤖 La IA ha visto un momento' }[m.src] || 'Nuevo momento';
   toast(`📡 ${S.status.slug}: ${who}`);
   if ($('livePage').hidden) { document.title = `(${liveNew}) ` + document.title.replace(/^\(\d+\) /, ''); }
