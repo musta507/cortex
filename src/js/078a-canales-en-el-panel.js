@@ -45,17 +45,33 @@ function lvChanAdd(btn) {
     if (liveWant.includes(slug)) { close(); lvFocusSet(slug); toast(`${slug} ya estaba en tus canales`); return; }
     go.disabled = true;
     try {
-      // si hay un canal vacío se usa ese; si no, uno nuevo
-      let cl = null; for (const c of clients) { if (!lvSlug((await getLive(c)).kick)) { cl = c; break; } }
-      if (!cl) { cl = { id: 'c' + Date.now().toString(36), name: slug, created: Date.now(), tg: groupOf(clients[0].id), chan: true }; clients.push(cl); }
-      else if (cl !== clients[0]) cl.name = slug;
-      await saveClients();
-      const L = await getLive(cl); await saveLive(cl, { ...L, kick: slug });
-      liveWant.push(slug); await writeLiveConfig();
+      await lvChanEnsure(slug);
       close(); liveRender(); livePoll();
       toast(`${slug} añadido: el grabador lo grabará en cuanto entre en directo`);
     } catch (e) { console.warn(e); go.disabled = false; toast('No se pudo añadir el canal'); }
   };
   go.onclick = save;
   inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); save(); } else if (e.key === 'Escape') close(); });
+}
+
+// añadir un canal (si ya está, no hace nada) y quitarlo: el grabador graba todos los canales que tengas
+async function lvChanEnsure(slug) {
+  for (const c of clients) if (lvSlug((await getLive(c)).kick) === slug) { if (!liveWant.includes(slug)) liveWant.push(slug); return c; }
+  let cl = null; for (const c of clients) { if (!lvSlug((await getLive(c)).kick)) { cl = c; break; } }   // si hay un hueco vacío se usa ese
+  if (!cl) { cl = { id: 'c' + Date.now().toString(36), name: slug, created: Date.now(), tg: groupOf(clients[0].id), chan: true }; clients.push(cl); }
+  else if (cl !== clients[0]) cl.name = slug;
+  await saveClients();
+  const L = await getLive(cl); await saveLive(cl, { ...L, kick: slug });
+  if (!liveWant.includes(slug)) liveWant.push(slug);
+  await writeLiveConfig();
+  return cl;
+}
+async function lvChanDrop(slug) {
+  for (const c of clients.slice()) {
+    if (lvSlug((await getLive(c)).kick) !== slug) continue;
+    if (c === clients[0]) { const L = await getLive(c); await saveLive(c, { ...L, kick: '' }); }
+    else clients = clients.filter(x => x !== c);
+  }
+  await saveClients(); liveWant = liveWant.filter(x => x !== slug); if (lvFocus === slug) lvFocus = '';
+  await writeLiveConfig();
 }

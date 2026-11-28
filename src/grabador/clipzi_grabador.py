@@ -12,7 +12,7 @@ No hace falta tocar nada aquí: Clipzi escribe config.json y tú solo abres
 """
 import os, sys, json, time, threading, subprocess, shutil, re, glob, wave, traceback, datetime, uuid
 
-GRABADOR_VERSION = 32   # Clipzi solo lo sobrescribe con una versión más nueva
+GRABADOR_VERSION = 33   # Clipzi solo lo sobrescribe con una versión más nueva
 BASE = os.path.dirname(os.path.abspath(__file__))
 CFG = os.path.join(BASE, 'config.json')
 DIRS = os.path.join(BASE, 'directos')
@@ -1587,6 +1587,161 @@ def downloads_loop():
         time.sleep(1)
 
 
+# ---------------------------------------------------------------- directos de Kick para la pantalla «¿A quién clipeas hoy?»
+# Clipzi deja una petición en kick/req/<id>.json y aquí se contesta en kick/out/<id>.json:
+#   {"kind": "live"}                     los directos en español con más espectadores
+#   {"kind": "canales", "slugs": [...]}  si tus canales están en directo
+#   {"kind": "buscar", "q": "west"}      canales que se llaman así (en directo o no)
+KJ = os.path.join(BASE, 'kick')
+_kcache = {}
+
+
+def _kget(url, ttl):
+    now = time.time(); c = _kcache.get(url)
+    if c and now - c[0] < ttl:
+        return c[1]
+    j = http_json(url, timeout=15)
+    if j is not None:
+        _kcache[url] = (now, j)
+    elif c:
+        return c[1]
+    return j
+
+
+def _kpic(x):
+    if isinstance(x, dict):
+        return x.get('src') or x.get('url') or x.get('responsive') or ''
+    return x or ''
+
+
+def _knorm(it):
+    """Un directo o un canal de Kick, venga del listado, de la búsqueda o de la ficha del canal."""
+    if not isinstance(it, dict):
+        return None
+    ch = it.get('channel') if isinstance(it.get('channel'), dict) else {}
+    ls = it.get('livestream') if isinstance(it.get('livestream'), dict) else None
+    user = ch.get('user') or it.get('user') or {}
+    slug = (ch.get('slug') or it.get('slug') or user.get('username') or '').lower()
+    if not slug:
+        return None
+    src = ls or it
+    live = bool(ls and (ls.get('is_live', True))) if ls is not None else bool(it.get('is_live', it.get('viewer_count') is not None))
+    if ls is None and 'is_live' in it:
+        live = bool(it.get('is_live'))
+    cats = src.get('categories') or ([src.get('category')] if src.get('category') else [])
+    cat = (cats[0] or {}).get('name', '') if cats and isinstance(cats[0], dict) else ''
+    return {
+        'slug': slug,
+        'name': user.get('username') or ch.get('username') or it.get('username') or slug,
+        'avatar': _kpic(user.get('profile_pic') or user.get('profilepic') or it.get('profile_pic') or ch.get('profile_pic')),
+        'live': live,
+        'title': (src.get('session_title') or src.get('title') or '')[:160] if live else '',
+        'viewers': int(src.get('viewer_count') or src.get('viewers') or 0) if live else 0,
+        'started': src.get('start_time') or src.get('created_at') or '' if live else '',
+        'thumb': _kpic(src.get('thumbnail')) if live else '',
+        'cat': cat if live else '',
+        'lang': src.get('language') or '',
+    }
+
+
+def kick_live_list():
+    out, seen = [], set()
+    for url in ('https://kick.com/stream/livestreams/es?page=1&limit=48&subcategory=&sort=desc',
+                'https://kick.com/stream/featured-livestreams/es'):
+        j = _kget(url, 45)
+        data = j.get('data') if isinstance(j, dict) else (j if isinstance(j, list) else None)
+        for it in data or []:
+            n = _knorm(it)
+            if n and n['slug'] not in seen:
+                n['live'] = True; seen.add(n['slug']); out.append(n)
+        if len(out) >= 12:
+            break
+    out.sort(key=lambda x: -x['viewers'])
+    return out
+
+
+def kick_channel(slug):
+    j = _kget('https://kick.com/api/v2/channels/%s' % slug, 25)
+    if not isinstance(j, dict) or not j.get('slug'):
+        return None
+    n = _knorm(j)
+    if n:
+        n['live'] = bool(j.get('livestream') and j['livestream'].get('is_live', True))
+        if not n['live']:
+            for k in ('title', 'thumb', 'cat', 'started'):
+                n[k] = ''
+            n['viewers'] = 0
+    return n
+
+
+def kick_search(q):
+    q = (q or '').strip().lower()
+    slug = re.sub(r'^https?://(www\.)?kick\.com/', '', q).split('/')[0].split('?')[0].lstrip('@')
+    res, seen = [], set()
+
+    def add(n):
+        if n and n['slug'] not in seen:
+            seen.add(n['slug']); res.append(n)
+    if re.match(r'^[a-z0-9_\-]{2,30}$', slug):
+        add(kick_channel(slug))
+    for url in ('https://kick.com/api/search?searched_word=%s' % slug,):
+        j = _kget(url, 60)
+        for it in ((j or {}).get('channels') or []) if isinstance(j, dict) else []:
+            add(_knorm(it))
+    for n in kick_live_list():
+        if slug and (slug in n['slug'] or slug in n['name'].lower()):
+            add(n)
+    res.sort(key=lambda x: (not x['live'], x['slug'] != slug, -x['viewers']))
+    return res[:12]
+
+
+def kick_loop():
+    for d in ('req', 'out'):
+        os.makedirs(os.path.join(KJ, d), exist_ok=True)
+    busy = set()
+    while True:
+        write_json(os.path.join(KJ, 'vivo.json'), {'t': time.time(), 'v': GRABADOR_VERSION})
+        now = time.time()
+        for o in glob.glob(os.path.join(KJ, 'out', '*.json')):   # respuestas que nadie recogió
+            try:
+                if now - os.path.getmtime(o) > 120:
+                    os.remove(o)
+            except Exception:
+                pass
+        for rq in glob.glob(os.path.join(KJ, 'req', '*.json')):
+            rid = os.path.basename(rq)[:-5]
+            if rid in busy:
+                continue
+            busy.add(rid)
+            try:
+                with open(rq, encoding='utf-8') as f:
+                    q = json.load(f)
+            except Exception:
+                busy.discard(rid); continue
+
+            def answer(r=rid, qq=q, path=rq):
+                try:
+                    k = qq.get('kind')
+                    if k == 'live':
+                        res = {'status': 'done', 'items': kick_live_list()}
+                    elif k == 'canales':
+                        res = {'status': 'done', 'items': [x for x in (kick_channel(str(s).lower()) for s in (qq.get('slugs') or [])[:20]) if x]}
+                    elif k == 'buscar':
+                        res = {'status': 'done', 'items': kick_search(qq.get('q'))}
+                    else:
+                        res = {'status': 'error', 'error': 'no sé hacer «%s»' % k}
+                except Exception as e:
+                    res = {'status': 'error', 'error': str(e)}
+                write_json(os.path.join(KJ, 'out', r + '.json'), res)
+                try:
+                    os.remove(path)
+                except Exception:
+                    pass
+                busy.discard(r)
+            threading.Thread(target=answer, daemon=True).start()
+        time.sleep(0.25)
+
+
 # ---------------------------------------------------------------- aislar la voz (lo pide Clipzi cuando el navegador no tiene tarjeta gráfica)
 VOZ = os.path.join(BASE, 'voz')
 VOZ_MODEL = os.path.join(BASE, 'modelos', 'UVR-MDX-NET-Voc_FT.onnx')
@@ -2203,7 +2358,7 @@ def main():
     kill_old_ffmpeg()
     log_rotate()
     clean_all_out()   # copias de clips de sesiones anteriores: fuera, para liberar disco
-    for fn in (downloads_loop, voz_loop, capcut_loop, disk_loop):   # si alguno falla, se vuelve a poner en marcha solo
+    for fn in (downloads_loop, voz_loop, capcut_loop, disk_loop, kick_loop):   # si alguno falla, se vuelve a poner en marcha solo
         threading.Thread(target=forever(fn), daemon=True).start()
     print('=' * 60)
     print('  GRABADOR DE CLIPZI  (versión %d)' % GRABADOR_VERSION)

@@ -141,7 +141,7 @@ try {
     else history.back();   // ya en el inicio: ahora sí se sale
   });
 } catch {}
-$('lvBackHome').onclick = () => { $('livePage').hidden = true; renderHome(); $('home').hidden = false; };
+$('lvBackHome').onclick = () => { $('livePage').hidden = true; homeSec = 'directo'; renderHome(); $('home').hidden = false; };
 $('liveBack').onclick = async () => { await saveNow(); vid.pause(); $('liveBack').hidden = true; $('livePage').hidden = false; livePoll(); };
 
 // leer lo que va dejando el grabador

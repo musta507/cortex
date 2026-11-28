@@ -385,9 +385,6 @@ const hIcon = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
 document.addEventListener('click', e => { const a = e.target.closest('[data-go]'); if (a) { e.preventDefault(); setHomeSec(a.dataset.go); } });
 @@fin
 function setHomeSec(k) {
-@@solo-pc
-  if (k === 'directo') { liveGo(); return; }   // «En directo» abre el panel directamente; sus ajustes están en Ajustes
-@@fin
   homeSec = k;
   document.querySelectorAll('#homeClient .hsec').forEach(el => el.hidden = el.dataset.sec !== k);
   const it = HSECS.find(x => x[0] === k); $('hSecName').textContent = it ? it[1] : '';
@@ -395,6 +392,9 @@ function setHomeSec(k) {
   $('home').scrollTop = 0;
   if (k === 'reacciones') try { rxPlace(true); } catch {}
   if (k === 'ajustes') try { setRender(); } catch {}
+@@solo-pc
+  if (k === 'directo') { $('hSecName').textContent = '¿A quién clipeas hoy?'; try { lsRender(); } catch (e) { console.warn(e); } }
+@@fin
 }
 function renderHnav(c) {
   const n = $('hnav'); n.innerHTML = '';
@@ -509,9 +509,6 @@ function renderHome() {
   const c = clientOf(curClient);
   $('homeClients').hidden = !!c; $('homeClient').hidden = !c;
   if (c && homeSecFor !== c.id) { homeSecFor = c.id; homeSec = 'inicio'; }
-@@solo-pc
-  if (homeSec === 'directo') homeSec = 'inicio';
-@@fin
   renderHnav(c);
   if (!c) {
     const g = $('clientGrid'); g.innerHTML = '';

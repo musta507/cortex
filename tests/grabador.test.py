@@ -57,6 +57,26 @@ s2 = S2(); s2.wait_disk()
 ok.append(not s2.disk_paused)
 print('5 pausa y sigue:', not s2.disk_paused, '| estado guardado:', json.load(open(os.path.join(reciente, 'status.json'))).get('disco_gb'))
 
+# 6) directos de Kick para «¿A quién clipeas hoy?»: Clipzi deja la petición y el grabador contesta
+LIST = {'data': [{'session_title': 'APOSTANDO TODO', 'viewer_count': 48200, 'start_time': '2026-11-28 06:00:00', 'thumbnail': {'src': 'https://img/t.webp'}, 'categories': [{'name': 'Just Chatting'}], 'channel': {'slug': 'westcol', 'user': {'username': 'WestCOL', 'profile_pic': 'https://img/a.webp'}}},
+                 {'session_title': 'bonus', 'viewer_count': 900, 'categories': [{'name': 'Slots'}], 'channel': {'slug': 'otro', 'user': {'username': 'Otro'}}}]}
+CH = {'westcol': {'slug': 'westcol', 'user': {'username': 'WestCOL'}, 'livestream': {'is_live': True, 'session_title': 'APOSTANDO', 'viewer_count': 48000, 'categories': [{'name': 'Just Chatting'}]}},
+      'pablo': {'slug': 'pablo', 'user': {'username': 'Pablo'}, 'livestream': None}}
+time.sleep = _real_sleep
+gr.http_json = lambda url, timeout=20: LIST if 'livestreams/es' in url else CH.get(url.rsplit('/', 1)[1]) if '/channels/' in url else None
+threading.Thread(target=gr.kick_loop, daemon=True).start(); time.sleep(0.4)
+def pide(rid, q):
+    json.dump(q, open(os.path.join(gr.KJ, 'req', rid + '.json'), 'w'))
+    for _ in range(40):
+        time.sleep(0.1); p = os.path.join(gr.KJ, 'out', rid + '.json')
+        if os.path.exists(p):
+            try: return json.load(open(p, encoding='utf-8'))
+            except Exception: pass
+a = pide('a', {'kind': 'live'}); b = pide('b', {'kind': 'canales', 'slugs': ['westcol', 'pablo']}); c = pide('c', {'kind': 'buscar', 'q': 'https://kick.com/pablo'})
+ok.append(bool(a and b and c) and [x['slug'] for x in a['items']] == ['westcol', 'otro'] and a['items'][0]['viewers'] == 48200 and a['items'][0]['thumb'] and
+          [(x['slug'], x['live']) for x in b['items']] == [('westcol', True), ('pablo', False)] and c['items'][0]['slug'] == 'pablo' and not os.path.exists(os.path.join(gr.KJ, 'req', 'a.json')))
+print('6 directos de Kick:', a and [x['slug'] for x in a['items']], '| canales:', b and [(x['slug'], x['live']) for x in b['items']], '| buscar enlace:', c and c['items'][0]['slug'])
+
 shutil.rmtree(G, ignore_errors=True)
 print('  %d bien, %d mal' % (sum(ok), len(ok) - sum(ok)))
 sys.exit(0 if all(ok) else 1)

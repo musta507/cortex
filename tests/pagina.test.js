@@ -125,6 +125,23 @@ const exportBlob = p => p.evaluate(async () => {
       check('sin errores al juntar', !errs.length, errs[0]);
       await ctx.close();
     }
+    // «¿A quién clipeas hoy?»: buscar un streamer, ver quién está en directo y entrar en su panel
+    {
+      const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } }); const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+      await ctx.route(/^https?:/, r => r.abort()); await p.goto(PC); await p.waitForTimeout(1200);
+      await p.evaluate(() => { const mk = (slug, v, cat) => ({ slug, name: slug, live: true, viewers: v, title: 't', cat, started: new Date(Date.now() - 6e5).toISOString() });
+        const L = [mk('westcol', 48200, 'Just Chatting'), mk('spreen', 18400, 'Minecraft'), mk('roshtein', 12200, 'Slots')];
+        ksAsk = async q => q.kind === 'live' ? { items: L } : q.kind === 'canales' ? { items: q.slugs.map(s => L.find(x => x.slug === s) || { slug: s, name: s, live: false, viewers: 0 }) } : { items: L.filter(x => x.slug.includes(lvSlug(q.q))) };
+        openLive = async () => { window.__opened = 1; }; });
+      await p.click('#hnav .hi[data-sec=directo]'); await p.waitForTimeout(500);
+      const v = await p.evaluate(() => ({ live: $('lsLive').children.length, cats: $('lsCats').children.length, home: !$('home').hidden }));
+      await p.click('#lsQ'); await p.keyboard.type('spr'); await p.waitForTimeout(500); const dd = await p.evaluate(() => $('lsDd').hidden ? '' : $('lsDd').textContent);
+      await p.keyboard.press('Enter'); await p.waitForTimeout(400);
+      const r = await p.evaluate(async () => [window.__opened, lvFocus, (await lsMineSlugs()).includes('spreen')]);
+      check('«¿A quién clipeas hoy?»: lista de directos, buscador y entrar en el panel', v.live === 3 && v.cats === 4 && v.home && /spreen/.test(dd) && r[0] === 1 && r[1] === 'spreen' && r[2], { v, dd: dd.slice(0, 60), r });
+      check('sin errores en «¿A quién clipeas hoy?»', !errs.length, errs[0]);
+      await ctx.close();
+    }
     // cambiar de formato: al volver a uno ya visto no se busca otra vez
     {
       const p = await openWithClip(b);
