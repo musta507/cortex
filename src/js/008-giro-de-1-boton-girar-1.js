@@ -68,7 +68,7 @@ function drawPasteBtn(R, y) {
   ctx.fillStyle = '#FFFFFF'; ctx.shadowColor = 'rgba(110,151,255,.6)'; ctx.shadowBlur = 30;
   ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(bx, y - bh / 2, bw, bh, 26); else ctx.rect(bx, y - bh / 2, bw, bh); ctx.fill();
   ctx.shadowBlur = 0; ctx.fillStyle = '#08080A'; ctx.font = '800 40px Inter, sans-serif';
-  ctx.fillText('📋 Pegar imagen', R.x + R.w / 2, y + 2);
+  ctx.fillText('Pegar imagen', R.x + R.w / 2, y + 2);
   ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.font = '600 26px Inter, sans-serif';
   ctx.fillText('Copia una imagen y haz clic aquí · o Ctrl+V · o arrástrala', R.x + R.w / 2, y + bh / 2 + 40);
   ctx.restore();

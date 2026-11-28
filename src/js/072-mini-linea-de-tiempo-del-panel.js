@@ -147,11 +147,11 @@ function mtRR(x, X, Y, w, h, r) { x.beginPath(); if (w <= 0 || h <= 0) return; c
 function mtPill(x, cx, y, text, o = {}) {   // etiqueta flotante
   x.save(); x.font = o.font || '600 11px ui-monospace,SFMono-Regular,Menlo,monospace'; const w = x.measureText(text).width + 14, h = o.h || 18, X = mtClamp(cx - w / 2, 2, MT.vw - w - 2);
   x.globalAlpha = o.a == null ? 1 : o.a; mtRR(x, X, y, w, h, h / 2); x.fillStyle = o.bg || '#000'; x.fill(); if (o.line) { x.strokeStyle = o.line; x.lineWidth = 1; x.stroke(); }
-  x.fillStyle = o.fg || '#fff'; x.textBaseline = 'middle'; x.textAlign = 'left'; x.fillText(text, X + 7, y + h / 2 + 0.5); x.restore();
+  x.fillStyle = o.fg || '#fff'; x.textBaseline = 'middle'; x.textAlign = 'left'; x.fillText(icStrip(text), X + 7, y + h / 2 + 0.5); x.restore();
 }
 function mtLabel(x, text, X0, X1, y, h, color, font) {   // texto dentro de un bloque: se queda a la vista aunque el bloque empiece fuera
   const a = Math.max(X0, 0) + 7, b = Math.min(X1, MT.vw) - 5; if (b - a < 14) return;
-  x.save(); x.beginPath(); x.rect(a - 2, y, b - a + 2, h); x.clip(); x.font = font; x.fillStyle = color; x.textBaseline = 'middle'; x.textAlign = 'left'; x.fillText(text, a, y + h / 2 + 0.5); x.restore();
+  x.save(); x.beginPath(); x.rect(a - 2, y, b - a + 2, h); x.clip(); x.font = font; x.fillStyle = color; x.textBaseline = 'middle'; x.textAlign = 'left'; x.fillText(icStrip(text), a, y + h / 2 + 0.5); x.restore();
 }
 function mtDrawRuler(x) {
   const pps = MT.pps, VW = MT.vw, steps = [0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600], step = steps.find(v => v * pps >= 64) || 600;

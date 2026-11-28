@@ -13,6 +13,7 @@
   "librerias/mp4box.html",
   "js/000-inicio.js",
   "js/001-utilidades.js",
+  "js/001a-iconos.js",
   "js/002-arrastrar-la-linea-con-la-imagen-al-instante-cop.js",
   "js/003-carga-de-clip.js",
   "js/004-audio-voz-musica-para-oir-y-para-la-exportacion.js",

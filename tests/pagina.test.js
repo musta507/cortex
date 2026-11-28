@@ -142,6 +142,19 @@ const exportBlob = p => p.evaluate(async () => {
       check('sin errores en «¿A quién clipeas hoy?»', !errs.length, errs[0]);
       await ctx.close();
     }
+    // iconos en vez de emojis (sin tocar lo que escribe la gente)
+    {
+      const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } }); const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+      await ctx.route(/^https?:/, r => r.abort()); await p.goto(PC); await p.waitForTimeout(1200);
+      const r = await p.evaluate(async () => {
+        const seen = []; for (const s of ['inicio', 'plantillas', 'marca', 'agente', 'viral', 'ajustes']) { setHomeSec(s); await new Promise(r => setTimeout(r, 150));
+          const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) { const e = n.parentElement; if (e && IC_RE.test(n.data) && e.getClientRects().length && !e.closest(IC_SKIP)) seen.push(n.data.trim().slice(0, 30)); } }
+        const d = document.createElement('div'); d.innerHTML = '<button>🗑️ Borrar</button><span class="rinfo"><strong>🔥 MI TÍTULO</strong></span><select><option>⚡ Rápida</option></select>'; document.body.append(d); await new Promise(r => setTimeout(r, 30));
+        const out = { seen, btn: d.querySelector('button').innerHTML.startsWith('<svg'), user: d.querySelector('strong').textContent === '🔥 MI TÍTULO', opt: d.querySelector('option').textContent === 'Rápida' }; d.remove(); return out; });
+      check('sin emojis en la interfaz (iconos), pero los títulos de la gente intactos', !r.seen.length && r.btn && r.user && r.opt, r);
+      check('sin errores con los iconos', !errs.length, errs[0]);
+      await ctx.close();
+    }
     // cambiar de formato: al volver a uno ya visto no se busca otra vez
     {
       const p = await openWithClip(b);

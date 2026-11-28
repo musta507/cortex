@@ -235,7 +235,7 @@ function stEdPend(m) {
   stPend = m.id; stPendFmt = prep ? prep.f : ''; stDock = true; $('livePage').classList.add('dock'); $('stEd').classList.remove('full'); $('stEd').hidden = false;
   $('seT').innerHTML = `<i></i>Tu clip <em>${Math.round(m.t1 - m.t0)} s</em>`; $('seRes').innerHTML = ''; $('seBarW').hidden = true; $('seTitle').value = prep ? prep.t : ''; $('seExp').disabled = true;
   $('seS').textContent = prep && (prep.t.trim() || prep.f) ? '⏳ Guardando el clip… Le pongo el título y el formato que preparaste.' : '⏳ Guardando el clip… Mientras, ve poniendo el título y el formato.';
-  const c = $('seCv'), x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#A1A1AA'; x.font = '600 26px system-ui'; x.textAlign = 'center'; x.fillText('⏳ Guardando el clip…', c.width / 2, c.height / 2);
+  const c = $('seCv'), x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#A1A1AA'; x.font = '600 26px system-ui'; x.textAlign = 'center'; x.fillText('Guardando el clip…', c.width / 2, c.height / 2);
   stEdFmts(stPendFmt); stEdTT(); try { mtBlank(); } catch {} cancelAnimationFrame(stEdRaf); stEdLoop(); setTimeout(() => $('seTitle').focus(), 50);
 }
 async function stEdOpen(S, g, c) {
