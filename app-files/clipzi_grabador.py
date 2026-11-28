@@ -12,7 +12,7 @@ No hace falta tocar nada aquí: Clipzi escribe config.json y tú solo abres
 """
 import os, sys, json, time, threading, subprocess, shutil, re, glob, wave, traceback, datetime, uuid
 
-GRABADOR_VERSION = 33   # Clipzi solo lo sobrescribe con una versión más nueva
+GRABADOR_VERSION = 34   # Clipzi solo lo sobrescribe con una versión más nueva
 BASE = os.path.dirname(os.path.abspath(__file__))
 CFG = os.path.join(BASE, 'config.json')
 DIRS = os.path.join(BASE, 'directos')
@@ -1695,6 +1695,58 @@ def kick_search(q):
     return res[:12]
 
 
+def radar_youtube(q, hours=24, n=20):
+    """Shorts y vídeos de YouTube recientes que hablan del streamer (los más nuevos primero)."""
+    q = (q or '').strip()
+    if not q:
+        return []
+    code, out, err = run([PY, '-m', 'yt_dlp', '-j', '--skip-download', '--ignore-errors', '--no-warnings', '--playlist-end', str(n),
+                          '--match-filter', 'duration <= 240', 'ytsearchdate%d:%s' % (n, q)], timeout=240)
+    now, res = time.time(), []
+    for line in (out or '').splitlines():
+        try:
+            j = json.loads(line)
+        except Exception:
+            continue
+        ts = j.get('timestamp') or 0
+        if not ts and j.get('upload_date'):
+            try:
+                ts = time.mktime(time.strptime(j['upload_date'], '%Y%m%d'))
+            except Exception:
+                ts = 0
+        if ts and now - ts > hours * 3600:
+            continue
+        res.append({'id': str(j.get('id') or ''), 'url': j.get('webpage_url') or '', 'acc': j.get('channel') or j.get('uploader') or '', 'name': j.get('channel') or '',
+                    'desc': (j.get('title') or '')[:300], 'ts': ts, 'views': j.get('view_count') or 0, 'likes': j.get('like_count') or 0,
+                    'dur': j.get('duration') or 0, 'thumb': j.get('thumbnail') or '', 'src': 'youtube'})
+    return res
+
+
+def radar_kick(slug, hours=24):
+    """Los clips que han hecho los espectadores en Kick, los más vistos del día (o de la semana)."""
+    slug = re.sub(r'^https?://(www\.)?kick\.com/', '', (slug or '').strip().lower()).split('/')[0].lstrip('@')
+    if not slug:
+        return []
+    j = _kget('https://kick.com/api/v2/channels/%s/clips?sort=view&time=%s' % (slug, 'day' if hours <= 24 else 'week'), 120) or {}
+    clips = j.get('clips') if isinstance(j, dict) else j
+    now, res = time.time(), []
+    for c in clips or []:
+        if not isinstance(c, dict):
+            continue
+        ts = 0
+        try:
+            ts = datetime.datetime.fromisoformat(str(c.get('created_at') or '').replace('Z', '+00:00')).timestamp()
+        except Exception:
+            pass
+        if ts and now - ts > hours * 3600:
+            continue
+        cid = c.get('id') or ''
+        res.append({'id': str(cid), 'url': 'https://kick.com/%s/clips/%s' % (slug, cid), 'acc': ((c.get('creator') or {}).get('username') or ''), 'name': slug,
+                    'desc': (c.get('title') or '')[:300], 'ts': ts, 'views': c.get('view_count') or c.get('views') or 0, 'likes': c.get('likes_count') or c.get('likes') or 0,
+                    'dur': c.get('duration') or 0, 'thumb': c.get('thumbnail_url') or '', 'src': 'kick'})
+    return res
+
+
 def kick_loop():
     for d in ('req', 'out'):
         os.makedirs(os.path.join(KJ, d), exist_ok=True)
@@ -1728,6 +1780,10 @@ def kick_loop():
                         res = {'status': 'done', 'items': [x for x in (kick_channel(str(s).lower()) for s in (qq.get('slugs') or [])[:20]) if x]}
                     elif k == 'buscar':
                         res = {'status': 'done', 'items': kick_search(qq.get('q'))}
+                    elif k == 'radar_yt':
+                        res = {'status': 'done', 'items': radar_youtube(qq.get('q'), int(qq.get('hours') or 24))}
+                    elif k == 'radar_kick':
+                        res = {'status': 'done', 'items': radar_kick(qq.get('q'), int(qq.get('hours') or 24))}
                     else:
                         res = {'status': 'error', 'error': 'no sé hacer «%s»' % k}
                 except Exception as e:

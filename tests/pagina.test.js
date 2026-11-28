@@ -174,6 +174,19 @@ const exportBlob = p => p.evaluate(async () => {
       check('sin errores con los iconos', !errs.length, errs[0]);
       await ctx.close();
     }
+    // Radar de clips: junta TikTok (app), YouTube y Kick (grabador) y ordena por visitas por hora
+    {
+      const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } }); const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+      await ctx.route(/^https?:/, r => r.abort()); await p.goto(PC); await p.waitForTimeout(1200);
+      await p.evaluate(async () => { const now = Date.now() / 1000, it = (src, id, h, v) => ({ id, url: 'https://x/' + id, acc: 'a', desc: 'd', ts: now - h * 3600, views: v, src });
+        window.cortexApp = { isApp: true, radar: async q => ({ ok: true, items: q.kind === 'tag' ? [] : [it('tiktok', 't1', 2, 180000), it('tiktok', 'viejo', 30, 900000)] }), radarShow: async () => true };
+        ksAsk = async q => ({ items: q.kind === 'radar_yt' ? [it('youtube', 'y1', 1, 100000)] : [it('kick', 'k1', 3, 3000)] }); dlAsk = async () => ({ items: [] }); await saveLive(clients[0], { kick: 'westcol' }); });
+      await p.click('#hnav .hi[data-sec=radar]'); await p.click('#rdGo'); await p.waitForFunction(() => !RD.busy, null, { timeout: 10000 });
+      const r = await p.evaluate(() => [...$('rdList').querySelectorAll('.rd-card')].map(c => c.querySelector('.rd-src-b').textContent));
+      check('Radar: junta TikTok, YouTube y Kick, sin lo de hace más de 24 h, y el que más sube primero', r.join() === 'YouTube,TikTok,Kick', r);
+      check('sin errores en el radar', !errs.length, errs[0]);
+      await ctx.close();
+    }
     // cambiar de formato: al volver a uno ya visto no se busca otra vez
     {
       const p = await openWithClip(b);

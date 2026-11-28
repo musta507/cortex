@@ -431,6 +431,22 @@
           </section>
           </div>
           <div class="hsec" data-sec="replicar" hidden><div id="repHomeBox"></div></div>
+@@solo-pc
+          <div class="hsec" data-sec="radar" hidden>
+            <div class="rd" id="rd">
+              <p class="rd-sub">Busca en TikTok, YouTube y Kick los clips de tus streamers que más rápido están subiendo, los suba quien los suba.</p>
+              <div class="rd-bar">
+                <div class="rd-who" id="rdWho"></div>
+                <span class="rd-sp"></span>
+                <select id="rdHours" aria-label="Desde cuándo"><option value="24">Últimas 24 h</option><option value="48">Últimas 48 h</option><option value="168">Últimos 7 días</option></select>
+                <button class="primary" id="rdGo">Buscar ahora</button>
+              </div>
+              <div class="rd-srcs" id="rdSrcs"></div>
+              <div class="rd-opts"><label class="toggle"><input type="checkbox" id="rdAuto"><span></span>Buscar sola cada 45 minutos mientras Cortex está abierto</label><span class="hint" id="rdLast"></span></div>
+              <div class="rd-grid" id="rdList"></div>
+            </div>
+          </div>
+@@fin
           <div class="hsec" data-sec="reacciones" hidden><div id="rxHome"></div></div>
           <div class="hsec" data-sec="ajustes" hidden>
             <div class="agent set-card" id="setKeys">

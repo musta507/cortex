@@ -370,6 +370,7 @@ const HSECS = [
   ['agente', 'Agente de clips', '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M10 9l5 3-5 3z"/>'],
   ['viral', 'Qué peta', '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>'],
   ['directo', 'En directo', '<circle cx="12" cy="12" r="3"/><path d="M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>'],
+  ['radar', 'Radar de clips', '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12l6-6"/>'],
 @@fin
 @@solo-web
   ['viral', 'Qué hace viral un clip', '<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>'],
@@ -395,6 +396,9 @@ function setHomeSec(k) {
   if (k === 'ajustes') try { setRender(); } catch {}
   if (k === 'replicar') try { repHome(); } catch (e) { console.warn(e); }
 @@solo-pc
+  if (k === 'radar') { $('hSecName').textContent = '¿Qué está petando?'; try { rdRender(); } catch (e) { console.warn(e); } }
+@@fin
+@@solo-pc
   if (k === 'directo') { $('hSecName').textContent = '¿A quién clipeas hoy?'; try { lsRender(); } catch (e) { console.warn(e); } }
 @@fin
 }
@@ -409,7 +413,7 @@ function renderHnav(c) {
   // lo que más se hace, siempre a un clic
   const nw = document.createElement('button'); nw.className = 'hnew primary'; nw.title = 'Nuevo clip'; nw.innerHTML = hIcon('<path d="M12 5v14M5 12h14"/>') + '<span>Nuevo clip</span>'; nw.onclick = () => newClip(); n.append(nw);
   // secciones agrupadas por lo que se hace con ellas
-  const GROUPS = [['Crear', ['inicio', 'directo', 'agente', 'replicar']], ['Biblioteca', ['plantillas', 'marca', 'reacciones']], ['Analizar', ['viral']]];
+  const GROUPS = [['Crear', ['inicio', 'directo', 'agente', 'replicar']], ['Biblioteca', ['plantillas', 'marca', 'reacciones']], ['Analizar', ['radar', 'viral']]];
   for (const [g, ks] of GROUPS) {
     const secs = ks.map(k => HSECS.find(x => x[0] === k)).filter(Boolean); if (!secs.length) continue;
     lbl(g);
