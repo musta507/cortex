@@ -2,7 +2,7 @@
 const lvTr = {};   // por directo: { done: Set(wav), lines: [{a, b, t, w?: [[inicio, fin, palabra]…]}] }
 let lvTrBusy = false, lvTrStick = true, lvTrDown = false;
 const lvTrOn = () => ezPref('liveTr') !== '0';   // encendida por defecto
-function lvTrSess() { const all = Object.values(liveSessions).sort((a, b) => b.status.started - a.status.started); return all.find(x => x.on) || all[0]; }
+function lvTrSess() { const all = Object.values(liveSessions).filter(x => x.status).sort((a, b) => b.status.started - a.status.started); const f = lvFocus && all.filter(x => String(x.status.slug || '').toLowerCase() === lvFocus); return (f && (f.find(x => x.on) || f[0])) || all.find(x => x.on) || all[0]; }
 async function lvTrLoad(S) {
   if (lvTr[S.name]) return lvTr[S.name];
   const T = lvTr[S.name] = { done: new Set(), lines: [] };

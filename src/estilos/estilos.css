@@ -1531,4 +1531,21 @@ body.se-rzing{cursor:ew-resize;user-select:none}
 #setLiveHost>.agent{max-width:760px}
 /* un solo botón de volver: te lleva al sitio del que vienes */
 #liveBack:not([hidden])~#homeBtn,#revBack:not([hidden])~#homeBtn{display:none}
+/* panel del directo: cabecera sin cortes y barra de canales */
+#livePage .lv-head{flex-wrap:wrap;row-gap:8px}
+#livePage .lv-head>button,#livePage .lv-head h2,#livePage .lv-modes button{white-space:nowrap}
+#livePage .lv-head h2{flex:none}
+.lv-cbar{margin:0 0 8px;align-items:center}
+.lv-cbar .lv-chip{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;font-size:13.5px}
+.lv-cbar .lv-chip span{font-weight:600}
+.lv-cbar .lv-chip em{font-style:normal;font-size:12px;color:#8E8E96}
+.lv-cbar .lv-chip.on em{color:#555}
+.lv-cbar .lv-dot{width:8px;height:8px;border-radius:50%;background:#52525B;flex:none}
+.lv-cbar .lv-chip.live .lv-dot{background:#ff4d4d;box-shadow:0 0 0 3px #ff4d4d33;animation:lvBlink 1.6s ease-in-out infinite}
+@keyframes lvBlink{50%{opacity:.45}}
+.lv-cbar .lv-chip.ghost{background:transparent;border-color:transparent;color:#8E8E96}
+.lv-cbar .lv-chip.ghost:hover{color:#fff}
+.lv-addpop{position:fixed;z-index:9600;display:flex;gap:8px;width:330px;padding:10px;background:#121216;border:1px solid rgba(255,255,255,.14);border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.lv-addpop input{flex:1;min-width:0;padding:8px 12px}
+.lv-addpop button{width:auto;padding:8px 14px}
 </style>

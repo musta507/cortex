@@ -151,10 +151,12 @@ async function livePoll() {
   try {
     const d = await getLiveDir(false);
     if (!d) { liveRender('need-dir'); return; }
+    if (!liveWant.length) { for (const c of clients) { const k = lvSlug((await getLive(c)).kick); if (k && !liveWant.includes(k)) liveWant.push(k); } }
     let dd; try { dd = await d.getDirectoryHandle('directos'); } catch { liveRender('no-rec'); return; }
     // solo los canales de Kick que tienen puestos tus clientes
     const want = new Set();
     for (const c of clients) { const L = await getLive(c); const k = (L.kick || '').trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?kick\.com\//i, '').split(/[/?#]/)[0].toLowerCase(); if (k) want.add(k); }
+    liveWant = [...want];
     for (const k of Object.keys(liveSessions)) if (!want.has(String((liveSessions[k].status || {}).slug || k.replace(/_\d{8}_\d{4}$/, '')).toLowerCase())) delete liveSessions[k];
     try { const viv = JSON.parse((await rtext(d, 'descargas/vivo.json')) || 'null'); liveGrabOn = !!viv && Date.now() / 1000 - viv.t < 20; } catch { liveGrabOn = false; }
     const found = [];

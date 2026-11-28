@@ -114,18 +114,18 @@ setTimeout(critUI, 0);
 setTimeout(() => { const cs = document.querySelectorAll('.scn-chk'), sync = () => cs.forEach(c => c.checked = ezPref('scenes') !== '0'); sync(); cs.forEach(c => c.onchange = () => { ezPref('scenes', c.checked ? '1' : '0'); sync(); toast(c.checked ? 'Formato por escenas: encendido' : 'Formato por escenas: apagado, cada clip va con un solo formato'); }); }, 0);
 function liveRender(state) {
   const st = $('lvStatus'), box = $('lvMoments'), miss = $('lvMiss');
-  if (state === 'need-dir') { st.innerHTML = '<p class="hint">Falta elegir la carpeta del grabador (en la ficha del cliente).</p>'; box.innerHTML = ''; return; }
+  if (state === 'need-dir') { st.innerHTML = '<p class="hint">Falta elegir la carpeta del grabador (en Ajustes → Directo).</p>'; box.innerHTML = ''; return; }
   if (state === 'no-rec') { st.innerHTML = '<div class="lv-off">⚫ El grabador aún no ha grabado nada. Abre «Grabador Clipzi.bat» en la carpeta del grabador y déjalo abierto: en cuanto el streamer empiece, aparecerá aquí.</div>'; box.innerHTML = ''; return; }
   const S = Object.values(liveSessions).sort((a, b) => b.status.started - a.status.started);
-  st.innerHTML = '';
+  st.innerHTML = ''; lvChanBar(st, S);
   if (!S.some(s => s.on)) { const p = document.createElement('div'); p.className = 'lv-off'; p.textContent = '⚫ Ahora mismo no hay ningún directo. Deja el grabador abierto: empieza a grabar solo cuando el streamer entra en directo.'; st.append(p); }
-  for (const s of S.filter(s => s.on || Date.now() / 1000 - s.status.updated < 3600 * 3)) {
+  for (const s of (lvChanBarOn ? [] : S.filter(s => s.on || Date.now() / 1000 - s.status.updated < 3600 * 3))) {
     const p = document.createElement('div'); p.className = 'lv-pill' + (s.on ? ' on' : '');
     const mins = Math.round(((s.segs.length ? s.segs[s.segs.length - 1].t1 : s.status.started) - s.status.started) / 60);
     p.textContent = `${s.on ? '🔴' : '⚫'} ${s.status.slug}${s.status.client ? ' (' + s.status.client + ')' : ''} · ${s.on ? 'grabando' : 'terminado'} · ${mins} min grabados · ${critOff().has('chat') || s.status.chat_off ? 'chat apagado' : (s.status.chat || 0) + ' mensajes del chat'}${s.status.test ? ' · PRUEBA' : ''}${s.status.error === 'chat' ? ' · ⚠️ no puedo leer el chat' : ''}${s.status.disco === 'lleno' ? ' · 💾 PARADO: disco lleno' : s.status.disco === 'bajo' ? ' · 💾 queda poco disco (' + s.status.disco_gb + ' GB)' : ''}`;
     st.append(p);
   }
-  liveMini(S.find(s => s.on));
+  { const f = lvTrSess(); liveMini(f && f.on ? f : S.find(s => s.on)); }
   box.innerHTML = '';
   const all = [];
   // los que coinciden salen juntos en «Varios criterios» y además cada señal suelta en su sección
