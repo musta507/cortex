@@ -12,7 +12,7 @@ No hace falta tocar nada aquí: Clipzi escribe config.json y tú solo abres
 """
 import os, sys, json, time, threading, subprocess, shutil, re, glob, wave, traceback, datetime, uuid
 
-GRABADOR_VERSION = 35   # Clipzi solo lo sobrescribe con una versión más nueva
+GRABADOR_VERSION = 36   # Clipzi solo lo sobrescribe con una versión más nueva
 BASE = os.path.dirname(os.path.abspath(__file__))
 CFG = os.path.join(BASE, 'config.json')
 DIRS = os.path.join(BASE, 'directos')
@@ -1778,10 +1778,10 @@ def kick_loop():
                         res = {'status': 'done', 'items': [x for x in (kick_channel(str(s).lower()) for s in (qq.get('slugs') or [])[:20]) if x]}
                     elif k == 'buscar':
                         res = {'status': 'done', 'items': kick_search(qq.get('q'))}
-                    elif k == 'radar_yt':
-                        res = {'status': 'done', 'items': radar_youtube(qq.get('q'), int(qq.get('hours') or 24))}
-                    elif k == 'radar_kick':
-                        res = {'status': 'done', 'items': radar_kick(qq.get('q'), int(qq.get('hours') or 24))}
+                    elif k in ('radar_yt', 'radar_kick'):
+                        it = (radar_youtube if k == 'radar_yt' else radar_kick)(qq.get('q'), int(qq.get('hours') or 24))
+                        log('📡 Radar · %s · %s: %d vídeos' % ('YouTube' if k == 'radar_yt' else 'Kick', qq.get('q'), len(it)))
+                        res = {'status': 'done', 'items': it}
                     else:
                         res = {'status': 'error', 'error': 'no sé hacer «%s»' % k}
                 except Exception as e:

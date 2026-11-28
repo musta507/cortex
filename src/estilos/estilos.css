@@ -1738,4 +1738,5 @@ body.on-home .wrap>header,body.on-home #revPanel,body.on-home #rail,body.on-home
 .rd-v{font-size:14px}.rd-d{font-size:13px;color:#d4d4d8;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
 .rd-m{font-size:12px;color:#8E8E96;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rd-act{display:flex;gap:6px;margin-top:6px}.rd-act button{width:auto;padding:7px 10px;font-size:12.5px}.rd-act .rd-mk{flex:1}
+.rd-count{grid-column:1/-1;margin:0 0 -4px}
 </style>

@@ -77,6 +77,7 @@ function rdListRender() {
   list.sort((a, b) => b.vph - a.vph);
   if (!list.length) { const e = document.createElement('div'); e.className = 'ls-empty'; e.textContent = RD.busy ? 'Buscando…' : RD.at ? 'No hay clips en este tiempo. Prueba con 48 h o 7 días.' : 'Pulsa «Buscar ahora» para ver qué está petando.'; box.append(e); return; }
   const SRC = { tiktok: 'TikTok', youtube: 'YouTube', kick: 'Kick' };
+  const t = document.createElement('p'); t.className = 'hint rd-count'; t.textContent = `${list.length} clip${list.length > 1 ? 's' : ''} de ${hrs <= 24 ? 'las últimas 24 h' : hrs <= 48 ? 'las últimas 48 h' : 'esta semana'}, el que más rápido sube primero`; box.append(t);
   for (const x of list.slice(0, 80)) {
     const c = document.createElement('div'); c.className = 'rd-card';
     c.innerHTML = `<div class="rd-th"><span class="rd-src-b ${x.src}"></span><span class="rd-vph"></span></div><div class="rd-in"><b class="rd-v"></b><span class="rd-d"></span><span class="rd-m"></span><div class="rd-act"><button type="button" class="primary rd-mk">Hacer mi versión</button><button type="button" class="rd-see">Ver</button></div></div>`;
@@ -103,13 +104,19 @@ async function rdRun(quiet) {
     if (!rdApp()) { if (on.tt) rdStatus('tt', 'solo en la app de Cortex', 'off'); if (on.tag) rdStatus('tag', 'solo en la app de Cortex', 'off'); }
     else jobs.push((async () => {
       for (const [k, kind] of [['tt', 'search'], ['tag', 'tag']]) {
-        if (!on[k]) continue; let n = 0; rdStatus(k, 'buscando…', 'busy');
-        for (const w of targets) {
-          const r = await window.cortexApp.radar({ kind, q: kind === 'tag' ? w.replace(/\s+/g, '') : w, max: 60 }).catch(e => ({ ok: false, error: e.message }));
-          if (r.login) { rdStatus(k, 'TikTok pide iniciar sesión', 'login'); break; }
-          if (r.captcha) { rdStatus(k, 'TikTok pide una verificación', 'captcha'); break; }
-          if (!r.ok) { rdStatus(k, 'no ha ido: ' + (r.error || ''), 'bad'); continue; }
-          add(r.items, w); n += (r.items || []).length; rdStatus(k, n === 1 ? '1 vídeo' : n + ' vídeos', 'ok'); rdListRender();
+        if (!on[k]) continue; let n = 0, nr = 0; rdStatus(k, 'buscando…', 'busy');
+        const lim = Date.now() / 1000 - hrs * 3600;
+        stop: for (const w of targets) {
+          // la búsqueda con varias formas de decirlo (TikTok mezcla vídeos viejos y nuevos: cuantos más se miran, más nuevos salen); el hashtag, tal cual
+          const qs = kind === 'tag' ? [w.replace(/\s+/g, '')] : [w, w + ' clip', w + ' hoy', w + ' en vivo'];
+          for (const qq of qs) {
+            const r = await window.cortexApp.radar({ kind, q: qq, max: 150, scrolls: 12 }).catch(e => ({ ok: false, error: e.message }));
+            if (r.captcha) { rdStatus(k, 'TikTok pide una verificación', 'captcha'); break stop; }
+            if (r.login || (r.ok && !(r.items || []).length && kind === 'search')) { rdStatus(k, 'TikTok no enseña resultados sin iniciar sesión', 'login'); break stop; }
+            if (!r.ok) { rdStatus(k, 'no ha ido: ' + (r.error || ''), 'bad'); continue; }
+            add(r.items, w); n += (r.items || []).length; nr += (r.items || []).filter(x => x.ts >= lim).length;
+            rdStatus(k, `${n} vistos · ${nr} de ${hrs <= 24 ? 'las últimas 24 h' : hrs <= 48 ? 'las últimas 48 h' : 'esta semana'}`, 'ok'); rdListRender();
+          }
         }
       }
     })());
@@ -121,6 +128,7 @@ async function rdRun(quiet) {
       let n = 0; rdStatus(k, 'buscando…', 'busy');
       for (const w of targets) {
         const r = await ksAsk({ kind, q: w, hours: hrs }, 260000);
+        if (r.err === 'mal' || (r.status === 'error')) { rdStatus(k, 'no ha ido: ' + (r.error || ''), 'bad'); continue; }
         if (r.err) { rdStatus(k, r.err === 'grab' ? 'abre el grabador (versión 34 o más nueva)' : r.err === 'dir' ? 'falta la carpeta del grabador' : 'no contesta', 'off'); return; }
         add(r.items, w); n += (r.items || []).length; rdStatus(k, n === 1 ? '1 vídeo' : n + ' vídeos', 'ok'); rdListRender();
       }
